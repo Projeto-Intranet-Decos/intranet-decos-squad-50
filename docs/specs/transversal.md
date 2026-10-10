@@ -210,3 +210,19 @@ de toque vale o comportamento nativo do navegador.
 - **Não acontece** com um modal aberto, com o ponteiro sobre uma área que tem rolagem própria, com
   `Ctrl` pressionado (zoom), com a preferência desligada ou com animações reduzidas (GER-14 ou
   `prefers-reduced-motion`).
+
+### GER-16 — Modais
+Origem: [COD] · Back — · Front ✅ · Teste ✅
+
+Todo modal usa o componente compartilhado `Modal`: painel de vidro centralizado sobre um fundo que
+escurece e desfoca de leve a página.
+
+- **Dado** um modal aberto, **quando** o usuário clica fora do painel, aperta `Esc` ou aciona
+  "Fechar", **então** o modal fecha; clicar dentro do painel não fecha.
+- **Dado** um modal aberto, **então** o painel desfoca o que está atrás dele: o painel não pode
+  ficar dentro do elemento que desfoca a página, porque um `backdrop-filter` aninhado em outro só
+  enxerga o conteúdo do pai, não a página. 🐞 corrigido: o painel ficava dentro do fundo e o texto
+  da página aparecia nítido através dele.
+- O painel tem um vidro próprio (`glass-modal`), mais branco e menos transparente que o do menu,
+  para não escurecer junto com o fundo. Ele segue as preferências de desfoque e transparência
+  (GER-14), sempre mais opaco que o resto.

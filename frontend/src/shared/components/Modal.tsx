@@ -61,10 +61,10 @@ function Modal({
   const classes = CLASSES_VARIANTE[variante]
 
   return (
-    <div
-      onClick={aoFechar}
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-[3px] ${classes.fundo}`}
-    >
+    <div onClick={aoFechar} className={`fixed inset-0 z-50 flex items-center justify-center ${classes.fundo}`}>
+      {/* O fundo é irmão do painel, não pai: um backdrop-filter dentro de outro só enxerga o
+          conteúdo do pai, e o painel deixaria de desfocar a página. */}
+      <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[3px]" aria-hidden="true" />
       <div
         ref={painelRef}
         role="dialog"
@@ -74,7 +74,7 @@ function Modal({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{ width: largura }}
-        className={`glass relative flex max-h-full w-full max-w-full flex-col overflow-hidden rounded-2xl outline-none ${classes.painel}`}
+        className={`glass-modal relative flex max-h-full w-full max-w-full flex-col overflow-hidden rounded-2xl outline-none ${classes.painel}`}
       >
         {/* A rolagem fica num filho para o brilho da borda (::before do vidro) não rolar junto. */}
         <div className={`flex min-h-0 flex-1 flex-col overflow-auto ${classes.conteudo}`}>
