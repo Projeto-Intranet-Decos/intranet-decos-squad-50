@@ -2,9 +2,12 @@ import type { ReactNode } from 'react'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth/useAuth'
+import { usePreferencias } from '../../lib/preferencias/usePreferencias'
+import { useRolagemElastica } from '../hooks/useRolagemElastica'
 import logoDecos from '../assets/logo-decos.png'
 import simboloDecos from '../assets/simbolo.png'
 import {
+  IconeAjustes,
   IconeArquivos,
   IconeCalendario,
   IconeDuvida,
@@ -70,10 +73,14 @@ function Layout({ children }: PropriedadesLayout) {
   const navegar = useNavigate()
   const menuRef = useRef<HTMLElement>(null)
   const botaoMenuRef = useRef<HTMLButtonElement>(null)
+  const conteudoRef = useRef<HTMLDivElement>(null)
+  const preferencias = usePreferencias()
 
   // "Recolher menu" só vale no desktop; o drawer sempre abre inteiro.
   const compacto = recolhido && desktop
   const drawerAberto = menuAberto && !desktop
+
+  useRolagemElastica(conteudoRef, preferencias.rolagemElastica && !preferencias.reduzirAnimacoes && !drawerAberto)
 
   useEffect(() => {
     if (!drawerAberto) return
@@ -109,7 +116,7 @@ function Layout({ children }: PropriedadesLayout) {
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row lg:items-start">
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+      <div className="fundo-app pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
         <div className="absolute -top-40 -left-32 size-[34rem] rounded-full bg-brand-100 opacity-70 blur-3xl" />
         <div className="absolute top-1/4 -right-40 size-[38rem] rounded-full bg-slate-200/80 blur-3xl" />
         <div className="absolute -bottom-48 left-1/4 size-[32rem] rounded-full bg-slate-200 opacity-80 blur-3xl" />
@@ -203,11 +210,21 @@ function Layout({ children }: PropriedadesLayout) {
           </div>
         </div>
 
+        <NavLink
+          to="/configuracoes"
+          title="Configurações"
+          onClick={fecharMenu}
+          className={({ isActive }) => `mt-3 flex-none ${itemClasse(isActive)}`}
+        >
+          <IconeAjustes tamanho={18} className="flex-none" />
+          {!compacto && <span className="flex-1 truncate">Configurações</span>}
+        </NavLink>
+
         <button
           type="button"
           onClick={() => setRecolhido((r) => !r)}
           title={compacto ? 'Expandir menu' : 'Recolher menu'}
-          className={`mt-3 hidden flex-none items-center gap-2.5 rounded-lg py-2 lg:flex ${compacto ? 'justify-center px-0' : 'px-3'} text-xs text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700`}
+          className={`mt-1 hidden flex-none items-center gap-2.5 rounded-lg py-2 lg:flex ${compacto ? 'justify-center px-0' : 'px-3'} text-xs text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700`}
         >
           {compacto ? <IconeSidebarExpandir tamanho={16} /> : <IconeSidebarRecolher tamanho={16} />}
           {!compacto && <span className="flex-1 text-left">Recolher menu</span>}
@@ -241,7 +258,7 @@ function Layout({ children }: PropriedadesLayout) {
       </aside>
 
       <main className="min-w-0 flex-1 self-stretch lg:min-h-dvh">
-        <div className="px-4 pt-5 pb-8 sm:px-7 lg:py-6">
+        <div ref={conteudoRef} className="px-4 pt-5 pb-8 sm:px-7 lg:py-6">
           {children}
         </div>
       </main>

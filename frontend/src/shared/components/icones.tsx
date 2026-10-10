@@ -129,6 +129,10 @@ export const IconeMenos = criarIcone(<path d="M5 12h14" />)
 
 export const IconeMenu = criarIcone(<path d="M4 6h16M4 12h16M4 18h16" />)
 
+export const IconeAjustes = criarIcone(
+  <path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4" />,
+)
+
 export const IconeLapis = criarIcone(
   <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15v5Z" />,
 )

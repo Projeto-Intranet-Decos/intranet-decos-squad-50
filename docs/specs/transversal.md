@@ -24,7 +24,8 @@ Aplicação web de uso interno, pensada para o desktop. Público: colaboradores 
 assistenciais, exceto o corpo médico. Abaixo de 1024px o layout se adapta (menu lateral vira
 drawer aberto por uma barra superior), sem rolagem horizontal da página a partir de 360px; o
 desktop não muda por causa disso. Visual de referência em
-[`docs/DESIGN_PROMPT.md`](../DESIGN_PROMPT.md).
+[`docs/DESIGN_PROMPT.md`](../DESIGN_PROMPT.md); o fundo da aplicação tem um gradiente suave
+(ajustável, ver GER-14) e a rolagem tem efeito elástico no desktop (GER-15).
 
 ### GER-02 — Autenticação obrigatória
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
@@ -163,3 +164,49 @@ Ambiente reproduzível via `docker-compose` (Postgres, MinIO, backend, frontend 
 remove o prefixo `/api` e repassa ao backend.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
+
+### GER-14 — Preferências de interface
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+Página **Configurações** (`/configuracoes`, item no menu lateral) com ajustes visuais da
+interface. São do **navegador**, não da conta: ficam em `localStorage` (`intranet:preferencias`),
+não passam pelo backend e continuam valendo depois de sair e entrar com outro usuário.
+
+| Preferência | Valores | Padrão |
+|---|---|---|
+| Desfoque do vidro | 0 a 24 px | 16 px |
+| Transparência do vidro | 0 a 100% | 60% |
+| Gradiente de fundo | desligado, suave, intenso | suave |
+| Efeito elástico na rolagem (GER-15) | ligado/desligado | ligado |
+| Reduzir animações | ligado/desligado | desligado |
+
+- **Dado** qualquer usuário autenticado (inclusive `comum`), **quando** abre `/configuracoes`,
+  **então** vê a página; o menu lateral tem o item "Configurações".
+- **Dado** que nada foi salvo, **então** valem os padrões da tabela.
+- **Dado** que o usuário muda uma opção, **então** o efeito aparece na hora, sem botão de salvar,
+  e o valor é gravado; **quando** a página é recarregada, **então** a preferência já vem aplicada.
+- **Dado** um valor salvo inválido (JSON corrompido, campo fora dos limites ou de outro tipo),
+  **então** o campo inválido volta ao padrão e os demais são mantidos.
+- **Dado** desfoque 0 e transparência 0, **então** o vidro vira superfície sólida, sem
+  `backdrop-filter`.
+- **Dado** "Reduzir animações" ligado, **então** transições e animações são suprimidas como em
+  `prefers-reduced-motion`, e o efeito elástico não acontece.
+- **Quando** o usuário aciona "Restaurar padrão", **então** todas as opções voltam ao padrão.
+
+A tela de login não muda com as preferências. A classe `no-glass` no `<html>` continua
+funcionando só por CSS.
+
+### GER-15 — Efeito elástico na rolagem
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+No desktop (mouse ou trackpad), rolar além do topo ou do fim da página desloca o conteúdo com
+resistência e ele volta sozinho ao lugar (*rubber banding*). O menu lateral não se move. Em telas
+de toque vale o comportamento nativo do navegador.
+
+- **Dado** a página no topo, **quando** o usuário continua rolando para cima, **então** o conteúdo
+  desce no máximo 96px, cada vez menos a cada rolagem; o mesmo vale, espelhado, no fim da página.
+- **Dado** o conteúdo deslocado, **quando** a rolagem para ou muda de sentido, **então** ele volta
+  à posição original.
+- **Não acontece** com um modal aberto, com o ponteiro sobre uma área que tem rolagem própria, com
+  `Ctrl` pressionado (zoom), com a preferência desligada ou com animações reduzidas (GER-14 ou
+  `prefers-reduced-motion`).

@@ -8,6 +8,7 @@ import PaginaSetores from './features/setores/components/PaginaSetores'
 import PaginaUsuarios from './features/usuarios/components/PaginaUsuarios'
 import PaginaLogin from './lib/auth/PaginaLogin'
 import RotaProtegida from './lib/auth/RotaProtegida'
+import PaginaConfiguracoes from './lib/preferencias/PaginaConfiguracoes'
 import Layout from './shared/components/Layout'
 
 function App() {
@@ -62,6 +63,16 @@ function App() {
           <RotaProtegida>
             <Layout>
               <PaginaSetores />
+            </Layout>
+          </RotaProtegida>
+        }
+      />
+      <Route
+        path="/configuracoes"
+        element={
+          <RotaProtegida>
+            <Layout>
+              <PaginaConfiguracoes />
             </Layout>
           </RotaProtegida>
         }

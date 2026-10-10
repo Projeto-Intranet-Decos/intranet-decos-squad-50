@@ -2,6 +2,8 @@
 
 Este documento descreve um **redesign visual** da intranet que **já existe**. O objetivo é trocar a aparência (cores, superfícies, tipografia, ícones, logos, espaçamentos internos) mantendo intactos a estrutura, o conteúdo e o funcionamento. A única mudança de comportamento permitida é a de **responsividade**.
 
+> **Decisões posteriores a este prompt** (valem sobre o texto abaixo): o fundo da aplicação ganhou um gradiente suave, a rolagem tem efeito elástico no desktop e existe uma página Configurações com ajustes de desfoque, transparência, gradiente e animações. Regras em [`specs/transversal.md`](./specs/transversal.md), GER-14 e GER-15.
+
 Stack de referência: **Tailwind CSS v4** e ícones **Lucide**. Se o projeto usar Tailwind v3, adapte os blocos `@theme` e `@utility` para `tailwind.config` + `@layer components`. Se o projeto não usar Tailwind, traduza as utilities para CSS puro (classes `.glass`, `.surface`, `.field`, `.btn` etc.) em vez de introduzir um framework novo. Se o projeto já usa outra biblioteca de ícones, mantenha-a; Lucide é só a referência de estilo de traço.
 
 ## Escopo (leia antes de tudo)
