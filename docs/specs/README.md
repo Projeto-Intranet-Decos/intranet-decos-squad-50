@@ -103,7 +103,7 @@ ninguém esquece de atualizar.
 ## Testes: onde e como
 
 **Backend** — `pytest` + `fastapi.testclient.TestClient` (requisição HTTP de verdade contra o
-app). Configurado; o frontend ainda não tem suíte.
+app). O frontend usa `vitest` (ver mais abaixo); a suíte de lá ainda cobre poucos requisitos.
 
 ```bash
 docker compose up -d banco                  # Postgres do compose (só o banco basta)
@@ -154,8 +154,11 @@ def test_mur03_titulo_vazio_retorna_422(cliente, token_admin_setor):
     ...
 ```
 
-**Frontend** — `vitest` + Testing Library, com MSW para simular a API. Teste junto do componente
-ou hook (`PaginaMural.test.tsx`). O ID entra no nome do `describe`/`it`, pra `vitest -t MUR-11`:
+**Frontend** — `vitest` + Testing Library, com MSW para simular a API (o MSW entra junto com o
+primeiro teste que precisar de API). Em `frontend/`: `npm test`, ou `npx vitest -t GER-14` para um
+requisito. Preparação comum em `src/testes/` (`preparacao.ts` roda antes de cada teste, `apoio.ts`
+tem os auxiliares importáveis). Teste junto do componente ou hook (`PaginaMural.test.tsx`). O ID
+entra no nome do `describe`/`it`, pra `vitest -t MUR-11`:
 
 ```ts
 describe('MUR-11 — filtros do mural', () => {

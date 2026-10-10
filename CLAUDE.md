@@ -30,6 +30,8 @@ Bug: registre o comportamento esperado no spec (`🐞`) e escreva o teste que re
 
 Rodar os testes do backend: `docker compose up -d banco` e, em `backend/`, `.venv/bin/pytest` (ou `-k mur03`). Fixtures, banco de teste e MinIO falso: `backend/tests/conftest.py` e `tests/apoio.py`.
 
+Rodar os testes do frontend: em `frontend/`, `npm test` (ou `npx vitest -t GER-14`). Preparação e auxiliares em `frontend/src/testes/`.
+
 ## Convenção de idioma no código
 
 Nomes de arquivos, componentes, funções, variáveis, classes e rotas em **português**, sem acento (ex: `PaginaMural`, `aniversariantes`, `clienteDeConsultas`, `requer_admin`). Isso vale pro código como um todo, frontend e backend.
