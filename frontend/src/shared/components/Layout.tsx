@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import type { ComponentType, ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth/useAuth'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
 import { useRolagemElastica } from '../hooks/useRolagemElastica'
@@ -50,15 +51,59 @@ const ROTULO_PAPEL = {
 
 // Abaixo de lg o menu lateral vira drawer, aberto pelo botão da barra superior.
 const CONSULTA_DESKTOP = '(min-width: 1024px)'
+const CONSULTA_MENOS_MOVIMENTO = '(prefers-reduced-motion: reduce)'
 
-function inscreverDesktop(aoMudar: () => void) {
-  const consulta = window.matchMedia(CONSULTA_DESKTOP)
-  consulta.addEventListener('change', aoMudar)
-  return () => consulta.removeEventListener('change', aoMudar)
+function useConsultaDeMidia(consulta: string) {
+  const inscrever = useCallback(
+    (aoMudar: () => void) => {
+      const lista = window.matchMedia(consulta)
+      lista.addEventListener('change', aoMudar)
+      return () => lista.removeEventListener('change', aoMudar)
+    },
+    [consulta],
+  )
+  return useSyncExternalStore(inscrever, () => window.matchMedia(consulta).matches)
 }
 
-function useDesktop() {
-  return useSyncExternalStore(inscreverDesktop, () => window.matchMedia(CONSULTA_DESKTOP).matches)
+interface PropriedadesItemMenu {
+  rota: string
+  label: string
+  Icone: ComponentType<{ tamanho?: number; className?: string }>
+  compacto: boolean
+  aoNavegar: () => void
+  className?: string
+}
+
+function ItemMenu({ rota, label, Icone, compacto, aoNavegar, className }: PropriedadesItemMenu) {
+  return (
+    <NavLink
+      to={rota}
+      title={label}
+      onClick={aoNavegar}
+      className={({ isActive }) =>
+        `relative flex min-h-10 flex-none items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] transition-colors ${
+          compacto ? 'justify-center px-0' : 'px-3'
+        } ${
+          isActive ? 'font-semibold text-brand-600' : 'font-medium text-slate-600 hover:bg-white/60 hover:text-slate-900'
+        } ${className ?? ''}`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {/* Um só indicador para o menu todo: o layoutId faz ele deslizar do item antigo ao novo. */}
+          {isActive && (
+            <motion.span
+              layoutId="indicador-do-menu"
+              transition={{ type: 'spring', stiffness: 520, damping: 42 }}
+              className="item-ativo absolute inset-0 rounded-[10px]"
+            />
+          )}
+          <Icone tamanho={18} className="relative flex-none" />
+          {!compacto && <span className="relative flex-1 truncate">{label}</span>}
+        </>
+      )}
+    </NavLink>
+  )
 }
 
 interface PropriedadesLayout {
@@ -68,13 +113,16 @@ interface PropriedadesLayout {
 function Layout({ children }: PropriedadesLayout) {
   const [recolhido, setRecolhido] = useState(false)
   const [menuAberto, setMenuAberto] = useState(false)
-  const desktop = useDesktop()
+  const desktop = useConsultaDeMidia(CONSULTA_DESKTOP)
   const { usuario, sair } = useAuth()
   const navegar = useNavigate()
+  const { pathname } = useLocation()
+  const prefereMenosMovimento = useConsultaDeMidia(CONSULTA_MENOS_MOVIMENTO)
   const menuRef = useRef<HTMLElement>(null)
   const botaoMenuRef = useRef<HTMLButtonElement>(null)
   const conteudoRef = useRef<HTMLDivElement>(null)
   const preferencias = usePreferencias()
+  const semAnimacao = preferencias.reduzirAnimacoes || prefereMenosMovimento
 
   // "Recolher menu" só vale no desktop; o drawer sempre abre inteiro.
   const compacto = recolhido && desktop
@@ -105,15 +153,6 @@ function Layout({ children }: PropriedadesLayout) {
     navegar('/login', { replace: true })
   }
 
-  const itemClasse = (ativo: boolean) =>
-    `flex min-h-10 items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] transition-colors ${
-      compacto ? 'justify-center px-0' : 'px-3'
-    } ${
-      ativo
-        ? 'bg-brand-50 font-semibold text-brand-700 shadow-[inset_3px_0_0_var(--color-brand-600)]'
-        : 'font-medium text-slate-600 hover:bg-white/60 hover:text-slate-900'
-    }`
-
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row lg:items-start">
       <div className="fundo-app pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
@@ -143,7 +182,10 @@ function Layout({ children }: PropriedadesLayout) {
         <div className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden" onClick={fecharMenu} aria-hidden="true" />
       )}
 
-      <aside
+      {/* layoutRoot: o menu fica parado na tela, então a rolagem da página não entra na conta
+          da animação do indicador. */}
+      <motion.aside
+        layoutRoot
         id="menu-lateral"
         ref={menuRef}
         inert={!desktop && !menuAberto}
@@ -162,16 +204,13 @@ function Layout({ children }: PropriedadesLayout) {
           {compacto && <img src={simboloDecos} alt="Hospital Decós" className="size-9 object-contain" />}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <motion.div layoutScroll className="min-h-0 flex-1 overflow-y-auto">
           <nav className="flex flex-none flex-col gap-1">
             {!compacto && (
               <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500">PÁGINAS</span>
             )}
-            {NAV_PRINCIPAL.map(({ rota, label, Icone }) => (
-              <NavLink key={rota} to={rota} title={label} onClick={fecharMenu} className={({ isActive }) => itemClasse(isActive)}>
-                <Icone tamanho={18} className="flex-none" />
-                {!compacto && <span className="flex-1 truncate">{label}</span>}
-              </NavLink>
+            {NAV_PRINCIPAL.map((item) => (
+              <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
             ))}
           </nav>
 
@@ -180,11 +219,8 @@ function Layout({ children }: PropriedadesLayout) {
               {!compacto && (
                 <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500">ADMINISTRAÇÃO</span>
               )}
-              {NAV_ADMIN.map(({ rota, label, Icone }) => (
-                <NavLink key={rota} to={rota} title={label} onClick={fecharMenu} className={({ isActive }) => itemClasse(isActive)}>
-                  <Icone tamanho={18} className="flex-none" />
-                  {!compacto && <span className="flex-1 truncate">{label}</span>}
-                </NavLink>
+              {NAV_ADMIN.map((item) => (
+                <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
               ))}
             </div>
           )}
@@ -208,17 +244,16 @@ function Layout({ children }: PropriedadesLayout) {
               </a>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <NavLink
-          to="/configuracoes"
-          title="Configurações"
-          onClick={fecharMenu}
-          className={({ isActive }) => `mt-3 flex-none ${itemClasse(isActive)}`}
-        >
-          <IconeAjustes tamanho={18} className="flex-none" />
-          {!compacto && <span className="flex-1 truncate">Configurações</span>}
-        </NavLink>
+        <ItemMenu
+          rota="/configuracoes"
+          label="Configurações"
+          Icone={IconeAjustes}
+          compacto={compacto}
+          aoNavegar={fecharMenu}
+          className="mt-3"
+        />
 
         <button
           type="button"
@@ -255,11 +290,23 @@ function Layout({ children }: PropriedadesLayout) {
             </>
           )}
         </div>
-      </aside>
+      </motion.aside>
 
       <main className="min-w-0 flex-1 self-stretch lg:min-h-dvh">
         <div ref={conteudoRef} className="px-4 pt-5 pb-8 sm:px-7 lg:py-6">
-          {children}
+          {/* A página atual some e só então a nova entra. O transform some ao fim da animação,
+              para os modais (position: fixed) da página continuarem presos à tela. */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={pathname}
+              initial={semAnimacao ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={semAnimacao ? undefined : { opacity: 0, transition: { duration: 0.09, ease: 'easeIn' } }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
     </div>

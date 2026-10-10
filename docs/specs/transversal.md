@@ -226,3 +226,17 @@ escurece e desfoca de leve a página.
 - O painel tem um vidro próprio (`glass-modal`), mais branco e menos transparente que o do menu,
   para não escurecer junto com o fundo. Ele segue as preferências de desfoque e transparência
   (GER-14), sempre mais opaco que o resto.
+
+### GER-17 — Transição entre páginas
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+Trocar de página pelo menu lateral é animado, no conteúdo e no menu.
+
+- **Dado** uma página aberta, **quando** o usuário vai para outra, **então** o conteúdo atual some
+  e só depois o novo entra (esmaecendo e subindo de leve); a troca toda leva menos de meio segundo.
+- **Dado** a troca de página, **então** o menu lateral não é remontado (continua recolhido ou
+  expandido como estava) e o indicador de página atual desliza do item antigo até o novo. Só o
+  item da página atual tem indicador.
+- **Dado** animações reduzidas (GER-14 ou `prefers-reduced-motion`), **então** a troca é imediata,
+  sem animação.
+- A primeira página aberta depois de carregar o site entra sem animação.
