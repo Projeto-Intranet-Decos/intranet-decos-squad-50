@@ -8,6 +8,7 @@
 - **TanStack Query** para data fetching, cache e mutations
 - **React Hook Form** para formulários
 - **Sonner** para notificações (toast)
+- **Lucide** (`lucide-react`) para ícones — única biblioteca de ícones, sempre via `shared/components/icones.tsx`
 
 ## Organização de pastas
 

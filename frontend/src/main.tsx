@@ -7,6 +7,7 @@ import './index.css'
 import App from './App.tsx'
 import ConfiguracaoDeMovimento from './lib/preferencias/ConfiguracaoDeMovimento'
 import { iniciarPreferencias } from './lib/preferencias/preferencias'
+import { IconeAlerta, IconeErro, IconeInfo, IconeSucesso } from './shared/components/icones'
 
 const clienteDeConsultas = new QueryClient()
 
@@ -20,7 +21,11 @@ createRoot(document.getElementById('root')!).render(
         <ConfiguracaoDeMovimento>
           <App />
         </ConfiguracaoDeMovimento>
-        <Toaster richColors position="top-right" />
+        <Toaster
+          richColors
+          position="top-right"
+          icons={{ success: <IconeSucesso />, info: <IconeInfo />, warning: <IconeAlerta />, error: <IconeErro /> }}
+        />
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

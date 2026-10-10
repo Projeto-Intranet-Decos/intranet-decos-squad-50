@@ -2,11 +2,11 @@ import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeSlash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import fachada from '../../shared/assets/fachada.png'
 import logoDecos from '../../shared/assets/logo-decos.png'
 import simboloDecos from '../../shared/assets/simbolo.png'
+import { IconeOlho, IconeOlhoFechado } from '../../shared/components/icones'
 import { api } from '../api'
 import { useAuth } from './useAuth'
 
@@ -84,11 +84,7 @@ function PaginaLogin() {
                   title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
                   className="absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-900/5 hover:text-slate-700"
                 >
-                  {mostrarSenha ? (
-                    <EyeSlash className="h-[18px] w-[18px]" />
-                  ) : (
-                    <Eye className="h-[18px] w-[18px]" />
-                  )}
+                  {mostrarSenha ? <IconeOlhoFechado /> : <IconeOlho />}
                 </button>
               </div>
             </label>
