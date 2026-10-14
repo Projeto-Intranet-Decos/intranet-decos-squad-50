@@ -22,7 +22,7 @@ import {
 
 const NAV_PRINCIPAL = [
   { rota: '/mural', label: 'Mural de avisos', Icone: IconeMegafone },
-  { rota: '/calendario', label: 'Calendário & aniversários', Icone: IconeCalendario },
+  { rota: '/calendario', label: 'Calendário', Icone: IconeCalendario },
   { rota: '/documentos', label: 'POPs & documentos', Icone: IconeArquivos },
   { rota: '/duvidas', label: 'Central de dúvidas (FAQ)', Icone: IconeDuvida },
   { rota: '/setores', label: 'Setores e ramais', Icone: IconeTelefone },

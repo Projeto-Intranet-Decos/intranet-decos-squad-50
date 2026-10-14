@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
-import { chaveDeData, faixaDeHoras, formatarIntervaloHoras, rotuloHora } from '../formatadores'
+import { chaveDeData, comecaNoDia, faixaDeHoras, formatarIntervaloHoras, rotuloHora } from '../formatadoresCalendario'
 import type { Aniversariante, Evento } from '../types'
 
 interface PropriedadesVisaoDia {
   data: Date
   eventosPorDia: Map<string, Evento[]>
   aniversariantesDoDia: (data: Date) => Aniversariante[]
+  aoAbrirEvento: (evento: Evento) => void
 }
 
 interface PropriedadesLinhaHorario {
@@ -18,6 +19,7 @@ interface PropriedadesItemAgenda {
   titulo: string
   detalhe: string
   destaque: boolean
+  aoClicar?: () => void
 }
 
 function LinhaHorario({ rotulo, children }: PropriedadesLinhaHorario) {
@@ -31,12 +33,13 @@ function LinhaHorario({ rotulo, children }: PropriedadesLinhaHorario) {
   )
 }
 
-function ItemAgenda({ horario, titulo, detalhe, destaque }: PropriedadesItemAgenda) {
+function ItemAgenda({ horario, titulo, detalhe, destaque, aoClicar }: PropriedadesItemAgenda) {
   return (
     <div
+      onClick={aoClicar}
       className={`flex items-baseline gap-3 rounded-[10px] px-3 py-[9px] ${
         destaque ? 'bg-[#b33951] text-white' : 'bg-slate-100 text-slate-600'
-      }`}
+      } ${aoClicar ? 'cursor-pointer hover:opacity-90' : ''}`}
     >
       <span className="flex-[0_0_78px] text-[11px] opacity-70">{horario}</span>
       <div className="flex min-w-0 flex-col gap-0.5">
@@ -47,15 +50,29 @@ function ItemAgenda({ horario, titulo, detalhe, destaque }: PropriedadesItemAgen
   )
 }
 
-function VisaoDia({ data, eventosPorDia, aniversariantesDoDia }: PropriedadesVisaoDia) {
-  const eventos = eventosPorDia.get(chaveDeData(data)) ?? []
+function VisaoDia({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento }: PropriedadesVisaoDia) {
+  const chave = chaveDeData(data)
+  const eventosDoDia = eventosPorDia.get(chave) ?? []
+  const eventos = eventosDoDia.filter((evento) => comecaNoDia(evento, chave))
+  // Evento de vários dias: depois do primeiro dia, ocupa a faixa "Dia todo".
+  const continuacoes = eventosDoDia.filter((evento) => !comecaNoDia(evento, chave))
   const aniversariantes = aniversariantesDoDia(data)
   const horas = faixaDeHoras(eventos)
 
   return (
     <div className="overflow-hidden rounded-[10px] border border-slate-200">
-      {aniversariantes.length > 0 && (
+      {(aniversariantes.length > 0 || continuacoes.length > 0) && (
         <LinhaHorario rotulo="Dia todo">
+          {continuacoes.map((evento) => (
+            <ItemAgenda
+              key={evento.id}
+              horario="Continua"
+              titulo={evento.titulo}
+              detalhe={evento.conteudo ?? ''}
+              destaque
+              aoClicar={() => aoAbrirEvento(evento)}
+            />
+          ))}
           {aniversariantes.map((pessoa) => (
             <ItemAgenda
               key={pessoa.id}
@@ -76,8 +93,9 @@ function VisaoDia({ data, eventosPorDia, aniversariantesDoDia }: PropriedadesVis
                 key={evento.id}
                 horario={formatarIntervaloHoras(evento)}
                 titulo={evento.titulo}
-                detalhe={evento.descricao ?? ''}
+                detalhe={evento.conteudo ?? ''}
                 destaque
+                aoClicar={() => aoAbrirEvento(evento)}
               />
             ))}
         </LinhaHorario>

@@ -1,5 +1,5 @@
-import { IconeLapis, IconeLixeira, IconeUsuario } from '../../../shared/components/icones'
-import { formatarHora } from '../formatadores'
+import { IconeCalendario, IconeLapis, IconeLixeira, IconeUsuario } from '../../../shared/components/icones'
+import { formatarHora, formatarPeriodoEvento } from '../formatadores'
 import BadgeCategoria from './BadgeCategoria'
 import type { Aviso } from '../types'
 
@@ -65,10 +65,20 @@ function CartaoAviso({
         <h3 className="m-0 mb-3 text-lg leading-snug font-bold tracking-tight text-slate-900">
           {aviso.titulo}
         </h3>
-        <div className="mb-3 h-px bg-slate-200" />
-        <p className="m-0 line-clamp-3 text-[13.5px] leading-relaxed text-slate-600 text-balance">
-          {aviso.conteudo}
-        </p>
+        {aviso.dataInicio && (
+          <p className="m-0 mb-3 flex items-center gap-1.5 text-[12.5px] font-medium text-[#800020]">
+            <IconeCalendario tamanho={14} />
+            {formatarPeriodoEvento(aviso.dataInicio, aviso.dataFim)}
+          </p>
+        )}
+        {aviso.conteudo && (
+          <>
+            <div className="mb-3 h-px bg-slate-200" />
+            <p className="m-0 line-clamp-3 text-[13.5px] leading-relaxed text-slate-600 text-balance">
+              {aviso.conteudo}
+            </p>
+          </>
+        )}
         {podeGerenciar && (
           <div className="mt-4 flex items-center gap-1 border-t border-slate-100 pt-3.5">
             <div className="ml-auto flex gap-1">

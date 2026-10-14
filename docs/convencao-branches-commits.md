@@ -18,7 +18,7 @@ chore/<camada-ou-geral>/<descricao-curta>
 ```
 
 - `<camada>`: `frontend` ou `backend`. Omitir quando a mudança for genuinamente transversal (ex: `chore/geral/configura-ci`).
-- `<modulo>`: nome do módulo afetado — `usuarios`, `documentos`, `murais`, `calendario`, `setores`, `duvidas`, `logs`.
+- `<modulo>`: nome do módulo afetado — `usuarios`, `documentos`, `murais`, `setores`, `duvidas`, `logs`.
 - `<descricao-curta>`: resumo em poucas palavras, separado por hífen.
 
 ### Exemplos

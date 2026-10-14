@@ -11,6 +11,7 @@ import { IconeArquivoTexto, IconeClipe, IconeImagem, IconeX } from '../../../sha
 import type { Usuario } from '../../../lib/auth/tipos'
 import { useSalvarAviso } from '../hooks/useSalvarAviso'
 import { formatarTamanhoArquivo } from '../formatadores'
+import { combinarDataHora, separarDataHora } from '../formatadoresCalendario'
 import {
   EXTENSOES_ANEXO,
   LIMITE_IMAGEM_MB,
@@ -31,6 +32,17 @@ interface ValoresFormularioAviso {
   categoria: CategoriaAviso
   setorId: string
   fixado: boolean
+  // Só em evento. Data no formato do <input type="date">, hora no do <input type="time">.
+  dataInicio: string
+  horaInicio: string
+  dataFim: string
+  horaFim: string
+}
+
+/** Término do evento: hora sem data é no mesmo dia do início; data sem hora vai até 23:59. */
+function montarFim(valores: ValoresFormularioAviso): string | null {
+  if (!valores.dataFim && !valores.horaFim) return null
+  return combinarDataHora(valores.dataFim || valores.dataInicio, valores.horaFim || '23:59')
 }
 
 /** Anexo que já está no backend (`id`) ou que ainda vai ser enviado (`arquivo`). */
@@ -80,10 +92,13 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
   const urlImagemExibida =
     imagemNova?.url ?? (removerImagemAtual ? null : (avisoEditando?.urlImagem ?? null))
 
+  const inicioAtual = avisoEditando?.dataInicio ? separarDataHora(avisoEditando.dataInicio) : null
+  const fimAtual = avisoEditando?.dataFim ? separarDataHora(avisoEditando.dataFim) : null
   const {
     register,
     handleSubmit,
     control,
+    getValues,
     formState: { errors },
   } = useForm<ValoresFormularioAviso>({
     defaultValues: {
@@ -92,11 +107,20 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
       categoria: avisoEditando?.categoria ?? 'comunicado',
       setorId: avisoEditando?.setorId ?? usuario?.setorId ?? setores[0]?.id ?? '',
       fixado: avisoEditando?.fixado ?? false,
+      dataInicio: inicioAtual?.data ?? '',
+      horaInicio: inicioAtual?.hora ?? '',
+      dataFim: fimAtual?.data ?? '',
+      horaFim: fimAtual?.hora ?? '',
     },
   })
 
-  const [titulo, conteudo] = useWatch({ control, name: ['titulo', 'conteudo'] })
-  const valido = !!titulo?.trim() && !!conteudo?.trim()
+  const [titulo, conteudo, categoria, dataInicio, horaInicio] = useWatch({
+    control,
+    name: ['titulo', 'conteudo', 'categoria', 'dataInicio', 'horaInicio'],
+  })
+  const ehEvento = categoria === 'evento'
+  // Conteúdo é opcional em evento; em evento, a data e a hora de início são obrigatórias.
+  const valido = !!titulo?.trim() && (ehEvento ? !!dataInicio && !!horaInicio : !!conteudo?.trim())
 
   function trocarImagemNova(arquivo: File | null) {
     if (urlPreviaRef.current) URL.revokeObjectURL(urlPreviaRef.current)
@@ -166,11 +190,19 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
       return
     }
 
+    const evento = valores.categoria === 'evento'
     const texto = {
       titulo: valores.titulo.trim(),
-      conteudo: valores.conteudo.trim(),
+      conteudo: valores.conteudo.trim() || null,
       categoria: valores.categoria,
       fixado: valores.fixado,
+      // Fora de evento as datas nem vão: o backend apaga as de um evento que mudou de categoria.
+      ...(evento
+        ? {
+            dataInicio: combinarDataHora(valores.dataInicio, valores.horaInicio),
+            dataFim: montarFim(valores),
+          }
+        : {}),
     }
 
     if (avisoEditando) {
@@ -203,7 +235,11 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
   }
 
   return (
-    <Modal aberto titulo={editando ? 'Editar aviso' : 'Novo aviso'} aoFechar={aoFechar}>
+    <Modal
+      aberto
+      titulo={editando ? (ehEvento ? 'Editar evento' : 'Editar aviso') : ehEvento ? 'Novo evento' : 'Novo aviso'}
+      aoFechar={aoFechar}
+    >
       <form onSubmit={handleSubmit(aoSubmeter)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <span className="text-[11px] tracking-wide text-slate-500">IMAGEM DE CAPA</span>
@@ -344,11 +380,51 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
           </Campo>
         </div>
 
-        <Campo rotulo="Conteúdo" erro={errors.conteudo?.message}>
+        {ehEvento && (
+          <div className="grid grid-cols-2 gap-4">
+            <Campo rotulo="Data de início" erro={errors.dataInicio?.message}>
+              <Input
+                type="date"
+                {...register('dataInicio', {
+                  validate: (valor) => getValues('categoria') !== 'evento' || !!valor || 'Informe a data.',
+                })}
+              />
+            </Campo>
+            <Campo rotulo="Hora de início" erro={errors.horaInicio?.message}>
+              <Input
+                type="time"
+                {...register('horaInicio', {
+                  validate: (valor) => getValues('categoria') !== 'evento' || !!valor || 'Informe a hora.',
+                })}
+              />
+            </Campo>
+            <Campo rotulo="Data de término (opcional)" erro={errors.dataFim?.message}>
+              <Input
+                type="date"
+                {...register('dataFim', {
+                  validate: (_valor, valores) => {
+                    if (valores.categoria !== 'evento' || !valores.dataInicio || !valores.horaInicio) return true
+                    const fim = montarFim(valores)
+                    const inicio = combinarDataHora(valores.dataInicio, valores.horaInicio)
+                    return !fim || fim >= inicio || 'Término antes do início.'
+                  },
+                })}
+              />
+            </Campo>
+            <Campo rotulo="Hora de término (opcional)">
+              <Input type="time" {...register('horaFim')} />
+            </Campo>
+          </div>
+        )}
+
+        <Campo rotulo={ehEvento ? 'Conteúdo (opcional)' : 'Conteúdo'} erro={errors.conteudo?.message}>
           <Textarea
             className="h-[132px]"
-            placeholder="Escreva o comunicado…"
-            {...register('conteudo', { required: 'Escreva o conteúdo do aviso.' })}
+            placeholder={ehEvento ? 'Local, público-alvo, detalhes do evento…' : 'Escreva o comunicado…'}
+            {...register('conteudo', {
+              validate: (valor) =>
+                getValues('categoria') === 'evento' || !!valor.trim() || 'Escreva o conteúdo do aviso.',
+            })}
           />
         </Campo>
 
@@ -366,7 +442,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
             variante="primario"
             disabled={!valido || salvarAviso.isPending}
           >
-            {editando ? 'Salvar alterações' : 'Publicar aviso'}
+            {editando ? 'Salvar alterações' : ehEvento ? 'Publicar evento' : 'Publicar aviso'}
           </Botao>
         </div>
       </form>

@@ -25,8 +25,8 @@ _Avoid_: Log de auditoria
 Arquivo pertencente a um setor (ex: POP). O metadado (nome, setor, quem fez upload) mora no Postgres; o binário mora no MinIO — são armazenados separadamente por design.
 
 **Mural**:
-Módulo de comunicados/avisos do setor ou do hospital. Cada Aviso tem uma categoria: `comunicado`, `promocao` ou `convite`. `convite` é o aviso que chama as pessoas para algo; não confundir com **Evento**, que é o item do Calendário.
-_Avoid_: categoria "evento" de Aviso
+Módulo de comunicados/avisos do setor ou do hospital. Cada Aviso tem uma categoria: `comunicado`, `promocao` ou `evento`. Também concentra os aniversariantes e a tela de calendário.
+_Avoid_: categoria `convite` (substituída por `evento`)
 
 **Capa (do aviso)**:
 Imagem opcional exibida no card, no carrossel de destaques e no detalhe do aviso. Uma por aviso; o binário mora no MinIO. É o único arquivo acessível sem login (ver `docs/arquitetura-backend.md`).
@@ -37,17 +37,22 @@ Arquivo baixável anexado a um aviso (até 10), com os mesmos tipos permitidos d
 _Avoid_: Documento (quando se fala do arquivo do aviso)
 
 **Central de Dúvidas / FAQ**:
-Lista de perguntas e respostas cadastrada diretamente por um admin (`admin_setor` ou `superadmin`) — não existe envio de pergunta por colaborador `comum`. Guarda o setor de quem criou (mesma regra de escopo de edição de Aviso/Evento).
+Lista de perguntas e respostas cadastrada diretamente por um admin (`admin_setor` ou `superadmin`) — não existe envio de pergunta por colaborador `comum`. Guarda o setor de quem criou (mesma regra de escopo de edição de Aviso).
 _Avoid_: Dúvida enviada, ticket
 
 **Ramal**:
 Número de telefone interno associado a um setor. Um setor pode ter mais de um ramal.
 
 **Evento**:
-Item do calendário (ex: reunião, treinamento), distinto de aniversariante (que é derivado da data de nascimento do usuário, não um registro próprio). Criado por `admin_setor` ou `superadmin`; sempre visível a todos, mas a edição/exclusão segue a mesma regra de escopo por setor (ver abaixo).
+Aviso de categoria `evento` (ex: reunião, treinamento), com data de início obrigatória e fim opcional. Não é registro próprio: aparece no feed do mural como qualquer aviso (com capa, anexos, fixado) e também na tela de calendário, na sua data. Distinto de aniversariante, que é derivado da data de nascimento do usuário.
+_Avoid_: Evento como entidade separada do Aviso, convite
+
+**Calendário**:
+Tela do mural que posiciona os Eventos nas suas datas (visões de dia, semana, mês e ano). É uma visão, não um módulo; clicar num evento abre o detalhe do aviso.
+_Avoid_: módulo calendário
 
 ## Regra de escopo de edição
 
-Vale pra Aviso, Evento, FAQ e Documento: o registro guarda o setor de quem criou. `admin_setor` só edita/exclui o que foi criado por alguém do próprio setor; `superadmin` edita/exclui qualquer um. A **visibilidade** de leitura desses quatro é sempre institucional (todo mundo vê tudo) — o escopo por setor vale só pra edição, não pra leitura.
+Vale pra Aviso (inclusive Evento), FAQ e Documento: o registro guarda o setor de quem criou. `admin_setor` só edita/exclui o que foi criado por alguém do próprio setor; `superadmin` edita/exclui qualquer um. A **visibilidade** de leitura desses três é sempre institucional (todo mundo vê tudo) — o escopo por setor vale só pra edição, não pra leitura.
 
 Documento segue a mesma regra: todo usuário autenticado lista e baixa documentos de qualquer setor; criar, editar, substituir o arquivo e excluir seguem o escopo por setor.

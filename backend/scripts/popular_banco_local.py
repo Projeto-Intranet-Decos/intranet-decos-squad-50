@@ -30,7 +30,6 @@ from sqlalchemy.orm import Session  # noqa: E402
 from app.core.config import configuracoes  # noqa: E402
 from app.core.database import SessaoLocal  # noqa: E402
 from app.core.security import gerar_hash_senha  # noqa: E402
-from app.modules.calendario.models import Evento  # noqa: E402
 from app.modules.murais.models import Aviso, CategoriaAviso  # noqa: E402
 from app.modules.setores.models import Ramal, Setor  # noqa: E402
 from app.modules.usuarios.models import Papel, Usuario  # noqa: E402
@@ -110,7 +109,7 @@ def _garantir_aviso(sessao: Session, autor: Usuario, setor: Setor) -> None:
 
 def _garantir_evento(sessao: Session, autor: Usuario, setor: Setor) -> None:
   titulo = "Treinamento de exemplo"
-  existe = sessao.scalar(select(Evento).where(Evento.titulo == titulo, Evento.setor_id == setor.id))
+  existe = sessao.scalar(select(Aviso).where(Aviso.titulo == titulo, Aviso.setor_id == setor.id))
   if existe:
     return
   # Daqui a uma semana, pra aparecer no calendário do mês corrente ou do próximo.
@@ -118,9 +117,10 @@ def _garantir_evento(sessao: Session, autor: Usuario, setor: Setor) -> None:
     hour=13, minute=0, second=0, microsecond=0
   )
   sessao.add(
-    Evento(
+    Aviso(
       titulo=titulo,
-      descricao="Evento de exemplo criado pelo popular_banco_local.",
+      conteudo="Evento de exemplo criado pelo popular_banco_local.",
+      categoria=CategoriaAviso.EVENTO,
       data_inicio=inicio,
       data_fim=inicio + timedelta(hours=2),
       autor_id=autor.id,

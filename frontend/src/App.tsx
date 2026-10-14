@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import PaginaCalendario from './features/calendario/components/PaginaCalendario'
+import PaginaCalendario from './features/murais/components/PaginaCalendario'
 import PaginaDocumentos from './features/documentos/components/PaginaDocumentos'
 import PaginaDuvidas from './features/duvidas/components/PaginaDuvidas'
 import PaginaLogs from './features/logs/components/PaginaLogs'

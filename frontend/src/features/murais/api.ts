@@ -1,6 +1,15 @@
 import { api } from '../../lib/api'
 import { formatarTamanhoArquivo } from './formatadores'
-import type { Aniversariante, Aviso, CategoriaAviso, EdicaoAviso, Evento, NovoAviso, Setor } from './types'
+import type {
+  Aniversariante,
+  Aviso,
+  CategoriaAviso,
+  EdicaoAviso,
+  Evento,
+  FiltroEventos,
+  NovoAviso,
+  Setor,
+} from './types'
 
 interface AnexoApi {
   id: string
@@ -12,8 +21,10 @@ interface AnexoApi {
 interface AvisoApi {
   id: string
   titulo: string
-  conteudo: string
+  conteudo: string | null
   categoria: CategoriaAviso
+  data_inicio: string | null
+  data_fim: string | null
   fixado: boolean
   possui_imagem: boolean
   versao_imagem: string | null
@@ -41,6 +52,8 @@ function paraAviso(bruto: AvisoApi): Aviso {
       ? `${api.defaults.baseURL}/murais/avisos/${bruto.id}/imagem?v=${bruto.versao_imagem}`
       : null,
     categoria: bruto.categoria,
+    dataInicio: bruto.data_inicio,
+    dataFim: bruto.data_fim,
     fixado: bruto.fixado,
     autorId: bruto.autor_id,
     autorNome: bruto.autor_nome,
@@ -58,13 +71,16 @@ function paraAviso(bruto: AvisoApi): Aviso {
 }
 
 // Só manda o que foi informado: no PUT o backend aplica apenas os campos
-// presentes. O setor não é editável depois de criado (AvisoAtualizar não
-// aceita setor_id), então só vai no POST.
+// presentes (`null` em conteudo/data_fim limpa o campo). O setor não é
+// editável depois de criado (AvisoAtualizar não aceita setor_id), então só
+// vai no POST.
 function paraCorpoAviso(dados: EdicaoAviso) {
   return {
     ...(dados.titulo !== undefined ? { titulo: dados.titulo } : {}),
     ...(dados.conteudo !== undefined ? { conteudo: dados.conteudo } : {}),
     ...(dados.categoria !== undefined ? { categoria: dados.categoria } : {}),
+    ...(dados.dataInicio !== undefined ? { data_inicio: dados.dataInicio } : {}),
+    ...(dados.dataFim !== undefined ? { data_fim: dados.dataFim } : {}),
     ...(dados.fixado !== undefined ? { fixado: dados.fixado } : {}),
   }
 }
@@ -83,8 +99,10 @@ export async function buscarAviso(id: string): Promise<Aviso> {
 export async function criarAviso(dados: NovoAviso): Promise<Aviso> {
   const formulario = new FormData()
   formulario.append('titulo', dados.titulo)
-  formulario.append('conteudo', dados.conteudo)
+  if (dados.conteudo) formulario.append('conteudo', dados.conteudo)
   formulario.append('categoria', dados.categoria)
+  if (dados.dataInicio) formulario.append('data_inicio', dados.dataInicio)
+  if (dados.dataFim) formulario.append('data_fim', dados.dataFim)
   formulario.append('fixado', String(dados.fixado))
   if (dados.setorId) formulario.append('setor_id', dados.setorId)
   if (dados.imagem) formulario.append('imagem', dados.imagem)
@@ -143,19 +161,6 @@ export async function listarSetores(): Promise<Setor[]> {
   return data.map((setor) => ({ id: setor.id, nome: setor.nome }))
 }
 
-interface EventoApi {
-  id: string
-  titulo: string
-  descricao: string | null
-  data_inicio: string
-  data_fim: string | null
-  setor_id: string
-  setor_nome: string
-  autor_id: string
-  autor_nome: string
-  criado_em: string
-}
-
 interface AniversarianteApi {
   id: string
   nome: string
@@ -164,28 +169,16 @@ interface AniversarianteApi {
   setor_nome: string | null
 }
 
-function paraEvento(bruto: EventoApi): Evento {
-  return {
-    id: bruto.id,
-    titulo: bruto.titulo,
-    descricao: bruto.descricao,
-    dataInicio: bruto.data_inicio,
-    dataFim: bruto.data_fim,
-    setorId: bruto.setor_id,
-    setorNome: bruto.setor_nome,
-    autorId: bruto.autor_id,
-    autorNome: bruto.autor_nome,
-    criadoEm: bruto.criado_em,
-  }
+/** Só avisos de categoria `evento`, ordenados por data de início (MUR-12). */
+export async function listarEventos(filtro: FiltroEventos = {}): Promise<Evento[]> {
+  const { data } = await api.get<AvisoApi[]>('/murais/eventos', {
+    params: { de: filtro.de, ate: filtro.ate, setor_id: filtro.setorId },
+  })
+  return data.map((bruto) => paraAviso(bruto) as Evento)
 }
 
-export async function listarProximosEventos(de: string): Promise<Evento[]> {
-  const { data } = await api.get<EventoApi[]>('/calendario/eventos', { params: { de } })
-  return data.map(paraEvento)
-}
-
-export async function listarAniversariantesDoMes(mes: number): Promise<Aniversariante[]> {
-  const { data } = await api.get<AniversarianteApi[]>('/calendario/aniversariantes', {
+export async function listarAniversariantes(mes: number): Promise<Aniversariante[]> {
+  const { data } = await api.get<AniversarianteApi[]>('/murais/aniversariantes', {
     params: { mes },
   })
   return data.map((bruto) => ({

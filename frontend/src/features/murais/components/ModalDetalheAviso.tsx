@@ -3,20 +3,24 @@ import Botao from '../../../shared/components/Botao'
 import Modal from '../../../shared/components/Modal'
 import {
   IconeArquivoTexto,
+  IconeCalendario,
   IconeDownload,
   IconeUsuario,
 } from '../../../shared/components/icones'
 import { baixarAnexoAviso } from '../api'
-import { formatarDiaMes, formatarHora } from '../formatadores'
+import { formatarDiaMes, formatarHora, formatarPeriodoEvento } from '../formatadores'
 import BadgeCategoria from './BadgeCategoria'
 import type { Aviso } from '../types'
 
 interface PropriedadesModalDetalheAviso {
   aviso: Aviso | null
   aoFechar: () => void
+  /** Só passados quando o usuário pode gerenciar este aviso (GER-12). */
+  aoEditar?: (aviso: Aviso) => void
+  aoExcluir?: (aviso: Aviso) => void
 }
 
-function ModalDetalheAviso({ aviso, aoFechar }: PropriedadesModalDetalheAviso) {
+function ModalDetalheAviso({ aviso, aoFechar, aoEditar, aoExcluir }: PropriedadesModalDetalheAviso) {
   if (!aviso) return null
 
   async function baixar(anexoId: string, nome: string) {
@@ -67,10 +71,18 @@ function ModalDetalheAviso({ aviso, aoFechar }: PropriedadesModalDetalheAviso) {
           <h2 className="m-0 mb-4 text-[26px] leading-tight font-bold tracking-tight text-slate-900 text-balance">
             {aviso.titulo}
           </h2>
+          {aviso.dataInicio && (
+            <p className="m-0 mb-4 flex items-center gap-2 text-[14px] font-medium text-[#800020]">
+              <IconeCalendario tamanho={16} />
+              {formatarPeriodoEvento(aviso.dataInicio, aviso.dataFim)}
+            </p>
+          )}
           <div className="mb-4 h-px bg-slate-200" />
-          <p className="m-0 text-[15px] leading-loose text-slate-700 text-balance whitespace-pre-line">
-            {aviso.conteudo}
-          </p>
+          {aviso.conteudo && (
+            <p className="m-0 text-[15px] leading-loose text-slate-700 text-balance whitespace-pre-line">
+              {aviso.conteudo}
+            </p>
+          )}
           {aviso.anexos.length > 0 && (
             <div className="mt-6 flex flex-col gap-2">
               <span className="text-[11px] tracking-wide text-slate-500">ANEXOS</span>
@@ -99,6 +111,16 @@ function ModalDetalheAviso({ aviso, aoFechar }: PropriedadesModalDetalheAviso) {
         </div>
       </div>
       <div className="mt-auto flex items-center gap-3 border-t border-slate-100 pt-6">
+        {aoExcluir && (
+          <Botao variante="secundario" onClick={() => aoExcluir(aviso)}>
+            Excluir
+          </Botao>
+        )}
+        {aoEditar && (
+          <Botao variante="secundario" onClick={() => aoEditar(aviso)}>
+            Editar
+          </Botao>
+        )}
         <Botao variante="secundario" onClick={aoFechar} className="ml-auto">
           Fechar
         </Botao>

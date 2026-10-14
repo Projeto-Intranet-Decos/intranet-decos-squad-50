@@ -16,17 +16,15 @@ import PainelAniversariantes from './PainelAniversariantes'
 import PainelFixados from './PainelFixados'
 import PainelProximosEventos from './PainelProximosEventos'
 
-const LIMITE_PROXIMOS_EVENTOS = 5
-
 function PaginaMural() {
   const { usuario } = useAuth()
   const { data: avisos = [], isLoading, isError } = useAvisos()
   const { data: setores = [] } = useSetoresMural()
   const excluirAviso = useExcluirAviso()
 
-  const hoje = useMemo(() => new Date(), [])
-  const { data: eventosFuturos = [] } = useProximosEventos(hoje.toISOString().slice(0, 10))
-  const { data: aniversariantes = [] } = useAniversariantes(hoje.getMonth() + 1)
+  const mesAtual = useMemo(() => new Date().getMonth() + 1, [])
+  const proximosEventos = useProximosEventos()
+  const aniversariantes = useAniversariantes([mesAtual]).get(mesAtual) ?? []
 
   const [busca, setBusca] = useState('')
   const [categoria, setCategoria] = useState<CategoriaAviso | ''>('')
@@ -43,7 +41,7 @@ function PaginaMural() {
       if (categoria && aviso.categoria !== categoria) return false
       if (setorId && aviso.setorId !== setorId) return false
       if (termo) {
-        const alvo = `${aviso.titulo} ${aviso.autorNome} ${aviso.conteudo}`.toLowerCase()
+        const alvo = `${aviso.titulo} ${aviso.autorNome} ${aviso.conteudo ?? ''}`.toLowerCase()
         if (!alvo.includes(termo)) return false
       }
       return true
@@ -53,14 +51,6 @@ function PaginaMural() {
   // Destaques e fixados ignoram os filtros da barra de busca
   const destaques = useMemo(() => avisos.slice(0, 5), [avisos])
   const fixados = useMemo(() => avisos.filter((a) => a.fixado), [avisos])
-
-  const proximosEventos = useMemo(() => {
-    const agora = new Date()
-    return eventosFuturos
-      .filter((evento) => new Date(evento.dataInicio) >= agora)
-      .sort((a, b) => a.dataInicio.localeCompare(b.dataInicio))
-      .slice(0, LIMITE_PROXIMOS_EVENTOS)
-  }, [eventosFuturos])
 
   function podeGerenciarEsteAviso(aviso: Aviso) {
     return usuario ? podeEditar(usuario, aviso) : false
@@ -72,6 +62,7 @@ function PaginaMural() {
   }
 
   function abrirEdicao(aviso: Aviso) {
+    setDetalhe(null)
     setAvisoEditando(aviso)
     setModalAberto(true)
   }
@@ -83,7 +74,7 @@ function PaginaMural() {
 
   function aoExcluir(aviso: Aviso) {
     if (window.confirm(`Excluir o aviso "${aviso.titulo}"? Essa ação não pode ser desfeita.`)) {
-      excluirAviso.mutate(aviso.id)
+      excluirAviso.mutate(aviso.id, { onSuccess: () => setDetalhe(null) })
     }
   }
 
@@ -100,8 +91,8 @@ function PaginaMural() {
       <CarrosselDestaques destaques={destaques} aoAbrir={setDetalhe} />
 
       <div className="mb-[22px] grid grid-cols-2 items-start gap-[22px]">
-        <PainelAniversariantes mes={hoje.getMonth() + 1} aniversariantes={aniversariantes} />
-        <PainelProximosEventos eventos={proximosEventos} />
+        <PainelAniversariantes mes={mesAtual} aniversariantes={aniversariantes} />
+        <PainelProximosEventos eventos={proximosEventos} aoAbrir={setDetalhe} />
       </div>
 
       <div className="mb-[22px]">
@@ -141,7 +132,12 @@ function PaginaMural() {
           usuario={usuario}
         />
       )}
-      <ModalDetalheAviso aviso={detalhe} aoFechar={() => setDetalhe(null)} />
+      <ModalDetalheAviso
+        aviso={detalhe}
+        aoFechar={() => setDetalhe(null)}
+        aoEditar={detalhe && podeGerenciarEsteAviso(detalhe) ? abrirEdicao : undefined}
+        aoExcluir={detalhe && podeGerenciarEsteAviso(detalhe) ? aoExcluir : undefined}
+      />
     </div>
   )
 }

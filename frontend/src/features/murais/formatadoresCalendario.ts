@@ -1,11 +1,7 @@
+import { NOMES_MESES, formatarHora } from './formatadores'
 import type { Evento, VisaoCalendario } from './types'
 
-export const NOMES_MESES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-]
-
-export const MESES_ABREV = [
+const MESES_ABREV = [
   'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ',
 ]
 
@@ -32,11 +28,6 @@ export function chaveDiaDeIso(iso: string): string {
   return chaveDeData(new Date(iso))
 }
 
-export function formatarHora(iso: string): string {
-  const data = new Date(iso)
-  return `${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}`
-}
-
 export function formatarIntervaloHoras(evento: Evento): string {
   const inicio = formatarHora(evento.dataInicio)
   return evento.dataFim ? `${inicio} – ${formatarHora(evento.dataFim)}` : inicio
@@ -44,11 +35,6 @@ export function formatarIntervaloHoras(evento: Evento): string {
 
 export function rotuloHora(hora: number): string {
   return `${doisDigitos(hora)}:00`
-}
-
-export function formatarDiaMes(iso: string): { dia: string; mes: string } {
-  const data = new Date(iso)
-  return { dia: doisDigitos(data.getDate()), mes: MESES_ABREV[data.getMonth()] }
 }
 
 export function separarDataHora(iso: string): { data: string; hora: string } {
@@ -140,13 +126,24 @@ export function faixaDeHoras(eventos: Evento[]): number[] {
   return Array.from({ length: final - inicial + 1 }, (_, indice) => inicial + indice)
 }
 
+/** Evento de vários dias entra em todos os dias que cobre (MUR-15). */
 export function agruparEventosPorDia(eventos: Evento[]): Map<string, Evento[]> {
   const mapa = new Map<string, Evento[]>()
   for (const evento of eventos) {
-    const chave = chaveDiaDeIso(evento.dataInicio)
-    mapa.set(chave, [...(mapa.get(chave) ?? []), evento])
+    const inicio = new Date(evento.dataInicio)
+    const ultimoDia = chaveDiaDeIso(evento.dataFim ?? evento.dataInicio)
+    let dia = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate())
+    for (let chave = chaveDeData(dia); chave <= ultimoDia; chave = chaveDeData(dia)) {
+      mapa.set(chave, [...(mapa.get(chave) ?? []), evento])
+      dia = somarDias(dia, 1)
+    }
   }
   return mapa
+}
+
+/** Nas visões com horário, o evento só ocupa a hora de início no dia em que começa. */
+export function comecaNoDia(evento: Evento, chave: string): boolean {
+  return chaveDiaDeIso(evento.dataInicio) === chave
 }
 
 export interface CelulaMes {

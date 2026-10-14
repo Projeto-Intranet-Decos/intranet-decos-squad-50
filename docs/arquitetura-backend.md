@@ -23,8 +23,7 @@ backend/
         schemas.py       # Pydantic
         router.py         # endpoints FastAPI
         service.py         # lógica de negócio
-      murais/
-      calendario/
+      murais/            # avisos, eventos (aviso de categoria evento) e aniversariantes
       documentos/
         models.py        # metadados do arquivo (nome, setor, uploaded_by, storage_key)
         schemas.py

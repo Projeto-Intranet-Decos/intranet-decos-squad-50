@@ -1,4 +1,5 @@
-import { NOMES_MESES, montarGradeMes } from '../formatadores'
+import { NOMES_MESES } from '../formatadores'
+import { montarGradeMes } from '../formatadoresCalendario'
 import type { Aniversariante, Evento } from '../types'
 
 interface PropriedadesVisaoAno {
@@ -21,7 +22,9 @@ function VisaoAno({ ano, eventosPorDia, aniversariantesDoDia, aoAbrirMes }: Prop
       mes,
       celulas,
       atual: ano === hoje.getFullYear() && mes === hoje.getMonth(),
-      totalEventos: celulas.reduce((soma, celula) => soma + celula.eventos, 0),
+      // Evento de vários dias aparece em cada dia, mas conta uma vez só no total do mês.
+      totalEventos: new Set(celulas.flatMap((celula) => eventosPorDia.get(celula.chave) ?? []).map((e) => e.id))
+        .size,
       totalAniversarios: celulas.reduce((soma, celula) => soma + celula.aniversarios, 0),
     }
   })

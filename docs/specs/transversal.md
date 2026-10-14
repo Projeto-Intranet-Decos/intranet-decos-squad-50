@@ -51,7 +51,7 @@ setores).
 ### GER-04 — Escopo por setor (escrita) e leitura institucional
 Origem: [CTX] [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
 
-Vale para Aviso, Evento, FAQ, Documento e Ramal. O registro guarda o setor de quem criou.
+Vale para Aviso (inclusive eventos, MUR-03), FAQ, Documento e Ramal. O registro guarda o setor de quem criou.
 
 Leitura:
 - **Dado** qualquer usuário autenticado, **quando** lista ou busca esses recursos, **então** vê os

@@ -39,7 +39,10 @@ function PainelFixados({ fixados, aoAbrir }: PropriedadesPainelFixados) {
                 FIXADO
               </span>
             </div>
-            <p className="m-0 line-clamp-2 text-[12.5px] leading-relaxed text-slate-700">{aviso.conteudo}</p>
+            {/* Evento pode não ter conteúdo; aí o título ocupa o lugar. */}
+            <p className="m-0 line-clamp-2 text-[12.5px] leading-relaxed text-slate-700">
+              {aviso.conteudo ?? aviso.titulo}
+            </p>
           </button>
         ))}
       </div>

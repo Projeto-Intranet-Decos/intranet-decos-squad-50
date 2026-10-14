@@ -1,7 +1,7 @@
 import os
 import uuid
 from collections.abc import Iterator
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -12,8 +12,8 @@ from app.core.arquivos import TIPOS_DOCUMENTO, TIPOS_IMAGEM, erro_arquivo, valid
 from app.core.config import configuracoes
 from app.core.permissions import UsuarioAutenticado, garantir_escopo, resolver_setor
 from app.modules.murais import repository
-from app.modules.murais.models import AnexoAviso, Aviso
-from app.modules.murais.schemas import AvisoAtualizar, AvisoCriar
+from app.modules.murais.models import AnexoAviso, Aviso, CategoriaAviso
+from app.modules.murais.schemas import AniversarianteResposta, AvisoAtualizar, AvisoCriar
 from app.modules.murais.storage import montar_chave_anexo, montar_chave_capa
 from app.modules.setores.service import buscar_setor
 
@@ -22,6 +22,34 @@ LIMITE_IMAGEM_MB = 5
 MAXIMO_ANEXOS = 10
 
 ArquivoValidado = tuple[UploadFile, str, str, int]
+
+
+def _erro_campo(campo: str, mensagem: str) -> HTTPException:
+  return HTTPException(
+    status.HTTP_422_UNPROCESSABLE_CONTENT, {"campo": campo, "mensagem": mensagem}
+  )
+
+
+def _validar_aviso(
+  categoria: CategoriaAviso,
+  conteudo: str | None,
+  data_inicio: datetime | None,
+  data_fim: datetime | None,
+) -> None:
+  """Regras que dependem da categoria (MUR-03); valem para o aviso criado e para o resultado
+  de uma edição (MUR-06)."""
+  if categoria == CategoriaAviso.EVENTO:
+    if data_inicio is None:
+      raise _erro_campo("data_inicio", "Evento precisa de data de início")
+    if data_fim is not None and data_fim < data_inicio:
+      raise _erro_campo("data_fim", "Data de fim deve ser posterior à data de início")
+    return
+  if data_inicio is not None:
+    raise _erro_campo("data_inicio", "Só eventos têm data")
+  if data_fim is not None:
+    raise _erro_campo("data_fim", "Só eventos têm data")
+  if conteudo is None:
+    raise _erro_campo("conteudo", "Conteúdo é obrigatório")
 
 
 def _validar_imagem(arquivo: UploadFile, campo: str) -> ArquivoValidado:
@@ -93,6 +121,29 @@ def listar_avisos(sessao: Session) -> list[Aviso]:
   return repository.listar(sessao)
 
 
+def listar_eventos(
+  sessao: Session,
+  de: date | None = None,
+  ate: date | None = None,
+  setor_id: uuid.UUID | None = None,
+) -> list[Aviso]:
+  return repository.listar_eventos(sessao, de, ate, setor_id)
+
+
+def listar_aniversariantes(sessao: Session, mes: int | None = None) -> list[AniversarianteResposta]:
+  mes_alvo = mes if mes is not None else date.today().month
+  return [
+    AniversarianteResposta(
+      id=usuario.id,
+      nome=usuario.nome,
+      dia=usuario.data_nascimento.day,
+      setor_id=usuario.setor_id,
+      setor_nome=usuario.setor.nome if usuario.setor else None,
+    )
+    for usuario in repository.listar_aniversariantes(sessao, mes_alvo)
+  ]
+
+
 def buscar_aviso(sessao: Session, aviso_id: uuid.UUID) -> Aviso:
   aviso = repository.buscar_por_id(sessao, aviso_id)
   if aviso is None:
@@ -108,6 +159,7 @@ def _buscar_anexo(sessao: Session, aviso_id: uuid.UUID, anexo_id: uuid.UUID) -> 
 
 
 def criar_aviso(sessao: Session, dados: AvisoCriar, usuario: UsuarioAutenticado) -> Aviso:
+  _validar_aviso(dados.categoria, dados.conteudo, dados.data_inicio, dados.data_fim)
   setor_id = resolver_setor(dados.setor_id, usuario, entidade="aviso")
   buscar_setor(sessao, setor_id)
   imagem = _validar_imagem(dados.imagem, "imagem") if dados.imagem is not None else None
@@ -128,6 +180,8 @@ def criar_aviso(sessao: Session, dados: AvisoCriar, usuario: UsuarioAutenticado)
     titulo=dados.titulo,
     conteudo=dados.conteudo,
     categoria=dados.categoria,
+    data_inicio=dados.data_inicio,
+    data_fim=dados.data_fim,
     fixado=dados.fixado,
     chave_imagem=chave_imagem,
     autor_id=usuario.id,
@@ -153,6 +207,17 @@ def atualizar_aviso(
   campos = dados.model_dump(exclude_unset=True)
   if not campos:
     return aviso
+  categoria = campos.get("categoria", aviso.categoria)
+  # Evento que muda de categoria perde as datas sem precisar mandar `null`.
+  if categoria != CategoriaAviso.EVENTO:
+    campos.setdefault("data_inicio", None)
+    campos.setdefault("data_fim", None)
+  _validar_aviso(
+    categoria,
+    campos.get("conteudo", aviso.conteudo),
+    campos.get("data_inicio", aviso.data_inicio),
+    campos.get("data_fim", aviso.data_fim),
+  )
   for campo, valor in campos.items():
     setattr(aviso, campo, valor)
   aviso.atualizado_em = datetime.now(UTC)

@@ -4,11 +4,10 @@
  * CONTEXT.md: ações administrativas (criar, editar, deletar) em qualquer
  * módulo, sem ações de leitura.
  */
-export type AreaAtividade = 'mural' | 'calendario' | 'documentos' | 'duvidas' | 'setores' | 'usuarios'
+export type AreaAtividade = 'mural' | 'documentos' | 'duvidas' | 'setores' | 'usuarios'
 
 export const ROTULO_AREA: Record<AreaAtividade, string> = {
   mural: 'Mural',
-  calendario: 'Calendário',
   documentos: 'POPs',
   duvidas: 'FAQ',
   setores: 'Setores',

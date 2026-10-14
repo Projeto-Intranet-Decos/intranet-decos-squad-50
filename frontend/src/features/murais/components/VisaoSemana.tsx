@@ -1,27 +1,34 @@
 import { Fragment } from 'react'
-import { DIAS_SEMANA, chaveDeData, diasDaSemana, faixaDeHoras, formatarHora, rotuloHora } from '../formatadores'
+import { formatarHora } from '../formatadores'
+import { DIAS_SEMANA, chaveDeData, comecaNoDia, diasDaSemana, faixaDeHoras, rotuloHora } from '../formatadoresCalendario'
 import type { Aniversariante, Evento } from '../types'
 
 interface PropriedadesVisaoSemana {
   data: Date
   eventosPorDia: Map<string, Evento[]>
   aniversariantesDoDia: (data: Date) => Aniversariante[]
+  aoAbrirEvento: (evento: Evento) => void
 }
 
-function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia }: PropriedadesVisaoSemana) {
+function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento }: PropriedadesVisaoSemana) {
   const chaveHoje = chaveDeData(new Date())
   const colunas = diasDaSemana(data).map((dia) => {
     const chave = chaveDeData(dia)
+    const eventosDoDia = eventosPorDia.get(chave) ?? []
     return {
       chave,
       dia,
       hoje: chave === chaveHoje,
-      eventos: eventosPorDia.get(chave) ?? [],
+      eventos: eventosDoDia.filter((evento) => comecaNoDia(evento, chave)),
+      // Evento de vários dias: depois do primeiro dia, ocupa a faixa "Dia todo".
+      continuacoes: eventosDoDia.filter((evento) => !comecaNoDia(evento, chave)),
       aniversariantes: aniversariantesDoDia(dia),
     }
   })
   const horas = faixaDeHoras(colunas.flatMap((coluna) => coluna.eventos))
-  const temDiaTodo = colunas.some((coluna) => coluna.aniversariantes.length > 0)
+  const temDiaTodo = colunas.some(
+    (coluna) => coluna.aniversariantes.length > 0 || coluna.continuacoes.length > 0,
+  )
 
   function classesCelula(indice: number, hoje: boolean) {
     return `flex min-w-0 flex-col gap-1 border-b border-slate-100 p-1 ${indice < 6 ? 'border-r' : ''} ${
@@ -54,6 +61,17 @@ function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia }: Propriedades
           <span className={classesRotulo}>Dia todo</span>
           {colunas.map((coluna, indice) => (
             <div key={`dia-todo-${coluna.chave}`} className={classesCelula(indice, coluna.hoje)}>
+              {coluna.continuacoes.map((evento) => (
+                <button
+                  key={evento.id}
+                  type="button"
+                  onClick={() => aoAbrirEvento(evento)}
+                  title={evento.titulo}
+                  className="min-w-0 cursor-pointer truncate rounded-md bg-[#b33951] px-1.5 py-[5px] text-left text-[10.5px] leading-snug text-white hover:bg-[#800020]"
+                >
+                  {evento.titulo}
+                </button>
+              ))}
               {coluna.aniversariantes.map((pessoa) => (
                 <div
                   key={pessoa.id}
@@ -76,14 +94,16 @@ function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia }: Propriedades
               {coluna.eventos
                 .filter((evento) => new Date(evento.dataInicio).getHours() === hora)
                 .map((evento) => (
-                  <div
+                  <button
                     key={evento.id}
+                    type="button"
+                    onClick={() => aoAbrirEvento(evento)}
                     title={evento.titulo}
-                    className="min-w-0 truncate rounded-md bg-[#b33951] px-1.5 py-[5px] text-[10.5px] leading-snug text-white"
+                    className="min-w-0 cursor-pointer truncate rounded-md bg-[#b33951] px-1.5 py-[5px] text-left text-[10.5px] leading-snug text-white hover:bg-[#800020]"
                   >
                     <div className="text-[9.5px] opacity-75">{formatarHora(evento.dataInicio)}</div>
                     {evento.titulo}
-                  </div>
+                  </button>
                 ))}
             </div>
           ))}

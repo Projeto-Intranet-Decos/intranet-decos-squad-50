@@ -10,7 +10,6 @@ from app.core.database import Base
 import app.modules.autenticacao.models  # noqa: F401
 import app.modules.setores.models  # noqa: F401
 import app.modules.usuarios.models  # noqa: F401
-import app.modules.calendario.models  # noqa: F401
 import app.modules.murais.models  # noqa: F401
 import app.modules.documentos.models  # noqa: F401
 import app.modules.duvidas.models  # noqa: F401

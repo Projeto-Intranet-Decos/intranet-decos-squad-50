@@ -23,21 +23,39 @@ from app.modules.usuarios.models import Usuario
 class CategoriaAviso(StrEnum):
   COMUNICADO = "comunicado"
   PROMOCAO = "promocao"
-  CONVITE = "convite"
+  # Evento é um aviso com data (ver docs/specs/murais.md); aparece também no calendário.
+  EVENTO = "evento"
 
 
 class Aviso(Base):
   __tablename__ = "avisos"
+  # Nomes iguais aos das migrations: o schema do banco vem do Alembic, não do create_all.
   __table_args__ = (
-    CheckConstraint("categoria IN ('comunicado', 'promocao', 'convite')", name="categoria"),
+    CheckConstraint(
+      "categoria IN ('comunicado', 'promocao', 'evento')", name="ck_avisos_categoria"
+    ),
+    CheckConstraint(
+      "(categoria = 'evento') = (data_inicio IS NOT NULL)", name="ck_avisos_evento_tem_data"
+    ),
+    CheckConstraint(
+      "data_fim IS NULL OR (data_inicio IS NOT NULL AND data_fim >= data_inicio)",
+      name="ck_avisos_data_fim_valida",
+    ),
+    CheckConstraint(
+      "categoria = 'evento' OR conteudo IS NOT NULL", name="ck_avisos_conteudo_fora_de_evento"
+    ),
   )
 
   id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
   titulo: Mapped[str] = mapped_column(String(200))
-  conteudo: Mapped[str] = mapped_column(Text)
+  # Opcional só em evento.
+  conteudo: Mapped[str | None] = mapped_column(Text)
   categoria: Mapped[CategoriaAviso] = mapped_column(
     String(20), default=CategoriaAviso.COMUNICADO, server_default=CategoriaAviso.COMUNICADO.value
   )
+  # Só em evento; nas demais categorias as duas ficam nulas.
+  data_inicio: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+  data_fim: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
   fixado: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
   # Chave da capa no MinIO (ver murais/storage.py). Nunca vem do cliente.
   chave_imagem: Mapped[str | None] = mapped_column(String(500))

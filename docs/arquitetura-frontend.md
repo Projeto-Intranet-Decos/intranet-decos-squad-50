@@ -21,7 +21,6 @@ src/
       hooks/
       types.ts
       api.ts
-    calendario/
     documentos/       # inclui upload de arquivos
     setores/
     duvidas/

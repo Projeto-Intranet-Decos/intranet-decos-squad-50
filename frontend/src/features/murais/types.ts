@@ -6,12 +6,12 @@ export type { ErroCampo, Setor }
  * Modelo alinhado a `AvisoResposta` de backend/app/modules/murais/schemas.py,
  * já em camelCase (a conversão fica em ./api.ts).
  */
-export type CategoriaAviso = 'comunicado' | 'promocao' | 'convite'
+export type CategoriaAviso = 'comunicado' | 'promocao' | 'evento'
 
 export const ROTULO_CATEGORIA: Record<CategoriaAviso, string> = {
   comunicado: 'Comunicado',
   promocao: 'Promoção',
-  convite: 'Convite',
+  evento: 'Evento',
 }
 
 /** Limites de backend/app/modules/murais/service.py e core/arquivos.py. */
@@ -36,10 +36,14 @@ export interface Anexo {
 export interface Aviso {
   id: string
   titulo: string
-  conteudo: string
+  /** Opcional só em evento. */
+  conteudo: string | null
   /** URL pública da capa, já com `?v=` para furar o cache quando a capa muda. */
   urlImagem: string | null
   categoria: CategoriaAviso
+  /** Só em evento (ISO); nas outras categorias vem `null`. */
+  dataInicio: string | null
+  dataFim: string | null
   fixado: boolean
   autorId: string
   autorNome: string
@@ -50,35 +54,43 @@ export interface Aviso {
   atualizadoEm: string | null
 }
 
+/**
+ * Evento é um aviso de categoria `evento`, que sempre tem `dataInicio`
+ * (docs/specs/murais.md). Aparece no feed e no calendário.
+ */
+export type Evento = Aviso & { categoria: 'evento'; dataInicio: string }
+
+export function ehEvento(aviso: Aviso): aviso is Evento {
+  return aviso.categoria === 'evento' && aviso.dataInicio !== null
+}
+
 export interface NovoAviso {
   titulo: string
-  conteudo: string
+  /** `null` só em evento. */
+  conteudo: string | null
   categoria: CategoriaAviso
+  /** Só em evento. */
+  dataInicio?: string | null
+  dataFim?: string | null
   setorId: string
   fixado: boolean
   imagem?: File | null
   anexos?: File[]
 }
 
-/** Só o texto; capa e anexos mudam por rotas próprias (ver hooks/useSalvarAviso.ts). */
-export type EdicaoAviso = Partial<Omit<NovoAviso, 'imagem' | 'anexos'>>
-
 /**
- * Leitura de backend/app/modules/calendario (só o que o mural exibe, sem editar/excluir
- * — isso continua exclusivo de features/calendario).
+ * Só texto e datas; capa e anexos mudam por rotas próprias (ver hooks/useSalvarAviso.ts).
+ * Evento que muda de categoria perde as datas no backend, sem precisar mandá-las.
  */
-export interface Evento {
-  id: string
-  titulo: string
-  descricao: string | null
-  dataInicio: string
-  dataFim: string | null
-  setorId: string
-  setorNome: string
-  autorId: string
-  autorNome: string
-  criadoEm: string
+export type EdicaoAviso = Partial<Omit<NovoAviso, 'imagem' | 'anexos' | 'setorId'>>
+
+export interface FiltroEventos {
+  de?: string
+  ate?: string
+  setorId?: string
 }
+
+export type VisaoCalendario = 'dia' | 'semana' | 'mes' | 'ano'
 
 export interface Aniversariante {
   id: string

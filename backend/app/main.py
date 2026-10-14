@@ -18,7 +18,6 @@ from app.core.config import configuracoes
 from app.core.database import obter_sessao
 from app.core.erros import registrar_tratadores_de_erro
 from app.modules.autenticacao.router import router as roteador_autenticacao
-from app.modules.calendario.router import router as roteador_calendario
 from app.modules.documentos.router import router as roteador_documentos
 from app.modules.duvidas.router import router as roteador_duvidas
 from app.modules.murais.router import router as roteador_murais
@@ -54,7 +53,6 @@ registrar_tratadores_de_erro(app)
 app.include_router(roteador_autenticacao)
 app.include_router(roteador_setores)
 app.include_router(roteador_usuarios)
-app.include_router(roteador_calendario)
 app.include_router(roteador_murais)
 app.include_router(roteador_documentos)
 app.include_router(roteador_duvidas)

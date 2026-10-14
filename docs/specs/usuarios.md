@@ -34,7 +34,7 @@ Origem: [ESP] [ENT H6] · Back ✅ · Front ⬜ · Teste ⬜
 | `senha` | obrigatória, 8–128 caracteres |
 | `role` | `comum` (padrão), `admin_setor` ou `superadmin` |
 | `setor_id` | opcional, precisa existir |
-| `data_nascimento` | opcional (alimenta os aniversariantes, CAL-06) |
+| `data_nascimento` | opcional (alimenta os aniversariantes, MUR-13) |
 
 - **Dado** dados válidos, **então** `201` com o usuário, que consegue fazer login (AUT-01).
 - **Dado** e-mail já cadastrado, **então** `409 {"campo": "email", "mensagem": "Já existe um
@@ -64,7 +64,7 @@ atualizado; o registro e tudo que ele criou (avisos, documentos, eventos, FAQ) c
 
 - **Dado** um usuário desativado, **quando** tenta login, **então** `401` (AUT-01); **quando** tenta
   refresh, **então** `401` (AUT-02).
-- Usuário desativado não aparece nos aniversariantes (CAL-06).
+- Usuário desativado não aparece nos aniversariantes (MUR-13).
 - Reativar: `PUT /usuarios/{id}` com `ativo: true`.
 - ❓ Impedir que o superadmin desative a si mesmo / o último superadmin ativo.
 

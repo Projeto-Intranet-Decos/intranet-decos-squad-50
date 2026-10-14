@@ -1,7 +1,8 @@
 import uuid
+from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, UploadFile, status
+from fastapi import APIRouter, Depends, Form, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -9,7 +10,12 @@ from app.core.arquivos import content_disposition
 from app.core.database import obter_sessao
 from app.core.permissions import UsuarioAutenticado, requer_admin, usuario_atual
 from app.modules.murais import service
-from app.modules.murais.schemas import AvisoAtualizar, AvisoCriar, AvisoResposta
+from app.modules.murais.schemas import (
+  AniversarianteResposta,
+  AvisoAtualizar,
+  AvisoCriar,
+  AvisoResposta,
+)
 
 router = APIRouter(prefix="/murais", tags=["murais"])
 
@@ -19,6 +25,30 @@ router = APIRouter(prefix="/murais", tags=["murais"])
 )
 def listar_avisos(sessao: Session = Depends(obter_sessao)):
   return service.listar_avisos(sessao)
+
+
+@router.get(
+  "/eventos", response_model=list[AvisoResposta], dependencies=[Depends(usuario_atual)]
+)
+def listar_eventos(
+  de: date | None = None,
+  ate: date | None = None,
+  setor_id: uuid.UUID | None = None,
+  sessao: Session = Depends(obter_sessao),
+):
+  return service.listar_eventos(sessao, de, ate, setor_id)
+
+
+@router.get(
+  "/aniversariantes",
+  response_model=list[AniversarianteResposta],
+  dependencies=[Depends(usuario_atual)],
+)
+def listar_aniversariantes(
+  mes: int | None = Query(default=None, ge=1, le=12),
+  sessao: Session = Depends(obter_sessao),
+):
+  return service.listar_aniversariantes(sessao, mes)
 
 
 @router.get(

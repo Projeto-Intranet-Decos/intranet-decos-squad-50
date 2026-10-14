@@ -10,8 +10,8 @@ aceite verificáveis. Os critérios de aceite viram testes.
 | [`autenticacao.md`](./autenticacao.md) | `AUT` | Login, refresh, sessão no frontend |
 | [`usuarios.md`](./usuarios.md) | `USU` | Cadastro e desativação de colaboradores |
 | [`setores.md`](./setores.md) | `SET` | Setores, ramais e guia de contatos |
-| [`murais.md`](./murais.md) | `MUR` | Mural de avisos, capa e anexos |
-| [`calendario.md`](./calendario.md) | `CAL` | Eventos e aniversariantes |
+| [`murais.md`](./murais.md) | `MUR` | Mural de avisos, eventos, capa e anexos, aniversariantes e tela de calendário |
+| [`calendario.md`](./calendario.md) | ~~`CAL`~~ | Absorvido pelo mural (IDs riscados apontando para `MUR`) |
 | [`documentos.md`](./documentos.md) | `DOC` | Repositório de POPs e documentos |
 | [`duvidas.md`](./duvidas.md) | `DUV` | Central de dúvidas (FAQ) |
 | [`logs.md`](./logs.md) | `LOG` | Registro de atividades (auditoria) |
@@ -82,7 +82,7 @@ Toda mudança de comportamento segue o ciclo abaixo, **um critério de aceite po
 **Bug:** antes de corrigir, registre o comportamento esperado no spec (status `🐞`) e escreva o
 teste que reproduz o bug. O teste vermelho é a prova de que o bug existe; o verde, de que acabou.
 Se a correção não entra no mesmo PR, o teste vai marcado com
-`@pytest.mark.xfail(reason="CAL-02 🐞: ...", raises=AssertionError)` e o status Teste fica `🔴`.
+`@pytest.mark.xfail(reason="MUR-12 🐞: ...", raises=AssertionError)` e o status Teste fica `🔴`.
 O `raises=` e a preparação fora de `assert` (helpers usam `pytest.fail`) garantem que só a
 asserção do bug conta como falha esperada; erro na preparação aparece como falha. Como o `xfail` é
 estrito (`pytest.ini`), quando a correção chegar o teste passa a falhar até a marca ser removida —
@@ -139,8 +139,7 @@ backend/
     conftest.py            # banco de teste, sessão com rollback, cliente, MinIO falso, fixtures
     apoio.py               # autenticar(), Fabrica, ArmazenamentoFalso — importáveis nos testes
     test_transversal.py    # GER-*
-    murais/test_avisos.py  # MUR-*
-    calendario/test_eventos.py
+    murais/                # MUR-*: test_avisos.py, test_eventos.py, test_aniversariantes.py
 ```
 
 Monte o cenário com a `fabrica` (direto no banco) e exercite o comportamento **pela API**, que é

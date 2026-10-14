@@ -22,7 +22,8 @@ Tabela `logs` (com migration) guardando, por ação:
 - usuário responsável (id; nome resolvido na resposta, GER-08);
 - setor do usuário no momento da ação;
 - ação: `criar`, `editar` ou `excluir`;
-- módulo afetado (`murais`, `calendario`, `documentos`, `duvidas`, `setores`, `usuarios`);
+- módulo afetado (`murais`, `documentos`, `duvidas`, `setores`, `usuarios`; eventos e
+  aniversariantes contam como `murais`);
 - tipo e id da entidade afetada, e um resumo legível (ex: título do aviso, e-mail do usuário);
 - `criado_em`.
 
