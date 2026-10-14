@@ -193,4 +193,4 @@ Containerização via `docker-compose`, cobrindo Postgres, MinIO, backend e fron
 - **Tratamento de erro global**: padronizar formato de erro (`{ campo, mensagem }`) via exception handler centralizado do FastAPI, ou cada endpoint formata manualmente?
 - **CORS**: configuração para dev (frontend e backend em portas diferentes) vs produção (mesmo domínio) ainda não definida.
 - **Variáveis de ambiente**: uso de `pydantic-settings` (ou equivalente) para carregar `.env` (URL do Postgres, credenciais MinIO, segredo JWT) ainda não decidido.
-- **Testes**: decisão consciente de ter ou não no MVP, ainda em aberto (mesmo ponto pendente no frontend).
+- ~~**Testes**~~: decidido — entram no MVP, guiados pelos specs (pytest + TestClient). Ver [`specs/README.md`](./specs/README.md).

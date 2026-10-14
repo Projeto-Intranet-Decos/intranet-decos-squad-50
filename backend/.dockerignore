@@ -9,3 +9,6 @@ venv/
 !.env.example
 Dockerfile
 .dockerignore
+tests/
+pytest.ini
+requirements-dev.txt

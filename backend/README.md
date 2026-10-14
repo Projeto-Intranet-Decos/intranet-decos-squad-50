@@ -22,3 +22,15 @@ uvicorn app.main:app --reload
   (senha `senha123`), 1 aviso e 1 evento. É idempotente e recusa rodar se `DATABASE_URL` não for
   localhost (`--forcar` para ignorar). Não faz parte das migrations e nunca roda em deploy.
 - Nova migration: `alembic revision --autogenerate -m "descricao"` — importe os models do módulo em `alembic/env.py` antes.
+
+## Testes
+
+```bash
+docker compose up -d banco          # na raiz do repositório; só o Postgres é necessário
+pip install -r requirements-dev.txt
+pytest                              # ou: pytest -k mur03 / pytest tests/murais
+```
+
+Os testes usam um banco separado (`<banco do DATABASE_URL>_teste`, ou `DATABASE_URL_TESTE`), que é
+apagado e recriado a cada execução, e trocam o MinIO por um falso em memória. Convenções e o ciclo
+spec → teste → código em [`docs/specs/README.md`](../docs/specs/README.md).

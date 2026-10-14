@@ -193,7 +193,7 @@ Usado para feedback de sucesso/erro em criações, edições e exclusões em tod
 ## Pontos em aberto (não bloqueiam o MVP, mas precisam de decisão)
 
 - **Tipos compartilhados** entre features (`Setor`, `User`) — definir onde moram (ex: `shared/types.ts`).
-- **Testes** — decidir conscientemente se entram no escopo do MVP ou ficam para depois.
+- ~~**Testes**~~ — decidido: entram no MVP, guiados pelos specs (vitest + Testing Library + MSW). Ver [`specs/README.md`](./specs/README.md).
 - **Variáveis de ambiente** — onde/como configurar a URL da API entre dev e produção.
 - **Framework do backend** (Python, Django descartado) — ainda não definido.
 - **Módulo de dúvidas** — ainda não definido se é FAQ estático ou sistema de tickets com fluxo de status.
