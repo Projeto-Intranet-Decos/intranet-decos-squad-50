@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { definirPreferencias, iniciarPreferencias } from '../../lib/preferencias/preferencias'
 import { simularConsultasDeMidia } from '../../testes/apoio'
+import estilos from '../../index.css?raw'
 import Layout from './Layout'
 
 // Mesmo arranjo do App: cada rota embrulha a própria página no Layout.
@@ -75,5 +76,33 @@ describe('GER-17 — transição entre páginas', () => {
 
     expect(screen.getByText('Página de documentos')).toBeTruthy()
     expect(screen.queryByText('Página do mural')).toBeNull()
+  })
+})
+
+// O jsdom não aplica o Tailwind, então o branco do vidro é conferido no próprio CSS.
+function fundoDoUtilitario(nome: string) {
+  const bloco = estilos.match(new RegExp(`@utility ${nome} \\{[\\s\\S]*?\\n\\}`))?.[0]
+  const fundo = bloco?.match(/background:[^;]*;/)?.[0]
+  if (!fundo) throw new Error(`utilitário ${nome} sem background`)
+  return fundo
+}
+
+describe('GER-18 — vidro do menu e da barra superior', () => {
+  beforeEach(() => {
+    const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
+    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    simularConsultasDeMidia(() => false)
+    iniciarPreferencias()
+  })
+
+  it('a barra superior e o menu lateral usam o vidro estrutural', () => {
+    render(<Aplicacao />)
+
+    expect(screen.getByRole('banner').className).toContain('glass')
+    expect(screen.getByRole('complementary').className).toContain('glass')
+  })
+
+  it('o vidro estrutural é tão branco quanto o dos modais', () => {
+    expect(fundoDoUtilitario('glass')).toBe(fundoDoUtilitario('glass-modal'))
   })
 })

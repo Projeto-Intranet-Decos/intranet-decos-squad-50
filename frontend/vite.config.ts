@@ -8,7 +8,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/testes/preparacao.ts',
-    css: false,
+    // Só o index.css é carregado, para os testes que conferem o vidro no próprio CSS (`?raw`).
+    css: { include: /index\.css/ },
   },
   server: {
     // Em dev, espelha o nginx de produção: /api vai pro backend sem o prefixo.

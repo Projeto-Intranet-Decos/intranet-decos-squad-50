@@ -38,12 +38,14 @@
   background: linear-gradient(135deg, #b33951 0%, #800020 45%, #3b000e 100%);
 }
 
-/* Vidro estrutural: menu lateral, barra superior, modal, dropdown */
+/* Vidro estrutural: menu lateral, barra superior, dropdown. Tão branco quanto o `glass-modal`,
+   porque no celular a página passa por trás dele (rola sob a barra; o menu abre por cima dela
+   escurecida) e um vidro mais transparente deixa o texto de trás competir com o dele. */
 @utility glass {
   background: linear-gradient(
     135deg,
-    rgb(255 255 255 / calc(1 - 0.34 * var(--vidro-transparencia))),
-    rgb(255 255 255 / calc(1 - 0.54 * var(--vidro-transparencia)))
+    rgb(255 255 255 / calc(1 - 0.08 * var(--vidro-transparencia))),
+    rgb(255 255 255 / calc(1 - 0.18 * var(--vidro-transparencia)))
   );
   backdrop-filter: blur(var(--vidro-desfoque)) saturate(140%);
   -webkit-backdrop-filter: blur(var(--vidro-desfoque)) saturate(140%);
@@ -55,8 +57,8 @@
     0 10px 30px rgb(15 23 42 / 0.08);
 }
 
-/* Vidro dos modais: bem mais branco que o `glass`, porque atrás dele a página está escurecida
-   pelo fundo do modal e um vidro muito transparente escureceria junto. */
+/* Vidro dos modais: o mesmo branco do `glass`, para não escurecer junto com o fundo do modal,
+   com borda e sombra mais fortes de painel flutuante. */
 @utility glass-modal {
   background: linear-gradient(
     135deg,

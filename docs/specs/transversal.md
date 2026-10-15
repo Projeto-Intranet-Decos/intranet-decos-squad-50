@@ -223,9 +223,9 @@ escurece e desfoca de leve a página.
   ficar dentro do elemento que desfoca a página, porque um `backdrop-filter` aninhado em outro só
   enxerga o conteúdo do pai, não a página. 🐞 corrigido: o painel ficava dentro do fundo e o texto
   da página aparecia nítido através dele.
-- O painel tem um vidro próprio (`glass-modal`), mais branco e menos transparente que o do menu,
-  para não escurecer junto com o fundo. Ele segue as preferências de desfoque e transparência
-  (GER-14), sempre mais opaco que o resto.
+- O painel tem um vidro próprio (`glass-modal`), tão branco quanto o do menu (GER-18) e com
+  sombra mais forte, para não escurecer junto com o fundo. Ele segue as preferências de desfoque e
+  transparência (GER-14).
 
 ### GER-17 — Transição entre páginas
 Origem: [CTX] · Back — · Front ✅ · Teste ✅
@@ -240,3 +240,15 @@ Trocar de página pelo menu lateral é animado, no conteúdo e no menu.
 - **Dado** animações reduzidas (GER-14 ou `prefers-reduced-motion`), **então** a troca é imediata,
   sem animação.
 - A primeira página aberta depois de carregar o site entra sem animação.
+
+### GER-18 — Vidro do menu e da barra superior
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+O menu lateral, a barra superior (abaixo de 1024px) e os dropdowns usam o vidro estrutural
+(`glass`), com o mesmo branco do painel dos modais (GER-16). No celular a página passa por trás
+deles: o conteúdo rola sob a barra superior e o menu abre por cima da página escurecida.
+
+- **Dado** a barra superior ou o menu lateral, **então** o texto deles fica legível com qualquer
+  conteúdo atrás: o fundo do vidro é tão branco quanto o do modal e segue as preferências de
+  desfoque e transparência (GER-14). 🐞 corrigido: o vidro era transparente demais e, no celular,
+  o texto da página atrás competia com o do menu.
