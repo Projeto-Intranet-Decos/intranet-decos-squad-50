@@ -8,6 +8,37 @@ import type { Aviso } from '../types'
 
 const INTERVALO_AUTOPLAY_MS = 6000
 
+// Mapa de deslocamento da refração (GER-14): neutro (128) no meio e rampas nas bordas, o canal
+// vermelho na horizontal e o verde na vertical. Somados, as bordas da placa puxam o fundo como
+// uma lente.
+const RAMPA_HORIZONTAL = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" preserveAspectRatio="none"><defs><linearGradient id="g"><stop offset="0" stop-color="#ff0000"/><stop offset="0.14" stop-color="#800000"/><stop offset="0.86" stop-color="#800000"/><stop offset="1" stop-color="#000000"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/></svg>`,
+)}`
+const RAMPA_VERTICAL = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" preserveAspectRatio="none"><defs><linearGradient id="g" x2="0" y2="1"><stop offset="0" stop-color="#00ff00"/><stop offset="0.22" stop-color="#008000"/><stop offset="0.78" stop-color="#008000"/><stop offset="1" stop-color="#000000"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/></svg>`,
+)}`
+
+/** Filtro usado pelo `backdrop-filter` da placa, só com a classe `refracao` no <html> (index.css). */
+function FiltroRefracao() {
+  return (
+    <svg aria-hidden="true" className="pointer-events-none absolute size-0">
+      <filter
+        id="refracao-vidro"
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        colorInterpolationFilters="sRGB"
+      >
+        <feImage href={RAMPA_HORIZONTAL} x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="horizontal" />
+        <feImage href={RAMPA_VERTICAL} x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="vertical" />
+        <feComposite in="horizontal" in2="vertical" operator="arithmetic" k2="1" k3="1" result="mapa" />
+        <feDisplacementMap in="SourceGraphic" in2="mapa" scale="64" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
+  )
+}
+
 interface PropriedadesCarrossel {
   destaques: Aviso[]
   aoAbrir: (aviso: Aviso) => void
@@ -30,6 +61,7 @@ function CarrosselDestaques({ destaques, aoAbrir }: PropriedadesCarrossel) {
 
   return (
     <div className="relative mb-6 h-[280px] overflow-hidden rounded-card bg-slate-800 sm:h-[400px] ios:rounded-panel">
+      <FiltroRefracao />
       {vazio && (
         <div className="absolute inset-0">
           <div className="bg-bordeaux-gradient absolute inset-0" />
@@ -38,7 +70,7 @@ function CarrosselDestaques({ destaques, aoAbrir }: PropriedadesCarrossel) {
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-slate-900/5 ios:from-slate-900/60 ios:via-slate-900/10 ios:to-transparent" />
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 p-5 pb-16 sm:p-8 ios:p-4 ios:pb-16 sm:ios:p-6 sm:ios:pb-6">
-            <div className="flex flex-col gap-2.5 ios:glass-dark ios:w-full ios:rounded-[1.25rem] ios:p-5 sm:ios:w-auto sm:ios:max-w-xl sm:ios:self-start">
+            <div className="refracao-vidro flex flex-col gap-2.5 ios:glass-dark ios:w-full ios:rounded-[1.25rem] ios:p-5 sm:ios:w-auto sm:ios:max-w-xl sm:ios:self-start">
               <h2 className="m-0 max-w-xl text-xl leading-tight font-semibold tracking-tight text-balance text-white sm:text-[26px] ios:font-display ios:text-2xl ios:font-bold sm:ios:text-3xl">
                 Nenhum aviso
               </h2>
@@ -72,7 +104,7 @@ function CarrosselDestaques({ destaques, aoAbrir }: PropriedadesCarrossel) {
             {/* No iOS Glass o texto fica numa placa de vidro escuro, no mesmo lugar. Abaixo de sm
                 ela ocupa a largura toda; acima, só o necessário, sem passar dos controles. */}
             <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 p-5 pb-16 sm:p-8 ios:p-4 ios:pb-16 sm:ios:p-6 sm:ios:pr-[13.5rem]">
-              <div className="flex flex-col gap-2.5 ios:glass-dark ios:w-full ios:rounded-[1.25rem] ios:p-5 sm:ios:w-auto sm:ios:max-w-xl sm:ios:self-start">
+              <div className="refracao-vidro flex flex-col gap-2.5 ios:glass-dark ios:w-full ios:rounded-[1.25rem] ios:p-5 sm:ios:w-auto sm:ios:max-w-xl sm:ios:self-start">
                 <div className="flex items-center gap-3 text-[10.5px] tracking-wide text-white/80 ios:text-xs ios:tracking-normal ios:text-white/75 ios:tabular-nums">
                   <BadgeCategoria categoria={avisoAtual.categoria} sobreFoto />
                   <span>

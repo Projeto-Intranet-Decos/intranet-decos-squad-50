@@ -182,6 +182,7 @@ não passam pelo backend e continuam valendo depois de sair e entrar com outro u
 | Estilo visual (GER-01) | iOS Glass, Vidro clínico | iOS Glass |
 | Desfoque do vidro | 0 a 24 px | 16 px |
 | Transparência do vidro | 0 a 100% | 60% |
+| Refração no carrossel | ligado/desligado | ligado |
 | Gradiente de fundo | desligado, suave, intenso | suave |
 | Efeito elástico na rolagem (GER-15) | ligado/desligado | ligado |
 | Reduzir animações | ligado/desligado | desligado |
@@ -201,6 +202,11 @@ não passam pelo backend e continuam valendo depois de sair e entrar com outro u
   `data-visual="clinico"` e a interface toda (menu, páginas, modais, toasts e a tela de login) passa
   a usar aquele estilo. Desfoque e transparência valem nos dois estilos, sempre relativos aos valores
   do design de cada um.
+- **Dado** "Refração no carrossel" ligado, o iOS Glass e um navegador Chromium (Chrome, Edge), **então**
+  o `<html>` recebe a classe `refracao` e a placa de vidro do carrossel distorce o fundo nas bordas,
+  como uma lente (filtro SVG `feDisplacementMap` no `backdrop-filter`). Em outros navegadores o
+  interruptor fica desativado, com a explicação, e a placa usa só o desfoque. Desfoque 0, `no-glass`
+  ou transparência reduzida também tiram a refração.
 - **Quando** o usuário aciona "Restaurar padrão", **então** todas as opções voltam ao padrão.
 
 A tela de login segue o estilo visual, mas não muda com as demais preferências. A classe

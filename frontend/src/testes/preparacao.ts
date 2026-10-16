@@ -1,6 +1,6 @@
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeEach } from 'vitest'
-import { simularConsultasDeMidia } from './apoio'
+import { simularConsultasDeMidia, simularNavegador } from './apoio'
 
 beforeEach(() => {
   simularConsultasDeMidia(() => false)
@@ -8,6 +8,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  simularNavegador(null)
   localStorage.clear()
   const raiz = document.documentElement
   raiz.removeAttribute('style')

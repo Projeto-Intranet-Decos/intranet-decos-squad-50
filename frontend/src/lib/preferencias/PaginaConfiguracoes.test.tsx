@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../../App'
-import { simularConsultasDeMidia } from '../../testes/apoio'
+import { simularConsultasDeMidia, simularNavegador } from '../../testes/apoio'
 import PaginaConfiguracoes from './PaginaConfiguracoes'
 import { CHAVE_PREFERENCIAS, PREFERENCIAS_PADRAO, definirPreferencias, iniciarPreferencias, obterPreferencias } from './preferencias'
 
@@ -72,10 +72,35 @@ describe('GER-14 — página Configurações', () => {
       transparencia: 90,
       gradiente: 'intenso',
       visual: 'ios',
+      refracao: true,
       rolagemElastica: false,
       reduzirAnimacoes: true,
     })
     expect(screen.queryByRole('button', { name: /salvar/i })).toBeNull()
+  })
+
+  it('refração no carrossel: desativada fora do Chromium e no Vidro clínico', () => {
+    render(<PaginaConfiguracoes />)
+    const refracao = () => screen.getByRole('switch', { name: 'Refração no carrossel' }) as HTMLInputElement
+
+    expect(refracao().disabled).toBe(true)
+    expect(screen.getByText(/só no Chrome ou no Edge/)).toBeTruthy()
+  })
+
+  it('refração no carrossel: liga e desliga no Chromium com o iOS Glass', () => {
+    simularNavegador(['Chromium'])
+    iniciarPreferencias()
+    render(<PaginaConfiguracoes />)
+    const refracao = () => screen.getByRole('switch', { name: 'Refração no carrossel' }) as HTMLInputElement
+
+    expect(refracao().disabled).toBe(false)
+    expect(refracao().checked).toBe(true)
+
+    fireEvent.click(refracao())
+    expect(raiz.classList.contains('refracao')).toBe(false)
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Vidro clínico' }))
+    expect(refracao().disabled).toBe(true)
   })
 
   it('"Restaurar padrão" volta todas as opções', () => {

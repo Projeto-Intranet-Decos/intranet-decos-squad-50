@@ -12,6 +12,8 @@ export interface PreferenciasInterface {
   transparencia: number
   gradiente: GradienteFundo
   visual: EstiloVisual
+  /** Refração na placa do carrossel; só tem efeito no iOS Glass e no Chromium. */
+  refracao: boolean
   rolagemElastica: boolean
   reduzirAnimacoes: boolean
 }
@@ -23,6 +25,7 @@ export const PREFERENCIAS_PADRAO: PreferenciasInterface = {
   transparencia: 60,
   gradiente: 'suave',
   visual: 'ios',
+  refracao: true,
   rolagemElastica: true,
   reduzirAnimacoes: false,
 }
@@ -58,9 +61,19 @@ function normalizar(bruto: unknown): PreferenciasInterface {
     transparencia: numeroValido(dados.transparencia, LIMITES.transparencia, PREFERENCIAS_PADRAO.transparencia),
     gradiente: opcaoValida(dados.gradiente, GRADIENTES, PREFERENCIAS_PADRAO.gradiente),
     visual: opcaoValida(dados.visual, VISUAIS, PREFERENCIAS_PADRAO.visual),
+    refracao: booleanoValido(dados.refracao, PREFERENCIAS_PADRAO.refracao),
     rolagemElastica: booleanoValido(dados.rolagemElastica, PREFERENCIAS_PADRAO.rolagemElastica),
     reduzirAnimacoes: booleanoValido(dados.reduzirAnimacoes, PREFERENCIAS_PADRAO.reduzirAnimacoes),
   }
+}
+
+/**
+ * A refração usa um filtro SVG no `backdrop-filter`, que só os navegadores Chromium desenham. Só
+ * eles têm `navigator.userAgentData`; nos outros a placa fica só com o desfoque.
+ */
+export function suportaRefracao(): boolean {
+  const dados = (navigator as { userAgentData?: { brands?: { brand: string }[] } }).userAgentData
+  return dados?.brands?.some((marca) => marca.brand === 'Chromium') ?? false
 }
 
 // O localStorage pode estar bloqueado (navegação privada); aí as preferências valem só na sessão.
@@ -83,7 +96,7 @@ function gravar(preferencias: PreferenciasInterface) {
 // O CSS (index.css) lê estas variáveis e classes no <html>.
 function aplicar(preferencias: PreferenciasInterface) {
   const raiz = document.documentElement
-  const { desfoque, transparencia, gradiente, visual, rolagemElastica, reduzirAnimacoes } = preferencias
+  const { desfoque, transparencia, gradiente, visual, refracao, rolagemElastica, reduzirAnimacoes } = preferencias
 
   raiz.style.setProperty('--vidro-desfoque', `${desfoque}px`)
   // 1 = transparência do design original (o padrão); 0 = sólido.
@@ -95,6 +108,7 @@ function aplicar(preferencias: PreferenciasInterface) {
   // A variante `ios:` do Tailwind e os blocos `@variant ios` do index.css leem este atributo.
   raiz.dataset.visual = visual
   raiz.classList.toggle('sem-desfoque', desfoque === 0)
+  raiz.classList.toggle('refracao', refracao && suportaRefracao())
   raiz.classList.toggle('reduzir-animacoes', reduzirAnimacoes)
   raiz.classList.toggle('rolagem-elastica', rolagemElastica && !reduzirAnimacoes)
 }

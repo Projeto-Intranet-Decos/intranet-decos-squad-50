@@ -607,6 +607,17 @@
   }
 }
 
+/* Refração na placa do carrossel (GER-14): o fundo passa pelo filtro SVG #refracao-vidro
+   (CarrosselDestaques), que o desloca nas bordas como uma lente, e só depois é desfocado, com um
+   desfoque menor para a distorção aparecer. Só o Chromium desenha `url()` no backdrop-filter; a
+   classe `refracao` só entra no <html> nele. Sem desfoque, sem vidro ou com transparência
+   reduzida, fica a placa normal. */
+@media not (prefers-reduced-transparency: reduce) {
+  html.refracao[data-visual="ios"]:not(.sem-desfoque, .no-glass) .refracao-vidro {
+    backdrop-filter: url(#refracao-vidro) blur(calc(var(--vidro-desfoque) * 0.6)) saturate(150%);
+  }
+}
+
 /* Alvo de toque mínimo do iOS (44px) abaixo de lg, inclusive nos botões compactos. */
 @media (width < 64rem) {
   [data-visual="ios"] .btn {

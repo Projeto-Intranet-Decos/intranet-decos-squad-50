@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { simularNavegador } from '../../testes/apoio'
 import {
   CHAVE_PREFERENCIAS,
   PREFERENCIAS_PADRAO,
@@ -61,6 +62,20 @@ describe('GER-14 — preferências de interface', () => {
     expect(raiz.dataset.visual).toBe('ios')
   })
 
+  it('refração: marca o <html> só no Chromium e com a opção ligada', () => {
+    iniciarPreferencias()
+    expect(obterPreferencias().refracao).toBe(true)
+    expect(raiz.classList.contains('refracao')).toBe(false)
+
+    simularNavegador(['Chromium', 'Google Chrome'])
+    iniciarPreferencias()
+    expect(raiz.classList.contains('refracao')).toBe(true)
+
+    definirPreferencias({ refracao: false })
+    expect(raiz.classList.contains('refracao')).toBe(false)
+    expect(salvo()).toMatchObject({ refracao: false })
+  })
+
   it('restaura o que foi salvo ao iniciar de novo (recarregar a página)', () => {
     iniciarPreferencias()
     definirPreferencias({ desfoque: 4, rolagemElastica: false })
@@ -82,6 +97,7 @@ describe('GER-14 — preferências de interface', () => {
         transparencia: 'muita',
         gradiente: 'arco-iris',
         visual: 'android',
+        refracao: 'sim',
         rolagemElastica: false,
         reduzirAnimacoes: 1,
       }),

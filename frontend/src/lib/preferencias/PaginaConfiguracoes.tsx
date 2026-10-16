@@ -4,6 +4,7 @@ import {
   LIMITES,
   definirPreferencias,
   restaurarPreferencias,
+  suportaRefracao,
   type EstiloVisual,
   type GradienteFundo,
 } from './preferencias'
@@ -97,10 +98,11 @@ interface PropriedadesInterruptor {
   rotulo: string
   ajuda: string
   ligado: boolean
+  desativado?: boolean
   aoMudar: (ligado: boolean) => void
 }
 
-function Interruptor({ rotulo, ajuda, ligado, aoMudar }: PropriedadesInterruptor) {
+function Interruptor({ rotulo, ajuda, ligado, desativado = false, aoMudar }: PropriedadesInterruptor) {
   const id = useId()
   return (
     <div className="flex items-center justify-between gap-4 py-3.5">
@@ -118,9 +120,10 @@ function Interruptor({ rotulo, ajuda, ligado, aoMudar }: PropriedadesInterruptor
           type="checkbox"
           role="switch"
           checked={ligado}
+          disabled={desativado}
           onChange={(e) => aoMudar(e.target.checked)}
           aria-describedby={`${id}-ajuda`}
-          className="peer size-full cursor-pointer appearance-none rounded-full bg-slate-400 transition-colors checked:bg-brand-600"
+          className="peer size-full cursor-pointer appearance-none rounded-full bg-slate-400 transition-colors checked:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <span
           aria-hidden="true"
@@ -133,6 +136,7 @@ function Interruptor({ rotulo, ajuda, ligado, aoMudar }: PropriedadesInterruptor
 
 function PaginaConfiguracoes() {
   const preferencias = usePreferencias()
+  const refracaoPossivel = suportaRefracao() && preferencias.visual === 'ios'
 
   return (
     <div className="max-w-[720px]">
@@ -181,6 +185,19 @@ function PaginaConfiguracoes() {
             limite={LIMITES.transparencia}
             passo={5}
             aoMudar={(transparencia) => definirPreferencias({ transparencia })}
+          />
+        </div>
+        <div className="mt-2 border-t border-slate-200/60 ios:border-slate-900/5">
+          <Interruptor
+            rotulo="Refração no carrossel"
+            ajuda={
+              refracaoPossivel
+                ? 'A placa de texto do carrossel distorce o fundo nas bordas, como uma lente.'
+                : 'Distorce o fundo nas bordas da placa do carrossel, como uma lente. Disponível só no iOS Glass e só no Chrome ou no Edge.'
+            }
+            ligado={preferencias.refracao && refracaoPossivel}
+            desativado={!refracaoPossivel}
+            aoMudar={(refracao) => definirPreferencias({ refracao })}
           />
         </div>
       </section>
