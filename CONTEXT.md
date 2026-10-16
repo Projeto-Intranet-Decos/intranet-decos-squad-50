@@ -56,3 +56,7 @@ _Avoid_: módulo calendário
 Vale pra Aviso (inclusive Evento), FAQ e Documento: o registro guarda o setor de quem criou. `admin_setor` só edita/exclui o que foi criado por alguém do próprio setor; `superadmin` edita/exclui qualquer um. A **visibilidade** de leitura desses três é sempre institucional (todo mundo vê tudo) — o escopo por setor vale só pra edição, não pra leitura.
 
 Documento segue a mesma regra: todo usuário autenticado lista e baixa documentos de qualquer setor; criar, editar, substituir o arquivo e excluir seguem o escopo por setor.
+
+**Atalho (acesso rápido)**:
+Link externo fixo na seção "Acesso rápido" da barra lateral (ex: prontuário eletrônico, portal do colaborador). Igual para todos os usuários e sem setor: só o `superadmin` cria, edita e exclui.
+_Avoid_: favorito, link do setor

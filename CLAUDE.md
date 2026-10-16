@@ -4,7 +4,7 @@ Monorepo com `backend/` (FastAPI) e `frontend/` (React + TypeScript). Glossário
 
 ## Docs
 
-- [`docs/specs/`](./docs/specs/README.md) — requisitos por domínio (IDs `GER`, `AUT`, `USU`, `SET`, `MUR`, `CAL`, `DOC`, `DUV`, `LOG`), com origem, status e critérios de aceite. Fonte do **que** o sistema faz.
+- [`docs/specs/`](./docs/specs/README.md) — requisitos por domínio (IDs `GER`, `AUT`, `USU`, `SET`, `MUR`, `CAL`, `DOC`, `DUV`, `LOG`, `ATA`), com origem, status e critérios de aceite. Fonte do **que** o sistema faz.
 - [`docs/arquitetura-backend.md`](./docs/arquitetura-backend.md) — stack (FastAPI, SQLAlchemy+Pydantic separados, Postgres, Alembic, MinIO, JWT, pwdlib), organização de módulos, RBAC (dependency vs service), logs.
 - [`docs/arquitetura-frontend.md`](./docs/arquitetura-frontend.md) — stack (React+TS, Tailwind, Axios, TanStack Query, React Hook Form, Sonner), estrutura por feature, RBAC no frontend (UX apenas, nunca fonte de verdade), padrão de erro do backend.
 - [`docs/convencao-branches-commits.md`](./docs/convencao-branches-commits.md) — branches (`feature/<camada>/<modulo>/<descricao>`), Conventional Commits, fluxo `dev → homolog → main`.
@@ -13,7 +13,7 @@ Monorepo com `backend/` (FastAPI) e `frontend/` (React + TypeScript). Glossário
 
 - Autorização real sempre no backend. Checagem no frontend (`ProtectedRoute`, `permissions.ts`) é só UX.
 - `admin_setor` opera o dia a dia do próprio setor (avisos, documentos, eventos, ramal). `superadmin` é o único que acessa as páginas de Administração (Usuários, Registro de atividades) e cria setores novos — é um papel de nível sistêmico, não o "admin de conteúdo" mais poderoso.
-- Estrutura de módulo/feature é 1:1 entre backend e frontend — mesmo nome dos 6 módulos nos dois lados (o calendário é uma tela do mural, não um módulo).
+- Estrutura de módulo/feature é 1:1 entre backend e frontend — mesmo nome dos 7 módulos nos dois lados (o calendário é uma tela do mural, não um módulo).
 
 ## Fluxo de desenvolvimento: spec → teste → código
 
