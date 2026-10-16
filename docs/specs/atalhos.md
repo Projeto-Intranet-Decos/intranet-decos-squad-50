@@ -10,7 +10,7 @@ para todo mundo. Não pertencem a setor: são configuração **sistêmica**, man
 | ATA-02 | Cadastrar atalho | ✅ | ✅ | ✅ |
 | ATA-03 | Editar atalho | ✅ | ✅ | ✅ |
 | ATA-04 | Excluir atalho | ✅ | ✅ | ✅ |
-| ATA-05 | Gestão na barra lateral | — | ✅ | ⬜ |
+| ATA-05 | Gestão na barra lateral | — | ✅ | ✅ |
 
 ### ATA-01 — Listar atalhos
 Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅
@@ -47,7 +47,7 @@ Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅
 `DELETE /atalhos/{id}` — só `superadmin` → `204`; id inexistente → `404`.
 
 ### ATA-05 — Gestão na barra lateral
-Origem: [CTX] · Back — · Front ✅ · Teste ⬜
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
 
 - A seção "Acesso rápido" da barra lateral lista os atalhos da API; cada um abre em nova aba.
 - Só o `superadmin` vê os botões de adicionar, editar e excluir (só UX, GER-12). Com o menu

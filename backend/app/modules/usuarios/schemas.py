@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.modules.usuarios.models import Papel
 
@@ -30,6 +30,14 @@ class UsuarioAtualizar(BaseModel):
   setor_id: uuid.UUID | None = None
   data_nascimento: date | None = None
   ativo: bool | None = None
+
+
+  @field_validator("nome", "email", "role", "ativo")
+  @classmethod
+  def rejeitar_nulo(cls, valor):
+    if valor is None:
+      raise ValueError("Não pode ser nulo")
+    return valor
 
 
 class UsuarioResposta(BaseModel):

@@ -5,25 +5,25 @@ Cadastro dos colaboradores com papel de acesso e setor. Área de Administração
 
 | ID | Requisito | Back | Front | Teste |
 |---|---|---|---|---|
-| USU-01 | Listar usuários | ✅ | ⬜ | ⬜ |
-| USU-02 | Cadastrar usuário | ✅ | ⬜ | ⬜ |
-| USU-03 | Editar usuário | ✅ | ⬜ | ⬜ |
-| USU-04 | Desativar usuário (soft delete) | ✅ | ⬜ | ⬜ |
+| USU-01 | Listar usuários | ✅ | ✅ | ✅ |
+| USU-02 | Cadastrar usuário | ✅ | ✅ | ✅ |
+| USU-03 | Editar usuário | ✅ | ✅ | ✅ |
+| USU-04 | Desativar usuário (soft delete) | ✅ | ✅ | ✅ |
 | USU-05 | Primeiro superadmin | ✅ | — | ⬜ |
 | USU-06 | Cargo do colaborador | ⬜ | ⬜ | ⬜ |
 | USU-07 | Troca e redefinição de senha | ❓ | ❓ | ⬜ |
 
 ### USU-01 — Listar usuários
-Origem: [ENT H6] · Back ✅ · Front ⬜ · Teste ⬜
+Origem: [ENT H6] · Back ✅ · Front ✅ · Teste ✅
 
 `GET /usuarios` — só `superadmin` (outros papéis → `403`). Devolve `id`, `nome`, `email`, `role`,
 `setor_id`, `data_nascimento`, `ativo`, `criado_em`; nunca a senha nem o hash. Inclui usuários
 desativados.
 
-- Frontend ⬜: página `/usuarios` com a listagem (hoje é só um placeholder).
+- Frontend ✅: tabela `/usuarios`, busca por nome/e-mail, filtros de perfil/setor/status e paginação local de 10 registros.
 
 ### USU-02 — Cadastrar usuário
-Origem: [ESP] [ENT H6] · Back ✅ · Front ⬜ · Teste ⬜
+Origem: [ESP] [ENT H6] · Back ✅ · Front ✅ · Teste ✅
 
 `POST /usuarios` — só `superadmin`. Campos:
 
@@ -42,22 +42,23 @@ Origem: [ESP] [ENT H6] · Back ✅ · Front ⬜ · Teste ⬜
 - **Dado** `setor_id` inexistente, **então** `409 {"campo": "setor_id", "mensagem": "Setor não
   encontrado"}`.
 - **Dado** senha curta, e-mail inválido ou papel fora da lista, **então** `422` com o campo.
-- Frontend ⬜: formulário com seleção de papel e setor; erro do backend no campo (GER-05).
+- Frontend ✅: formulário com seleção de papel e setor; erro do backend no campo (GER-05).
 - ❓ `admin_setor` sem setor é permitido hoje pelo backend, mas esse usuário não consegue criar
   nada (GER-04). Exigir setor para `admin_setor`?
 
 ### USU-03 — Editar usuário
-Origem: [ENT] · Back ✅ · Front ⬜ · Teste ⬜
+Origem: [ENT] · Back ✅ · Front ✅ · Teste ✅
 
 `PUT /usuarios/{id}` — só `superadmin`. Atualização parcial de `nome`, `email`, `role`,
 `setor_id`, `data_nascimento`, `ativo` (só os campos enviados mudam). Senha não é alterada por aqui.
 
 - **Dado** id inexistente, **então** `404`.
+- 🐞 Campos obrigatórios (`nome`, `email`, `role`, `ativo`) explicitamente nulos retornam `422` com o campo, sem alterar o registro; `setor_id` e `data_nascimento` aceitam nulo.
 - Mesmos conflitos de USU-02 (`409` em e-mail duplicado ou setor inexistente).
 - A mudança só chega ao token do usuário afetado quando o access token dele expira (AUT-03).
 
 ### USU-04 — Desativar usuário (soft delete)
-Origem: [ENT H6] · Back ✅ · Front ⬜ · Teste ⬜
+Origem: [ENT H6] · Back ✅ · Front ✅ · Teste ✅
 
 `DELETE /usuarios/{id}` — só `superadmin`. Marca `ativo = false` e devolve `200` com o usuário
 atualizado; o registro e tudo que ele criou (avisos, documentos, eventos, FAQ) continuam.
