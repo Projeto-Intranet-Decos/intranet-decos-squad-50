@@ -24,13 +24,13 @@ function ModalPreviaDocumento({ documento, aoFechar }: PropriedadesModalPreviaDo
         />
       )
     }
-    if (isLoading) return <p className="m-0 py-16 text-center text-sm text-slate-500">Carregando arquivo…</p>
+    if (isLoading) return <p className="m-0 py-16 text-center text-sm text-slate-600">Carregando arquivo…</p>
     if (isError || !url) {
       return <AvisoPrevia titulo="Não foi possível carregar o arquivo" texto="Tente novamente ou baixe o arquivo." />
     }
     if (tipo === 'imagem') {
       return (
-        <div className="flex justify-center rounded-lg bg-slate-50 p-4">
+        <div className="flex justify-center rounded-[10px] liquido:rounded-inner bg-white/55 p-4 ring-1 ring-white/80">
           <img src={url} alt={documento.titulo} className="max-h-[65vh] max-w-full object-contain" />
         </div>
       )
@@ -39,7 +39,7 @@ function ModalPreviaDocumento({ documento, aoFechar }: PropriedadesModalPreviaDo
       <iframe
         src={url}
         title={documento.titulo}
-        className={`h-[60vh] w-full rounded-lg sm:h-[70vh] border border-slate-200 ${tipo === 'texto' ? 'bg-white' : ''}`}
+        className={`h-[60vh] w-full rounded-[10px] liquido:rounded-inner border border-slate-200/60 liquido:border-slate-900/5 sm:h-[70vh] ${tipo === 'texto' ? 'bg-white' : ''}`}
       />
     )
   }
@@ -48,15 +48,15 @@ function ModalPreviaDocumento({ documento, aoFechar }: PropriedadesModalPreviaDo
     <Modal aberto titulo={documento.titulo} aoFechar={aoFechar} largura="960px">
       {conteudo()}
 
-      <div className="mt-[18px] flex flex-col items-stretch justify-between gap-2.5 sm:flex-row sm:items-center border-t border-slate-100 pt-[18px]">
-        <span className="truncate text-[12.5px] text-slate-500">
+      <div className="mt-[18px] flex flex-col items-stretch justify-between gap-2.5 border-t border-slate-200/60 liquido:border-slate-900/5 pt-[18px] sm:flex-row sm:items-center">
+        <span className="truncate text-[13px] text-slate-600">
           {documento.nomeArquivo} · {formatarTamanho(documento.tamanhoBytes)}
         </span>
         <Botao
           variante="primario"
           onClick={() => baixarDocumento.mutate({ documento })}
           disabled={baixarDocumento.isPending}
-          className="flex flex-none items-center justify-center gap-2"
+          className="flex-none"
         >
           <IconeBaixar tamanho={15} />
           {baixarDocumento.isPending ? 'Baixando…' : 'Baixar'}
@@ -68,10 +68,10 @@ function ModalPreviaDocumento({ documento, aoFechar }: PropriedadesModalPreviaDo
 
 function AvisoPrevia({ titulo, texto }: { titulo: string; texto: string }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-6 py-12 text-center">
-      <IconeAlerta tamanho={28} className="text-amber-600" />
-      <span className="text-[15px] font-bold text-slate-900">{titulo}</span>
-      <span className="max-w-md text-[13px] text-slate-600">{texto}</span>
+    <div className="flex flex-col items-center gap-2 rounded-[10px] liquido:rounded-inner bg-amber-50/90 px-6 py-12 text-center ring-1 ring-amber-200">
+      <IconeAlerta tamanho={28} className="text-warning" />
+      <span className="text-[15px] font-semibold text-slate-900">{titulo}</span>
+      <span className="max-w-md text-[13px] text-slate-700">{texto}</span>
     </div>
   )
 }

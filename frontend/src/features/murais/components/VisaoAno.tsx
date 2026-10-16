@@ -30,20 +30,20 @@ function VisaoAno({ ano, eventosPorDia, aniversariantesDoDia, aoAbrirMes }: Prop
   })
 
   return (
-    <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-3">
       {meses.map((item) => (
         <button
           key={item.mes}
           type="button"
           onClick={() => aoAbrirMes(item.mes)}
           title={`Abrir ${item.nome}`}
-          className="cursor-pointer rounded-[10px] border border-slate-200 bg-slate-50 px-3 pt-3 pb-3.5 text-left transition-colors hover:border-slate-300"
+          className="cursor-pointer rounded-[10px] liquido:rounded-inner bg-white/55 px-3 pt-3 pb-3.5 text-left ring-1 ring-white/80 transition-colors hover:bg-white/75 hover:ring-slate-300/70"
         >
           <span className="mb-[9px] flex h-[18px] items-baseline justify-between gap-2.5">
-            <span className={`text-[12.5px] font-bold whitespace-nowrap ${item.atual ? 'text-[#800020]' : 'text-slate-800'}`}>
+            <span className={`text-[12.5px] font-bold whitespace-nowrap ${item.atual ? 'text-brand-600' : 'text-slate-800'}`}>
               {item.nome}
             </span>
-            <span className="text-[9.5px] whitespace-nowrap text-slate-400">
+            <span className="text-[10px] whitespace-nowrap text-slate-500 tabular-nums">
               {item.totalEventos} ev · {item.totalAniversarios} aniv
             </span>
           </span>
@@ -51,12 +51,12 @@ function VisaoAno({ ano, eventosPorDia, aniversariantesDoDia, aoAbrirMes }: Prop
             {item.celulas.map((celula) => (
               <span
                 key={celula.chave}
-                className={`flex h-[19px] items-center justify-center rounded-md text-[9.5px] ${
+                className={`flex h-[19px] items-center justify-center rounded-md text-[10px] tabular-nums liquido:rounded-full ${
                   celula.eventos > 0
-                    ? 'bg-[#b33951] font-medium text-white'
+                    ? 'bg-brand-500 font-medium text-white'
                     : celula.aniversarios > 0
-                      ? 'bg-slate-100 font-medium text-slate-600'
-                      : 'text-slate-400'
+                      ? 'bg-slate-900/10 font-medium text-slate-700'
+                      : 'text-slate-500'
                 }`}
               >
                 {celula.dia ?? ''}

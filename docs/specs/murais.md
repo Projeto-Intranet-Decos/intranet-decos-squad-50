@@ -164,10 +164,15 @@ depois do commit, todos os objetos do aviso no bucket. Vale igual para eventos.
 Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste ⬜
 
 - Busca local por título, autor ou conteúdo; filtros por categoria (inclusive `evento`) e setor.
+- No Vidro líquido (GER-01), a partir de 1024px, a barra de busca e filtros fica presa ao topo da tela
+  num vidro em cápsula, e a lista rola por baixo dela. Abaixo de 1024px e no Vidro clínico ela rola
+  junto com a página.
 - Eventos aparecem no feed, no carrossel e nos fixados como qualquer aviso; o card e o detalhe de
   um evento mostram a data (e o fim, se houver).
 - Carrossel de destaques com os 5 avisos mais recentes e painel de fixados — ambos **ignoram** os
   filtros da busca.
+- O painel de fixados fica na coluna da direita no desktop; abaixo de 1024px aparece acima da
+  lista, para o aviso fixado ser visto primeiro.
 - Painéis laterais: próximos eventos (a partir de agora, MUR-12) e aniversariantes do mês
   (MUR-13). Clicar num próximo evento abre o detalhe do aviso.
 - "Novo aviso" só para `admin_setor`/`superadmin`; editar/excluir só nos avisos que o usuário pode
@@ -227,5 +232,12 @@ feature `murais`. Substitui CAL-08.
 - Clicar num evento abre o **mesmo detalhe do aviso** do mural (capa, conteúdo, anexos), com
   editar/excluir para quem pode gerenciar (GER-12).
 - Painéis de próximos eventos e de aniversariantes do mês (MUR-13).
+- **Dado** o detalhe de um aviso de categoria `evento`, **então** ele tem o botão "Ver no
+  calendário"; avisos de outras categorias não têm. **Quando** o usuário aciona o botão, **então**
+  o detalhe fecha e abre `/calendario?data=AAAA-MM-DD` (o dia de início do evento, no fuso local).
+- **Dado** `/calendario?data=AAAA-MM-DD` com uma data válida, **então** o calendário abre na visão
+  de mês daquela data e o dia recebe um destaque bordô que acende e some em 1s, uma vez só; com
+  animações reduzidas (GER-14 ou `prefers-reduced-motion`) não há animação. Data inválida é
+  ignorada e a tela abre no mês atual. Vale também quando o botão é acionado no próprio calendário.
 - A tela só exibe: **não há botão de criar evento**. Evento é criado no mural, como qualquer aviso
   (MUR-03, MUR-11); não existe formulário de evento separado.

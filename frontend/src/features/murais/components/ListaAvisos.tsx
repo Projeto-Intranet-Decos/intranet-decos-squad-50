@@ -30,14 +30,14 @@ function agruparPorDia(avisos: Aviso[]): ItemComIndicadorDia[] {
     const dia = formatarDiaMes(aviso.criadoEm)
     const primeiroDoDia = dia !== diaAnterior
     diaAnterior = dia
-    itens.push({ aviso, diaTexto: primeiroDoDia ? dia : '', corPonto: primeiroDoDia ? '#800020' : '#cbd5e1' })
+    itens.push({ aviso, diaTexto: primeiroDoDia ? dia : '', corPonto: primeiroDoDia ? 'var(--color-brand-600)' : 'var(--color-slate-300)' })
   }
   return itens
 }
 
 function ListaAvisos({ avisos, podeGerenciarAviso, aoAbrir, aoEditar, aoExcluir }: PropriedadesListaAvisos) {
   if (avisos.length === 0) {
-    return <p className="py-16 text-center text-sm text-slate-500">Nenhum aviso encontrado.</p>
+    return <p className="py-16 text-center text-sm text-slate-600">Nenhum aviso encontrado.</p>
   }
 
   const itens = agruparPorDia(avisos)

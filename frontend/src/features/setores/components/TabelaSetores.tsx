@@ -9,35 +9,33 @@ interface PropriedadesTabelaSetores {
   aoExcluir: (setor: SetorComRamais) => void
 }
 
-const COLUNAS = 'grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_76px] gap-[18px]'
+const COLUNAS = 'grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] gap-3 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_76px] sm:gap-[18px]'
 
 function TabelaSetores({ setores, podeEditarSetor, podeExcluir, aoEditar, aoExcluir }: PropriedadesTabelaSetores) {
   return (
-    <div className="overflow-hidden rounded-[10px] bg-white px-6 pb-2 shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)]">
-      <div className={`${COLUNAS} -mx-6 bg-[#800020] px-6 py-3`}>
-        <span className="text-[10px] tracking-[0.08em] text-white">SETOR</span>
-        <span className="text-[10px] tracking-[0.08em] text-white">RAMAIS</span>
-        <span className="text-right text-[10px] tracking-[0.08em] text-white">AÇÕES</span>
+    <div className="surface overflow-hidden px-4 pb-2 sm:px-6">
+      <div className={`${COLUNAS} -mx-4 tabela-cabecalho px-4 py-3 sm:-mx-6 sm:px-6`}>
+        <span className="text-xs font-medium tracking-wide uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Setor</span>
+        <span className="text-xs font-medium tracking-wide uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Ramais</span>
+        <span className="text-right text-xs font-medium tracking-wide uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Ações</span>
       </div>
 
       {setores.length === 0 && (
-        <p className="m-0 py-10 text-center text-sm text-slate-500">Nenhum setor encontrado.</p>
+        <p className="m-0 py-10 text-center text-sm text-slate-600">Nenhum setor encontrado.</p>
       )}
 
-      {setores.map((setor, indice) => (
+      {setores.map((setor) => (
         <div
           key={setor.id}
-          className={`${COLUNAS} -mx-6 items-center border-b border-slate-100 px-6 py-[13px] ${
-            indice % 2 ? 'bg-slate-50' : 'bg-white'
-          }`}
+          className={`${COLUNAS} -mx-4 items-center tabela-linha px-4 py-[13px] sm:-mx-6 sm:px-6`}
         >
-          <span className="text-[13.5px] font-medium text-slate-900">{setor.nome}</span>
+          <span className="text-sm font-medium text-slate-900 liquido:text-[15px]">{setor.nome}</span>
           <div className="flex flex-wrap gap-1.5">
-            {setor.ramais.length === 0 && <span className="text-[12.5px] text-slate-400">—</span>}
+            {setor.ramais.length === 0 && <span className="text-[13px] text-slate-500">—</span>}
             {setor.ramais.map((ramal) => (
               <span
                 key={ramal.id}
-                className="rounded-md bg-[#fff5f5] px-[9px] py-[3px] font-mono text-[12.5px] font-medium text-[#800020]"
+                className="rounded-md bg-brand-50 px-[9px] py-[3px] liquido:rounded-full liquido:px-2.5 font-mono text-[13px] font-medium text-brand-700 tabular-nums ring-1 ring-brand-100"
               >
                 {ramal.numero}
               </span>
@@ -49,7 +47,7 @@ function TabelaSetores({ setores, podeEditarSetor, podeExcluir, aoEditar, aoExcl
                 type="button"
                 onClick={() => aoEditar(setor)}
                 title="Editar"
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-700 sm:size-7 liquido:btn-icon"
               >
                 <IconeLapis tamanho={15} />
               </button>
@@ -59,7 +57,7 @@ function TabelaSetores({ setores, podeEditarSetor, podeExcluir, aoEditar, aoExcl
                 type="button"
                 onClick={() => aoExcluir(setor)}
                 title="Excluir"
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
+                className="flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-danger-50 hover:text-danger-600 sm:size-7 liquido:btn-icon is-danger"
               >
                 <IconeLixeira tamanho={15} />
               </button>

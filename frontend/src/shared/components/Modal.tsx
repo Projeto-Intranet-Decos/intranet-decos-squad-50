@@ -15,9 +15,17 @@ interface PropriedadesModal {
 }
 
 const CLASSES_VARIANTE = {
-  padrao: { fundo: 'p-10', painel: 'p-6 pb-5', cabecalho: 'mb-5' },
-  amplo: { fundo: 'p-12', painel: 'min-h-[600px] p-10 pb-8', cabecalho: 'mb-[22px]' },
+  padrao: { fundo: 'p-4 sm:p-10', painel: '', conteudo: 'p-5 pb-5 sm:p-6', cabecalho: 'mb-5' },
+  amplo: {
+    fundo: 'p-4 sm:p-12',
+    painel: 'min-h-[min(600px,100%)]',
+    conteudo: 'p-5 pb-6 sm:p-10 sm:pb-8',
+    cabecalho: 'mb-[22px]',
+  },
 }
+
+const SELETOR_FOCAVEIS =
+  'a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
 
 function Modal({
   aberto,
@@ -43,6 +51,32 @@ function Modal({
 
     function aoTeclar(e: KeyboardEvent) {
       if (e.key === 'Escape') aoFecharRef.current()
+      if (e.key === 'Tab') prenderFoco(e)
+    }
+
+    // Tab no último volta ao primeiro, Shift+Tab no primeiro (ou no painel) vai ao último: o foco
+    // não sai para a página atrás. No meio da lista o navegador segue sozinho.
+    function prenderFoco(e: KeyboardEvent) {
+      const painel = painelRef.current
+      if (!painel) return
+      // Os inputs de arquivo dos formulários ficam ocultos (display: none) e não recebem foco.
+      const focaveis = [...painel.querySelectorAll<HTMLElement>(SELETOR_FOCAVEIS)].filter(
+        (el) => !el.closest('[inert]') && (typeof el.checkVisibility !== 'function' || el.checkVisibility()),
+      )
+      if (focaveis.length === 0) {
+        e.preventDefault()
+        return
+      }
+      const primeiro = focaveis[0]
+      const ultimo = focaveis[focaveis.length - 1]
+      const atual = document.activeElement
+      if (e.shiftKey && (atual === primeiro || atual === painel || !painel.contains(atual))) {
+        e.preventDefault()
+        ultimo.focus()
+      } else if (!e.shiftKey && (atual === ultimo || !painel.contains(atual))) {
+        e.preventDefault()
+        primeiro.focus()
+      }
     }
     document.addEventListener('keydown', aoTeclar)
     return () => {
@@ -56,10 +90,10 @@ function Modal({
   const classes = CLASSES_VARIANTE[variante]
 
   return (
-    <div
-      onClick={aoFechar}
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-800/45 ${classes.fundo}`}
-    >
+    <div onClick={aoFechar} className={`fixed inset-0 z-50 flex items-center justify-center ${classes.fundo}`}>
+      {/* O fundo é irmão do painel, não pai: um backdrop-filter dentro de outro só enxerga o
+          conteúdo do pai, e o painel deixaria de desfocar a página. */}
+      <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[3px] liquido:bg-slate-900/25 liquido:backdrop-blur-sm" aria-hidden="true" />
       <div
         ref={painelRef}
         role="dialog"
@@ -69,24 +103,28 @@ function Modal({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{ width: largura }}
-        className={`flex max-h-full w-full max-w-full flex-col overflow-auto rounded-[10px] bg-white shadow-[0_18px_44px_-20px_rgba(30,41,59,0.32)] outline-none ${classes.painel}`}
+        className={`glass-modal relative flex max-h-full w-full max-w-full flex-col overflow-hidden rounded-2xl outline-none liquido:rounded-panel ${classes.painel}`}
       >
-        <div className={`flex items-center gap-4 ${classes.cabecalho}`}>
-          {cabecalho ?? (
-            <h2 id={idTitulo} className="m-0 text-[19px] font-bold tracking-tight text-slate-900">
-              {titulo}
-            </h2>
-          )}
-          <button
-            type="button"
-            onClick={aoFechar}
-            className="ml-auto flex text-slate-400 hover:text-[#800020]"
-            title="Fechar"
-          >
-            <IconeX tamanho={17} />
-          </button>
+        {/* A rolagem fica num filho para o brilho da borda (::before do vidro) não rolar junto. */}
+        <div className={`flex min-h-0 flex-1 flex-col overflow-auto ${classes.conteudo}`}>
+          <div className={`flex items-center gap-4 ${classes.cabecalho}`}>
+            {cabecalho ?? (
+              <h2 id={idTitulo} className="m-0 text-lg font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-xl">
+                {titulo}
+              </h2>
+            )}
+            <button
+              type="button"
+              onClick={aoFechar}
+              className="-mr-2 ml-auto flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-800 sm:size-8 liquido:mr-0 liquido:btn-icon"
+              title="Fechar"
+              aria-label="Fechar"
+            >
+              <IconeX tamanho={18} />
+            </button>
+          </div>
+          {children}
         </div>
-        {children}
       </div>
     </div>
   )

@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { podeEditar } from '../../../lib/permissions'
+import { IconeAlerta } from '../../../shared/components/icones'
 import {
   agruparEventosPorDia,
+  dataDeChave,
   deslocarPeriodo,
   intervaloDoPeriodo,
   mesesDoPeriodo,
@@ -24,6 +27,8 @@ import VisaoDia from './VisaoDia'
 import VisaoMes from './VisaoMes'
 import VisaoSemana from './VisaoSemana'
 
+const DURACAO_DESTAQUE_MS = 1000
+
 /**
  * Visão do mural que posiciona os eventos (avisos de categoria `evento`) nas suas datas
  * (MUR-15). Clicar num evento abre o mesmo detalhe de aviso do mural. Só exibe: evento é
@@ -31,11 +36,37 @@ import VisaoSemana from './VisaoSemana'
  */
 function PaginaCalendario() {
   const { usuario } = useAuth()
+  // `?data=AAAA-MM-DD` ("Ver no calendário", MUR-15): abre no mês da data e destaca o dia.
+  const [parametros] = useSearchParams()
+  const { key: chaveDaNavegacao } = useLocation()
+  const diaPedido = parametros.get('data')
+  const dataPedida = diaPedido ? dataDeChave(diaPedido) : null
+
   const [visao, setVisao] = useState<VisaoCalendario>('mes')
-  const [dataReferencia, setDataReferencia] = useState(() => new Date())
+  const [dataReferencia, setDataReferencia] = useState(() => dataPedida ?? new Date())
+  const [diaDestacado, setDiaDestacado] = useState(() => (dataPedida ? diaPedido : null))
+  const [navegacaoAplicada, setNavegacaoAplicada] = useState(chaveDaNavegacao)
   const [modalAberto, setModalAberto] = useState(false)
   const [avisoEditando, setAvisoEditando] = useState<Aviso | null>(null)
   const [detalhe, setDetalhe] = useState<Aviso | null>(null)
+
+  // O botão também funciona com o calendário já aberto: cada navegação nova aplica a data uma vez.
+  if (navegacaoAplicada !== chaveDaNavegacao) {
+    setNavegacaoAplicada(chaveDaNavegacao)
+    if (dataPedida) {
+      setDataReferencia(dataPedida)
+      setVisao('mes')
+      setDiaDestacado(diaPedido)
+    }
+  }
+
+  // O destaque some com a animação (1s, `.destaque-dia` no index.css), para não repetir ao trocar
+  // de mês e voltar.
+  useEffect(() => {
+    if (!diaDestacado) return
+    const id = setTimeout(() => setDiaDestacado(null), DURACAO_DESTAQUE_MS)
+    return () => clearTimeout(id)
+  }, [diaDestacado])
 
   const meses = useMemo(() => mesesDoPeriodo(dataReferencia, visao), [dataReferencia, visao])
 
@@ -87,22 +118,23 @@ function PaginaCalendario() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-5">
-        <h1 className="m-0 text-[31px] font-bold tracking-tight text-slate-900">Calendário</h1>
+      <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">Calendário</h1>
       </div>
 
-      {isLoading && <p className="mb-4 text-sm text-slate-500">Carregando eventos…</p>}
+      {isLoading && <p className="mb-4 text-sm text-slate-600">Carregando eventos…</p>}
 
       {/* Sem o backend rodando, as chamadas à API falham e este aviso aparece;
           as visões continuam renderizando (vazias) para permitir ver o layout. */}
       {isError && (
-        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="surface mb-4 flex items-center gap-2.5 !border-l-4 !border-l-critical px-4 py-3 text-sm text-critical">
+          <IconeAlerta tamanho={18} className="flex-none" />
           Não foi possível carregar os eventos. Verifique se o backend está no ar e tente novamente.
         </p>
       )}
 
-      <div className="grid grid-cols-[minmax(0,1fr)_316px] items-start gap-[22px]">
-        <div className="rounded-[10px] bg-white p-5 shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)]">
+      <div className="grid grid-cols-1 items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_316px]">
+        <div className="surface min-w-0 p-4 sm:p-5 liquido:sm:p-6">
           <CabecalhoCalendario
             titulo={tituloDoPeriodo(dataReferencia, visao)}
             visao={visao}
@@ -133,6 +165,7 @@ function PaginaCalendario() {
               eventosPorDia={eventosPorDia}
               aniversariantesDoDia={aniversariantesDoDia}
               aoAbrirEvento={setDetalhe}
+              diaDestacado={diaDestacado}
             />
           )}
           {visao === 'ano' && (
@@ -144,7 +177,7 @@ function PaginaCalendario() {
             />
           )}
         </div>
-        <div className="flex flex-col gap-[22px]">
+        <div className="grid grid-cols-1 items-start gap-[22px] md:grid-cols-2 lg:flex lg:flex-col lg:items-stretch">
           <PainelAniversariantes
             mes={dataReferencia.getMonth() + 1}
             aniversariantes={aniversariantesPorMes.get(dataReferencia.getMonth() + 1) ?? []}

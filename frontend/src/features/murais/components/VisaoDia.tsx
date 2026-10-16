@@ -24,8 +24,8 @@ interface PropriedadesItemAgenda {
 
 function LinhaHorario({ rotulo, children }: PropriedadesLinhaHorario) {
   return (
-    <div className="grid min-h-[58px] grid-cols-[76px_minmax(0,1fr)] border-b border-slate-100 last:border-b-0">
-      <span className="border-r border-slate-100 bg-slate-50 px-3 py-[9px] text-right text-[11px] text-slate-400">
+    <div className="grid min-h-[58px] grid-cols-[64px_minmax(0,1fr)] border-b border-slate-200/60 liquido:border-slate-900/5 last:border-b-0 sm:grid-cols-[76px_minmax(0,1fr)]">
+      <span className="border-r border-slate-200/60 liquido:border-slate-900/5 bg-white/40 px-2.5 py-[9px] text-right text-[11px] text-slate-500 tabular-nums sm:px-3">
         {rotulo}
       </span>
       <div className="flex flex-col gap-1.5 px-2.5 py-[7px]">{children}</div>
@@ -37,14 +37,14 @@ function ItemAgenda({ horario, titulo, detalhe, destaque, aoClicar }: Propriedad
   return (
     <div
       onClick={aoClicar}
-      className={`flex items-baseline gap-3 rounded-[10px] px-3 py-[9px] ${
-        destaque ? 'bg-[#b33951] text-white' : 'bg-slate-100 text-slate-600'
-      } ${aoClicar ? 'cursor-pointer hover:opacity-90' : ''}`}
+      className={`flex flex-col gap-1 rounded-[10px] liquido:rounded-inner px-3 py-[9px] sm:flex-row sm:items-baseline sm:gap-3 ${
+        destaque ? 'bg-brand-500 text-white' : 'bg-slate-900/5 text-slate-700'
+      } ${aoClicar ? 'cursor-pointer transition-opacity hover:opacity-90' : ''}`}
     >
-      <span className="flex-[0_0_78px] text-[11px] opacity-70">{horario}</span>
+      <span className="text-[11px] tabular-nums opacity-80 sm:flex-[0_0_78px]">{horario}</span>
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-[13px] font-semibold">{titulo}</span>
-        {detalhe && <span className="truncate text-[11.5px] opacity-75">{detalhe}</span>}
+        {detalhe && <span className="truncate text-xs opacity-80">{detalhe}</span>}
       </div>
     </div>
   )
@@ -60,7 +60,7 @@ function VisaoDia({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento }: 
   const horas = faixaDeHoras(eventos)
 
   return (
-    <div className="overflow-hidden rounded-[10px] border border-slate-200">
+    <div className="overflow-hidden rounded-[10px] liquido:rounded-inner border border-slate-200/60 liquido:border-slate-900/5">
       {(aniversariantes.length > 0 || continuacoes.length > 0) && (
         <LinhaHorario rotulo="Dia todo">
           {continuacoes.map((evento) => (

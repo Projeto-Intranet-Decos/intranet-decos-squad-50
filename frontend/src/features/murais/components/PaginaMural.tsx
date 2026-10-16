@@ -79,24 +79,24 @@ function PaginaMural() {
   }
 
   if (isLoading) {
-    return <p className="text-sm text-slate-500">Carregando mural…</p>
+    return <p className="text-sm text-slate-600">Carregando mural…</p>
   }
 
   if (isError) {
-    return <p className="text-sm text-red-600">Não foi possível carregar os avisos. Tente novamente.</p>
+    return <p className="text-sm text-critical">Não foi possível carregar os avisos. Tente novamente.</p>
   }
 
   return (
     <div>
       <CarrosselDestaques destaques={destaques} aoAbrir={setDetalhe} />
 
-      <div className="mb-[22px] grid grid-cols-2 items-start gap-[22px]">
+      <div className="mb-[22px] grid grid-cols-1 items-start gap-[22px] md:grid-cols-2">
         <PainelAniversariantes mes={mesAtual} aniversariantes={aniversariantes} />
         <PainelProximosEventos eventos={proximosEventos} aoAbrir={setDetalhe} />
       </div>
 
       <div className="mb-[22px]">
-        <h1 className="m-0 text-[31px] font-bold tracking-tight text-slate-900">Mural de avisos</h1>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">Mural de avisos</h1>
       </div>
 
       <BarraFiltrosMural
@@ -111,7 +111,11 @@ function PaginaMural() {
         aoNovoAviso={abrirNovoAviso}
       />
 
-      <div className="grid grid-cols-[minmax(0,1fr)_316px] items-start gap-[22px]">
+      {/* Fixados vem antes no DOM pra ficar no topo no mobile; no desktop volta pra coluna da direita */}
+      <div className="grid grid-cols-1 items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_316px]">
+        <div className="lg:col-start-2 lg:row-start-1">
+          <PainelFixados fixados={fixados} aoAbrir={setDetalhe} />
+        </div>
         <ListaAvisos
           avisos={avisosFiltrados}
           podeGerenciarAviso={podeGerenciarEsteAviso}
@@ -119,7 +123,6 @@ function PaginaMural() {
           aoEditar={abrirEdicao}
           aoExcluir={aoExcluir}
         />
-        <PainelFixados fixados={fixados} aoAbrir={setDetalhe} />
       </div>
 
       {modalAberto && (

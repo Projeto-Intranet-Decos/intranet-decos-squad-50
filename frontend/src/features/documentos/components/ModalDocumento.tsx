@@ -124,20 +124,20 @@ function ModalDocumento({ aoFechar, documentoEditando, setores, escolheSetor }: 
           }}
           onDragLeave={() => setArrastando(false)}
           onDrop={aoSoltar}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed px-4 py-8 text-center sm:px-6 sm:py-10 transition-colors ${
-            arrastando ? 'border-[#800020] bg-[#800020]/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[10px] liquido:rounded-inner border border-dashed px-4 py-8 text-center sm:px-6 sm:py-10 transition-colors ${
+            arrastando ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-white/55 hover:bg-white/75'
           }`}
         >
-          <IconeNuvemEnviar tamanho={32} className="mb-1 text-[#800020]" />
-          <span className="text-[15px] font-bold text-slate-900">
+          <IconeNuvemEnviar tamanho={32} className="mb-1 text-brand-600" />
+          <span className="text-[15px] font-semibold text-slate-900">
             {textoArquivo ?? 'Arraste arquivos para enviar'}
           </span>
-          <span className="text-[13px] text-slate-500">
+          <span className="text-[13px] text-slate-600">
             {textoArquivo
               ? 'Clique ou arraste outro arquivo para substituir'
               : `PDF, Office, texto ou imagem até ${TAMANHO_MAXIMO_MB} MB · ou clique para selecionar do computador`}
           </span>
-          {erroArquivo && <span className="text-xs text-red-600">{erroArquivo}</span>}
+          {erroArquivo && <span className="text-xs text-critical">{erroArquivo}</span>}
           <input
             ref={entradaArquivo}
             type="file"
@@ -182,7 +182,7 @@ function ModalDocumento({ aoFechar, documentoEditando, setores, escolheSetor }: 
           )}
         </div>
 
-        <div className="mt-2 flex justify-end gap-2.5 border-t border-slate-100 pt-[18px]">
+        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 liquido:border-slate-900/5 pt-[18px] sm:flex sm:justify-end">
           <Botao variante="secundario" onClick={aoFechar}>
             Cancelar
           </Botao>

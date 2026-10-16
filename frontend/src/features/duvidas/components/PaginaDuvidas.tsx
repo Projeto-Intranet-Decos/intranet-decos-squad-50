@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { podeEditar, podeGerenciarConteudo } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
@@ -9,15 +9,6 @@ import { useSetoresDuvidas } from '../hooks/useSetoresDuvidas'
 import type { Faq } from '../types'
 import ModalFaq from './ModalFaq'
 import PainelFaq from './PainelFaq'
-
-// Tokens de marca (docs/.claude/rules/design-system.md) declarados aqui, e
-// só aqui, porque ainda não estão em src/index.css (fora do escopo desta
-// feature) — evita hex direto espalhado pelos componentes da página.
-const TOKENS_MARCA = {
-  '--bordeaux': '#800020',
-  '--bordeaux-dark': '#3b000e',
-  '--bordeaux-light': '#b33951',
-} as CSSProperties
 
 function PaginaDuvidas() {
   const { usuario } = useAuth()
@@ -68,19 +59,19 @@ function PaginaDuvidas() {
   }
 
   if (isLoading) {
-    return <p className="text-sm text-slate-500">Carregando central de dúvidas…</p>
+    return <p className="text-sm text-slate-600">Carregando central de dúvidas…</p>
   }
 
   if (isError) {
-    return <p className="text-sm text-red-600">Não foi possível carregar a FAQ. Tente novamente.</p>
+    return <p className="text-sm text-critical">Não foi possível carregar a FAQ. Tente novamente.</p>
   }
 
   return (
-    <div style={TOKENS_MARCA}>
-      <div className="mb-[22px] flex items-center justify-between">
-        <h1 className="m-0 text-[31px] font-bold tracking-tight text-slate-900">Central de dúvidas</h1>
+    <div>
+      <div className="mb-[22px] flex flex-wrap items-center justify-between gap-3">
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">Central de dúvidas</h1>
         {podeCriar && (
-          <Botao variante="primario" onClick={abrirNovaFaq} className="flex items-center gap-2">
+          <Botao variante="primario" onClick={abrirNovaFaq} className="w-full sm:w-auto">
             <IconeMais tamanho={15} />
             Nova dúvida
           </Botao>

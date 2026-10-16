@@ -68,17 +68,17 @@ function PaginaSetores() {
   }
 
   if (isLoading) {
-    return <p className="text-sm text-slate-500">Carregando setores…</p>
+    return <p className="text-sm text-slate-600">Carregando setores…</p>
   }
 
   if (isError) {
-    return <p className="text-sm text-red-600">Não foi possível carregar os setores. Tente novamente.</p>
+    return <p className="text-sm text-critical">Não foi possível carregar os setores. Tente novamente.</p>
   }
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="m-0 text-[31px] font-bold tracking-tight text-slate-900">Setores e ramais</h1>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">Setores e ramais</h1>
       </div>
 
       <BarraFiltrosSetores

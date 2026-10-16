@@ -20,8 +20,17 @@ Personas `[ENT]`:
 ### GER-01 — Plataforma e público
 Origem: [ESP] · Back — · Front ✅ · Teste —
 
-Aplicação web de uso interno, exclusivamente desktop. Público: colaboradores administrativos e
-assistenciais, exceto o corpo médico. Layout não precisa ser responsivo para celular.
+Aplicação web de uso interno, pensada para o desktop. Público: colaboradores administrativos e
+assistenciais, exceto o corpo médico. Abaixo de 1024px o layout se adapta (menu lateral vira
+drawer aberto por uma barra superior), sem rolagem horizontal da página a partir de 360px; o
+desktop não muda por causa disso. Há dois estilos visuais, escolhidos em Configurações (GER-14):
+**Vidro líquido** (padrão), com referência em [`docs/DESIGN_VIDRO_LIQUIDO.md`](../DESIGN_VIDRO_LIQUIDO.md), e
+**Vidro clínico**, com referência em [`docs/DESIGN_PROMPT.md`](../DESIGN_PROMPT.md). Os dois mudam
+só a aparência: as telas, os textos e a posição das coisas no desktop são os mesmos. Rótulos curtos
+(títulos de seção do menu, cabeçalhos de painel e de tabela, rótulos de campo) são escritos em frase
+normal e aparecem assim no Vidro líquido; no Vidro clínico ficam em caixa alta, só por CSS. O fundo da
+aplicação tem um gradiente suave (ajustável, ver GER-14) e a rolagem tem efeito elástico no
+desktop (GER-15).
 
 ### GER-02 — Autenticação obrigatória
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
@@ -160,3 +169,110 @@ Ambiente reproduzível via `docker-compose` (Postgres, MinIO, backend, frontend 
 remove o prefixo `/api` e repassa ao backend.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
+
+### GER-14 — Preferências de interface
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+Página **Configurações** (`/configuracoes`, item no menu lateral) com ajustes visuais da
+interface. São do **navegador**, não da conta: ficam em `localStorage` (`intranet:preferencias`),
+não passam pelo backend e continuam valendo depois de sair e entrar com outro usuário.
+
+| Preferência | Valores | Padrão |
+|---|---|---|
+| Estilo visual (GER-01) | Vidro líquido, Vidro clínico | Vidro líquido |
+| Desfoque do vidro | 0 a 24 px | 16 px |
+| Transparência do vidro | 0 a 100% | 60% |
+| Refração no carrossel | ligado/desligado | ligado |
+| Gradiente de fundo | desligado, suave, intenso | suave |
+| Efeito elástico na rolagem (GER-15) | ligado/desligado | ligado |
+| Reduzir animações | ligado/desligado | desligado |
+
+- **Dado** qualquer usuário autenticado (inclusive `comum`), **quando** abre `/configuracoes`,
+  **então** vê a página; o menu lateral tem o item "Configurações".
+- **Dado** que nada foi salvo, **então** valem os padrões da tabela.
+- **Dado** que o usuário muda uma opção, **então** o efeito aparece na hora, sem botão de salvar,
+  e o valor é gravado; **quando** a página é recarregada, **então** a preferência já vem aplicada.
+- **Dado** um valor salvo inválido (JSON corrompido, campo fora dos limites ou de outro tipo),
+  **então** o campo inválido volta ao padrão e os demais são mantidos.
+- **Dado** desfoque 0 e transparência 0, **então** o vidro vira superfície sólida, sem
+  `backdrop-filter`.
+- **Dado** "Reduzir animações" ligado, **então** transições e animações são suprimidas como em
+  `prefers-reduced-motion`, e o efeito elástico não acontece.
+- **Dado** o estilo visual escolhido, **então** o `<html>` recebe `data-visual="liquido"` ou
+  `data-visual="clinico"` e a interface toda (menu, páginas, modais, toasts e a tela de login) passa
+  a usar aquele estilo. Desfoque e transparência valem nos dois estilos, sempre relativos aos valores
+  do design de cada um.
+- **Dado** "Refração no carrossel" ligado, o Vidro líquido e um navegador Chromium (Chrome, Edge), **então**
+  o `<html>` recebe a classe `refracao` e a placa de vidro do carrossel distorce o fundo nas bordas,
+  como uma lente (filtro SVG `feDisplacementMap` no `backdrop-filter`). Em outros navegadores o
+  interruptor fica desativado, com a explicação, e a placa usa só o desfoque. Desfoque 0, `no-glass`
+  ou transparência reduzida também tiram a refração.
+- **Quando** o usuário aciona "Restaurar padrão", **então** todas as opções voltam ao padrão.
+
+A tela de login segue o estilo visual, mas não muda com as demais preferências. A classe
+`no-glass` no `<html>` continua funcionando só por CSS, nos dois estilos.
+
+### GER-15 — Efeito elástico na rolagem
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+No desktop (mouse ou trackpad), rolar além do topo ou do fim da página desloca o conteúdo com
+resistência e ele volta sozinho ao lugar (*rubber banding*). O menu lateral não se move. Em telas
+de toque vale o comportamento nativo do navegador.
+
+- **Dado** a página no topo, **quando** o usuário continua rolando para cima, **então** o conteúdo
+  desce no máximo 96px, cada vez menos a cada rolagem; o mesmo vale, espelhado, no fim da página.
+- **Dado** o conteúdo deslocado, **quando** a rolagem para ou muda de sentido, **então** ele volta
+  à posição original.
+- **Não acontece** com um modal aberto, com o ponteiro sobre uma área que tem rolagem própria, com
+  `Ctrl` pressionado (zoom), com a preferência desligada ou com animações reduzidas (GER-14 ou
+  `prefers-reduced-motion`).
+
+### GER-16 — Modais
+Origem: [COD] · Back — · Front ✅ · Teste ✅
+
+Todo modal usa o componente compartilhado `Modal`: painel de vidro centralizado sobre um fundo que
+escurece e desfoca de leve a página.
+
+- **Dado** um modal aberto, **quando** o usuário clica fora do painel, aperta `Esc` ou aciona
+  "Fechar", **então** o modal fecha; clicar dentro do painel não fecha.
+- **Dado** um modal aberto, **então** o foco fica preso no painel: `Tab` no último elemento focável
+  volta ao primeiro e `Shift+Tab` no primeiro (ou com o foco no próprio painel) vai ao último; o
+  foco nunca passa para a página atrás.
+- **Quando** o modal fecha, **então** o foco volta ao elemento que estava focado antes de ele abrir.
+- **Dado** um modal aberto, **então** o painel desfoca o que está atrás dele: o painel não pode
+  ficar dentro do elemento que desfoca a página, porque um `backdrop-filter` aninhado em outro só
+  enxerga o conteúdo do pai, não a página. 🐞 corrigido: o painel ficava dentro do fundo e o texto
+  da página aparecia nítido através dele.
+- O painel tem um vidro próprio (`glass-modal`), tão branco quanto o do menu (GER-18) e com
+  sombra mais forte, para não escurecer junto com o fundo. Ele segue as preferências de desfoque e
+  transparência (GER-14). No Vidro líquido o painel é mais translúcido que no Vidro clínico, mas ainda
+  mais branco que o menu, para o carrossel bordô atrás não tingir o painel.
+
+### GER-17 — Transição entre páginas
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+Trocar de página pelo menu lateral é animado, no conteúdo e no menu.
+
+- **Dado** uma página aberta, **quando** o usuário vai para outra, **então** o conteúdo atual some
+  e só depois o novo entra (esmaecendo e subindo de leve); a troca toda leva menos de meio segundo.
+- **Dado** a troca de página, **então** o menu lateral não é remontado (continua recolhido ou
+  expandido como estava) e o indicador de página atual desliza do item antigo até o novo. Só o
+  item da página atual tem indicador.
+- **Dado** animações reduzidas (GER-14 ou `prefers-reduced-motion`), **então** a troca é imediata,
+  sem animação.
+- A primeira página aberta depois de carregar o site entra sem animação.
+
+### GER-18 — Vidro do menu e da barra superior
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+O menu lateral, a barra superior (abaixo de 1024px) e os dropdowns usam o vidro estrutural
+(`glass`), com o mesmo branco do painel dos modais (GER-16). No celular a página passa por trás
+deles: o conteúdo rola sob a barra superior e o menu abre por cima da página escurecida.
+
+- **Dado** a barra superior ou o menu lateral, **então** o texto deles fica legível com qualquer
+  conteúdo atrás: o fundo do vidro é tão branco quanto o do modal e segue as preferências de
+  desfoque e transparência (GER-14). 🐞 corrigido: o vidro era transparente demais e, no celular,
+  o texto da página atrás competia com o do menu.
+- No Vidro líquido o vidro é mais translúcido, como no design; a legibilidade no celular vem do fundo
+  do drawer, que escurece **e desfoca** a página, e da barra superior compacta, que só tem o botão
+  do menu e o logo.

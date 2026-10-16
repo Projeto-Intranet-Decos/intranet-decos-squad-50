@@ -1,4 +1,4 @@
-import { IconeLapis, IconeLixeira } from '../../../shared/components/icones'
+import { IconeLapis, IconeLixeira, IconeMais, IconeMenos } from '../../../shared/components/icones'
 import type { Faq } from '../types'
 
 interface PropriedadesItemFaq {
@@ -12,27 +12,29 @@ interface PropriedadesItemFaq {
 
 function ItemFaq({ faq, expandido, aoAlternar, podeGerenciar, aoEditar, aoExcluir }: PropriedadesItemFaq) {
   return (
-    <div className="border-t border-slate-100 py-4 first:border-t-0">
+    <div className="border-t border-slate-200/60 liquido:border-slate-900/5 py-4 first:border-t-0">
       <button
         type="button"
         onClick={aoAlternar}
-        className="flex w-full items-center gap-4 text-left"
+        className="flex w-full items-center gap-3 rounded-lg text-left sm:gap-4"
       >
-        <span className="w-16 flex-none text-[10.5px] font-semibold tracking-wide text-slate-500 uppercase">
+        <span className="w-16 flex-none text-[11px] font-semibold tracking-wide text-slate-500 uppercase liquido:text-xs liquido:tracking-normal liquido:normal-case">
           {faq.setorNome}
         </span>
-        <span className="flex-1 text-[14.5px] font-semibold text-slate-900">{faq.pergunta}</span>
-        <span className="flex-none text-lg leading-none text-slate-400">{expandido ? '−' : '+'}</span>
+        <span className="flex-1 text-[15px] font-semibold text-slate-900 liquido:tracking-tight">{faq.pergunta}</span>
+        <span className="flex size-10 flex-none items-center justify-center text-slate-500 sm:size-6">
+          {expandido ? <IconeMenos tamanho={18} /> : <IconeMais tamanho={18} />}
+        </span>
       </button>
 
       {expandido && (
-        <div className="mt-3 pl-20">
+        <div className="mt-3 sm:pl-20">
           {podeGerenciar && (
             <div className="mb-3 flex gap-2">
               <button
                 type="button"
                 onClick={() => aoEditar(faq)}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                className="btn btn-secondary min-h-10 px-3 text-[13px] sm:min-h-8"
               >
                 <IconeLapis tamanho={13} />
                 Editar
@@ -40,14 +42,14 @@ function ItemFaq({ faq, expandido, aoAlternar, podeGerenciar, aoEditar, aoExclui
               <button
                 type="button"
                 onClick={() => aoExcluir(faq)}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                className="btn btn-danger min-h-10 px-3 text-[13px] sm:min-h-8"
               >
                 <IconeLixeira tamanho={13} />
                 Excluir
               </button>
             </div>
           )}
-          <p className="m-0 text-[13.5px] leading-relaxed text-slate-700">{faq.resposta}</p>
+          <p className="m-0 text-sm leading-relaxed text-slate-700 liquido:text-[15px]">{faq.resposta}</p>
         </div>
       )}
     </div>

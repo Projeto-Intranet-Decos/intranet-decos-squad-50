@@ -66,7 +66,7 @@ function ModalSetor({ aoFechar, setorEditando, podeRenomear }: PropriedadesModal
           <Input
             placeholder="Ex.: Nutrição clínica"
             readOnly={!podeRenomear}
-            className={podeRenomear ? '' : 'cursor-not-allowed bg-slate-100 text-slate-500'}
+            className={podeRenomear ? '' : 'cursor-not-allowed bg-slate-900/5 text-slate-500'}
             {...register('nome', { required: 'Informe o nome do setor.' })}
           />
         </Campo>
@@ -75,7 +75,7 @@ function ModalSetor({ aoFechar, setorEditando, podeRenomear }: PropriedadesModal
           <Input placeholder="Ex.: 2320, 2321" {...register('ramais', { validate: validarRamais })} />
         </Campo>
 
-        <div className="mt-2 flex justify-end gap-2.5 border-t border-slate-100 pt-[18px]">
+        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 liquido:border-slate-900/5 pt-[18px] sm:flex sm:justify-end">
           <Botao variante="secundario" onClick={aoFechar}>
             Cancelar
           </Botao>

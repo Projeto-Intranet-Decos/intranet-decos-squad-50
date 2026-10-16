@@ -6,33 +6,37 @@ import FormularioAtalho from './FormularioAtalho'
 
 interface PropriedadesItemAtalho {
   atalho: Atalho
-  recolhido: boolean
+  compacto: boolean
   gerenciavel: boolean
+  aoNavegar: () => void
 }
 
 const CLASSE_ACAO =
-  'flex h-6 w-6 flex-none items-center justify-center rounded-md text-slate-400 hover:bg-slate-200'
+  'flex size-8 flex-none items-center justify-center rounded-lg text-slate-500 transition-[color,background-color,scale] lg:size-7 liquido:rounded-full liquido:active:scale-[0.94]'
 
-function ItemAtalho({ atalho, recolhido, gerenciavel }: PropriedadesItemAtalho) {
+const CLASSE_BOTAO_CONFIRMACAO =
+  'min-h-8 rounded-md px-2.5 font-medium transition-colors lg:min-h-7 lg:px-2 liquido:rounded-full disabled:opacity-60'
+
+function ItemAtalho({ atalho, compacto, gerenciavel, aoNavegar }: PropriedadesItemAtalho) {
   const [editando, setEditando] = useState(false)
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false)
   const excluir = useExcluirAtalho()
 
-  if (editando && !recolhido) {
+  if (editando && !compacto) {
     return <FormularioAtalho id={atalho.id} inicial={atalho} aoConcluir={() => setEditando(false)} />
   }
 
-  if (confirmandoExclusao && !recolhido) {
+  if (confirmandoExclusao && !compacto) {
     return (
-      <div className="flex items-center gap-2 rounded-[10px] bg-red-50 px-3 py-2 text-[12.5px] text-slate-700">
+      <div className="flex items-center gap-1.5 rounded-[10px] bg-danger-50/90 py-1.5 pr-1.5 pl-3 text-[13px] text-slate-700 ring-1 ring-red-200/70 liquido:rounded-2xl liquido:pl-3.5">
         <span className="flex-1 truncate">
-          Excluir <strong className="font-semibold">{atalho.titulo}</strong>?
+          Excluir <strong className="font-semibold text-slate-900">{atalho.titulo}</strong>?
         </span>
         <button
           type="button"
           autoFocus
           onClick={() => setConfirmandoExclusao(false)}
-          className="rounded-md px-1.5 py-0.5 text-slate-500 hover:bg-white"
+          className={`${CLASSE_BOTAO_CONFIRMACAO} text-slate-600 hover:bg-white/80 hover:text-slate-900`}
         >
           Não
         </button>
@@ -40,7 +44,7 @@ function ItemAtalho({ atalho, recolhido, gerenciavel }: PropriedadesItemAtalho) 
           type="button"
           disabled={excluir.isPending}
           onClick={() => excluir.mutate(atalho.id, { onError: () => setConfirmandoExclusao(false) })}
-          className="rounded-md bg-[#800020] px-1.5 py-0.5 font-semibold text-white hover:bg-[#6a001a] disabled:opacity-60"
+          className={`${CLASSE_BOTAO_CONFIRMACAO} bg-danger-600 font-semibold text-white hover:bg-red-700`}
         >
           Sim
         </button>
@@ -49,36 +53,38 @@ function ItemAtalho({ atalho, recolhido, gerenciavel }: PropriedadesItemAtalho) 
   }
 
   return (
-    <div className="group flex items-center rounded-[10px] hover:bg-slate-100">
+    <div className="group flex min-h-10 items-center rounded-[10px] transition-colors hover:bg-white/60 liquido:rounded-full liquido:hover:bg-white/50">
       <a
         href={atalho.url}
         target="_blank"
         rel="noopener noreferrer"
         title={atalho.titulo}
-        className={`flex min-w-0 flex-1 items-center gap-2.5 py-2.5 text-[13px] ${recolhido ? 'justify-center px-0' : 'px-3'} font-medium text-slate-600 no-underline group-hover:text-[#800020]`}
+        onClick={aoNavegar}
+        className={`flex min-h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] ${compacto ? 'justify-center px-0' : 'px-3 liquido:px-3.5'} font-medium text-slate-600 no-underline transition-[color,scale] group-hover:text-brand-600 liquido:rounded-full liquido:text-[15px] liquido:text-slate-700 liquido:active:scale-[0.98]`}
       >
-        <IconeSetaExterna tamanho={15} className="flex-none text-slate-400" />
-        {!recolhido && <span className="flex-1 truncate">{atalho.titulo}</span>}
+        <IconeSetaExterna tamanho={16} className="flex-none text-slate-500 liquido:size-[18px]" />
+        {!compacto && <span className="flex-1 truncate">{atalho.titulo}</span>}
       </a>
-      {gerenciavel && !recolhido && (
-        <div className="hidden flex-none items-center gap-0.5 pr-1.5 group-focus-within:flex group-hover:flex">
+      {gerenciavel && !compacto && (
+        // No toque (drawer) não há hover: os botões ficam sempre à mostra abaixo de lg.
+        <div className="flex flex-none items-center gap-0.5 pr-1 lg:hidden lg:group-focus-within:flex lg:group-hover:flex">
           <button
             type="button"
             onClick={() => setEditando(true)}
             title="Editar atalho"
             aria-label={`Editar ${atalho.titulo}`}
-            className={`${CLASSE_ACAO} hover:text-slate-700`}
+            className={`${CLASSE_ACAO} hover:bg-white/80 hover:text-slate-700`}
           >
-            <IconeLapis tamanho={13} />
+            <IconeLapis tamanho={14} />
           </button>
           <button
             type="button"
             onClick={() => setConfirmandoExclusao(true)}
             title="Excluir atalho"
             aria-label={`Excluir ${atalho.titulo}`}
-            className={`${CLASSE_ACAO} hover:text-[#800020]`}
+            className={`${CLASSE_ACAO} hover:bg-danger-50 hover:text-danger-600`}
           >
-            <IconeLixeira tamanho={13} />
+            <IconeLixeira tamanho={14} />
           </button>
         </div>
       )}

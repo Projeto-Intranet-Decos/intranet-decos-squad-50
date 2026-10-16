@@ -1,6 +1,867 @@
 @import "tailwindcss";
 
-button:not(:disabled),
-[role="button"] {
-  cursor: pointer;
+/* Dois estilos visuais, escolhidos em Configurações (GER-14) e marcados no <html>:
+   - data-visual="liquido": Vidro líquido, o padrão (docs/DESIGN_VIDRO_LIQUIDO.md);
+   - data-visual="clinico": Vidro clínico (docs/DESIGN_PROMPT.md).
+   As classes sem variante são as do Vidro clínico. O Vidro líquido entra por cima delas: nos
+   utilitários compartilhados, por um bloco `@variant liquido`; nos componentes, pela variante `liquido:`. */
+@custom-variant liquido (&:where([data-visual="liquido"], [data-visual="liquido"] *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-sans);
+
+  /* Bordeaux (marca Decós) */
+  --color-brand-50: #fbf3f5;
+  --color-brand-100: #f4e1e6;
+  --color-brand-500: #b33951;
+  --color-brand-600: #800020;
+  --color-brand-700: #3b000e;
+
+  /* Erro / crítico */
+  --color-danger-50: #fff5f5;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-critical: #dc2626;
+
+  /* Complementares de status */
+  --color-warning: #b7791f;
+  --color-success: #2f855a;
+  --color-info: #2b6cb0;
+
+  /* Raios. No Vidro líquido são concêntricos: interno = externo − padding. */
+  --radius-panel: 1rem;
+  --radius-card: 1rem;
+  --radius-inner: 0.625rem;
+  --radius-tile: 0.625rem;
+  --radius-control: 0.625rem;
+}
+
+/* Ajustáveis na página Configurações (lib/preferencias); estes são os valores do design. */
+:root {
+  --vidro-desfoque: 16px;
+  /* 1 = transparência do design; 0 = sólido; acima de 1, mais transparente. */
+  --vidro-transparencia: 1;
+}
+
+/* Tokens do Vidro líquido: pilha de sistema (SF Pro nos aparelhos Apple), cantos grandes. */
+[data-visual="liquido"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+  --radius-panel: 1.75rem;
+  --radius-card: 1.5rem;
+  --radius-inner: 1rem;
+  --radius-tile: 0.875rem;
+  --radius-control: 1rem;
+}
+@media (width < 40rem) {
+  [data-visual="liquido"] {
+    --radius-panel: 1.375rem;
+    --radius-card: 1.25rem;
+  }
+}
+
+@utility bg-bordeaux-gradient {
+  background: linear-gradient(135deg, #b33951 0%, #800020 45%, #3b000e 100%);
+}
+
+/* Vidro estrutural: menu lateral, barra superior, dropdown. Tão branco quanto o `glass-modal`,
+   porque no celular a página passa por trás dele (rola sob a barra; o menu abre por cima dela
+   escurecida) e um vidro mais transparente deixa o texto de trás competir com o dele. */
+@utility glass {
+  background: linear-gradient(
+    135deg,
+    rgb(255 255 255 / calc(1 - 0.08 * var(--vidro-transparencia))),
+    rgb(255 255 255 / calc(1 - 0.18 * var(--vidro-transparencia)))
+  );
+  backdrop-filter: blur(var(--vidro-desfoque)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--vidro-desfoque)) saturate(140%);
+  border: 1px solid rgb(255 255 255 / 0.75);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    inset 0 -1px 0 rgb(255 255 255 / 0.35),
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 10px 30px rgb(15 23 42 / 0.08);
+
+  /* Vidro líquido: 58→34% de branco, blur 24px (1,5× o desfoque escolhido) e espessura nas sombras internas. */
+  @variant liquido {
+    background: linear-gradient(
+      160deg,
+      rgb(255 255 255 / calc(1 - 0.42 * var(--vidro-transparencia))),
+      rgb(255 255 255 / calc(1 - 0.66 * var(--vidro-transparencia)))
+    );
+    backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.5)) saturate(170%);
+    -webkit-backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.5)) saturate(170%);
+    border-color: rgb(255 255 255 / 0.55);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.95),
+      inset 0 -12px 24px -14px rgb(255 255 255 / 0.6),
+      inset 0 0 0 1px rgb(255 255 255 / 0.22),
+      0 12px 40px rgb(59 0 14 / 0.07),
+      0 1px 2px rgb(15 23 42 / 0.04);
+  }
+}
+
+/* Vidro dos modais: o mesmo branco do `glass`, para não escurecer junto com o fundo do modal,
+   com borda e sombra mais fortes de painel flutuante. */
+@utility glass-modal {
+  background: linear-gradient(
+    135deg,
+    rgb(255 255 255 / calc(1 - 0.08 * var(--vidro-transparencia))),
+    rgb(255 255 255 / calc(1 - 0.18 * var(--vidro-transparencia)))
+  );
+  backdrop-filter: blur(var(--vidro-desfoque)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--vidro-desfoque)) saturate(140%);
+  border: 1px solid rgb(255 255 255 / 0.85);
+  box-shadow:
+    inset 0 1px 0 white,
+    0 2px 6px rgb(15 23 42 / 0.06),
+    0 24px 64px rgb(15 23 42 / 0.2);
+
+  /* Vidro líquido: o vidro do `glass` com mais branco (78→62%), porque o fundo do modal escurece a página e
+     um carrossel bordô atrás tingiria o painel todo; sombra de painel flutuante. */
+  @variant liquido {
+    background: linear-gradient(
+      160deg,
+      rgb(255 255 255 / calc(1 - 0.22 * var(--vidro-transparencia))),
+      rgb(255 255 255 / calc(1 - 0.38 * var(--vidro-transparencia)))
+    );
+    backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.5)) saturate(170%);
+    -webkit-backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.5)) saturate(170%);
+    border-color: rgb(255 255 255 / 0.55);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.95),
+      inset 0 -12px 24px -14px rgb(255 255 255 / 0.6),
+      inset 0 0 0 1px rgb(255 255 255 / 0.22),
+      0 24px 64px rgb(59 0 14 / 0.16),
+      0 2px 6px rgb(15 23 42 / 0.06);
+  }
+}
+
+/* Indicador da página atual no menu lateral: vidro tingido de bordô, com a borda refratando a
+   luz. Sem backdrop-filter, porque fica dentro do `glass` do menu. O elemento precisa ter
+   position (no Layout ele é absoluto, atrás do ícone e do rótulo, e desliza entre os itens). */
+@utility item-ativo {
+  background: linear-gradient(135deg, rgb(179 57 81 / 0.3), rgb(128 0 32 / 0.16));
+
+  /* Vidro líquido: cápsula com um tom bordô leve, sem borda especular. */
+  @variant liquido {
+    background: rgb(128 0 32 / 0.1);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.6),
+      inset 0 0 0 1px rgb(128 0 32 / 0.08);
+  }
+}
+
+/* Tabelas (dentro de um `surface`): cabeçalho tingido de bordô, como o item ativo do menu, e
+   divisores e hover das linhas no mesmo tom. Só tons translúcidos da marca, sem cinza sólido e sem
+   o vermelho de erro, que é reservado a status. */
+@utility tabela-cabecalho {
+  background: linear-gradient(135deg, rgb(179 57 81 / 0.14), rgb(128 0 32 / 0.07));
+  border-bottom: 1px solid rgb(128 0 32 / 0.14);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55);
+  color: var(--color-brand-600);
+
+  @variant liquido {
+    background: rgb(128 0 32 / 0.07);
+    border-bottom-color: rgb(128 0 32 / 0.08);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6);
+  }
+}
+
+@utility tabela-linha {
+  border-bottom: 1px solid rgb(128 0 32 / 0.08);
+  transition: background-color 0.15s;
+  &:last-child {
+    border-bottom-width: 0;
+  }
+  &:hover {
+    background: rgb(251 243 245 / 0.75);
+  }
+
+  @variant liquido {
+    border-bottom-color: rgb(128 0 32 / 0.06);
+    &:hover {
+      background: rgb(251 243 245 / 0.6);
+    }
+  }
+}
+
+/* Vidro de conteúdo: painéis, tabelas, formulários (mais opaco) */
+@utility surface {
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    rgb(255 255 255 / calc(1 - 0.2 * var(--vidro-transparencia))),
+    rgb(255 255 255 / calc(1 - 0.38 * var(--vidro-transparencia)))
+  );
+  backdrop-filter: blur(calc(var(--vidro-desfoque) * 0.75)) saturate(140%);
+  -webkit-backdrop-filter: blur(calc(var(--vidro-desfoque) * 0.75)) saturate(140%);
+  border: 1px solid rgb(255 255 255 / 0.8);
+  border-radius: var(--radius-card);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255),
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 6px 20px rgb(15 23 42 / 0.05);
+
+  /* Vidro líquido: 62→40% de branco e blur 20px (1,25× o desfoque escolhido). No hover só o brilho aumenta. */
+  @variant liquido {
+    background: linear-gradient(
+      160deg,
+      rgb(255 255 255 / calc(1 - 0.38 * var(--vidro-transparencia))),
+      rgb(255 255 255 / calc(1 - 0.6 * var(--vidro-transparencia)))
+    );
+    backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.25)) saturate(160%);
+    -webkit-backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.25)) saturate(160%);
+    border-color: rgb(255 255 255 / 0.6);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.9),
+      inset 0 -10px 20px -12px rgb(255 255 255 / 0.55),
+      inset 0 0 0 1px rgb(255 255 255 / 0.25),
+      0 8px 32px rgb(59 0 14 / 0.06),
+      0 1px 2px rgb(15 23 42 / 0.03);
+    transition: box-shadow 0.2s;
+
+    @media (hover: hover) {
+      &:hover {
+        box-shadow:
+          inset 0 1px 1px rgb(255 255 255),
+          inset 0 -10px 20px -12px rgb(255 255 255 / 0.7),
+          inset 0 0 0 1px rgb(255 255 255 / 0.4),
+          0 10px 36px rgb(59 0 14 / 0.08),
+          0 1px 2px rgb(15 23 42 / 0.03);
+      }
+    }
+  }
+}
+
+/* Cartão sobre o gradiente bordô (login) */
+@utility login-card {
+  position: relative;
+  background: rgb(255 255 255 / 0.9);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgb(255 255 255 / 0.5);
+  box-shadow:
+    inset 0 1px 0 white,
+    0 24px 64px rgb(59 0 14 / 0.35);
+
+  /* Vidro líquido: vidro claro do design, com valores fixos (o login não segue desfoque e transparência). */
+  @variant liquido {
+    background: linear-gradient(160deg, rgb(255 255 255 / 0.94), rgb(255 255 255 / 0.84));
+    backdrop-filter: blur(24px) saturate(170%);
+    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    border-color: rgb(255 255 255 / 0.55);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.95),
+      inset 0 -12px 24px -14px rgb(255 255 255 / 0.6),
+      0 24px 64px rgb(59 0 14 / 0.35);
+  }
+}
+
+/* Vidro escuro (só no Vidro líquido): placas sobre o gradiente bordô ou a foto do carrossel. */
+@utility glass-dark {
+  position: relative;
+  background: rgb(0 0 0 / calc(0.2 + 0.1 * (1 - min(var(--vidro-transparencia), 1))));
+  backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.5)) saturate(150%);
+  -webkit-backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.5)) saturate(150%);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 8px 32px rgb(0 0 0 / 0.18);
+}
+
+@utility field {
+  width: 100%;
+  border-radius: var(--radius-control);
+  background: rgb(255 255 255 / 0.8);
+  border: 1px solid rgb(203 213 225);
+  padding: 0.5rem 0.75rem;
+  color: rgb(30 41 59);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  &::placeholder {
+    color: rgb(148 163 184);
+  }
+  &:focus {
+    outline: none;
+    border-color: var(--color-brand-500);
+    box-shadow: 0 0 0 3px rgb(128 0 32 / 0.15);
+  }
+  &:user-invalid {
+    border-color: var(--color-danger-500);
+  }
+  &:disabled {
+    background: rgb(241 245 249 / 0.8);
+    color: rgb(100 116 139);
+  }
+
+  /* Vidro líquido: campo de formulário longo, retangular com `--radius-inner` e borda translúcida. */
+  @variant liquido {
+    border-radius: var(--radius-inner);
+    background: rgb(255 255 255 / 0.7);
+    border-color: rgb(15 23 42 / 0.1);
+    transition:
+      background-color 0.15s,
+      border-color 0.15s,
+      box-shadow 0.15s;
+    &::placeholder {
+      color: rgb(100 116 139);
+    }
+    &:focus {
+      background: rgb(255 255 255 / 0.85);
+      border-color: var(--color-brand-500);
+      box-shadow: 0 0 0 3px rgb(179 57 81 / 0.25);
+    }
+    &:user-invalid {
+      border-color: var(--color-danger-500);
+    }
+    &:disabled {
+      background: rgb(15 23 42 / 0.04);
+    }
+  }
+}
+
+/* Campo e filtro em cápsula (só no Vidro líquido): busca, filtros e controles compactos. Não mexe em
+   padding nem cor do texto, que ficam com as classes do elemento (ícone dentro, filtro ativo). */
+@utility capsule-field {
+  min-height: 2.75rem;
+  border-radius: 9999px;
+  background: rgb(15 23 42 / 0.05);
+  border: 1px solid transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s;
+  &::placeholder {
+    color: rgb(100 116 139);
+  }
+  &:hover:not(:disabled) {
+    background: rgb(15 23 42 / 0.07);
+  }
+  &:focus,
+  &:focus-within {
+    outline: none;
+    border-color: transparent;
+    background: rgb(255 255 255 / 0.75);
+    box-shadow: 0 0 0 3px rgb(179 57 81 / 0.25);
+  }
+}
+
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-control);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Vidro líquido: cápsula que encolhe de leve ao ser pressionada. */
+  @variant liquido {
+    border-radius: 9999px;
+    transition:
+      transform 0.15s,
+      background-color 0.15s,
+      border-color 0.15s,
+      box-shadow 0.15s,
+      color 0.15s;
+    &:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+    &:focus-visible {
+      outline-offset: 3px;
+    }
+  }
+}
+
+@utility btn-primary {
+  background: var(--color-brand-600);
+  color: white;
+  &:hover:not(:disabled) {
+    background: var(--color-brand-700);
+  }
+  &:disabled {
+    background: rgb(226 232 240);
+    color: rgb(100 116 139);
+  }
+
+  @variant liquido {
+    font-weight: 600;
+    background: linear-gradient(180deg, #8f0a2c, #800020);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3);
+    &:hover:not(:disabled) {
+      background: linear-gradient(180deg, #800020, #5c0017);
+    }
+    &:disabled {
+      background: rgb(15 23 42 / 0.08);
+      box-shadow: none;
+    }
+  }
+}
+
+/* No Vidro líquido é o `btn-glass` do design: cápsula de vidro com blur baixo. */
+@utility btn-secondary {
+  background: rgb(255 255 255 / 0.7);
+  color: rgb(51 65 85);
+  border: 1px solid rgb(203 213 225 / 0.9);
+  box-shadow: inset 0 1px 0 white;
+  &:hover:not(:disabled) {
+    background: rgb(255 255 255 / 0.95);
+  }
+  &:disabled {
+    color: rgb(148 163 184);
+  }
+
+  @variant liquido {
+    color: rgb(30 41 59);
+    background: rgb(255 255 255 / 0.55);
+    border-color: rgb(255 255 255 / 0.7);
+    box-shadow: inset 0 1px 0 white;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    &:hover:not(:disabled) {
+      background: rgb(255 255 255 / 0.8);
+    }
+  }
+}
+
+@utility btn-danger {
+  background: rgb(255 255 255 / 0.7);
+  color: var(--color-danger-600);
+  border: 1px solid rgb(220 38 38 / 0.35);
+  &:hover:not(:disabled) {
+    background: var(--color-danger-50);
+  }
+  &:disabled {
+    opacity: 0.6;
+  }
+
+  @variant liquido {
+    background: rgb(255 255 255 / 0.55);
+    border-color: rgb(220 38 38 / 0.25);
+    box-shadow: inset 0 1px 0 white;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+/* Botão de ícone circular (só no Vidro líquido): editar, excluir, setas, sino, sair. Abaixo de lg cresce para
+   44px, o alvo de toque mínimo. `is-danger` tinge o hover de vermelho; `is-dark` é a versão sobre
+   foto ou gradiente bordô. */
+@utility btn-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  color: rgb(71 85 105);
+  background: rgb(255 255 255 / 0.5);
+  border: 1px solid rgb(255 255 255 / 0.7);
+  box-shadow: inset 0 1px 0 white;
+  transition:
+    transform 0.15s,
+    background-color 0.15s,
+    color 0.15s;
+  @media (width < 64rem) {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  &:hover {
+    background: rgb(255 255 255 / 0.85);
+    color: rgb(15 23 42);
+  }
+  &:active {
+    transform: scale(0.94);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+  &.is-danger:hover {
+    color: var(--color-danger-600);
+    background: var(--color-danger-50);
+  }
+  &.is-dark {
+    color: white;
+    background: rgb(255 255 255 / 0.15);
+    border-color: rgb(255 255 255 / 0.25);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+  }
+  &.is-dark:hover {
+    color: white;
+    background: rgb(255 255 255 / 0.25);
+  }
+}
+
+/* Selo em cápsula (só no Vidro líquido): categoria, área, status. As cores ficam com as classes do selo. */
+@utility pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* Borda especular: o "brilho de luz" do vidro. O elemento precisa ter position. */
+.glass::before,
+.glass-modal::before,
+.surface::before,
+.login-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    rgb(255 255 255 / 0.95),
+    rgb(255 255 255 / 0) 35%,
+    rgb(255 255 255 / 0) 65%,
+    rgb(255 255 255 / 0.5)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+/* `liquido:surface` (vidro só no Vidro líquido) ganha a mesma borda especular. */
+[data-visual="liquido"] [class~="liquido:surface"]::before,
+[data-visual="liquido"] :is(.glass, .glass-modal, .surface, .login-card)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+  background: linear-gradient(
+    150deg,
+    rgb(255 255 255),
+    rgb(255 255 255 / 0) 30%,
+    rgb(255 255 255 / 0) 70%,
+    rgb(255 255 255 / 0.6)
+  );
+}
+
+/* Cartões do mural no Vidro líquido: `surface` sem backdrop-filter. A lista pode ter dezenas deles e
+   o que fica atrás são só as manchas, já desfocadas; o blur custaria rolagem sem mudar o visual. */
+[data-visual="liquido"] .cartao-aviso {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* A mesma borda especular, mais larga e mais forte, no item ativo do menu. */
+.item-ativo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    150deg,
+    rgb(255 255 255),
+    rgb(255 255 255 / 0.15) 32%,
+    rgb(255 255 255 / 0.05) 62%,
+    rgb(255 255 255 / 0.85)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+[data-visual="liquido"] .item-ativo::before {
+  display: none;
+}
+
+/* Barra de busca e filtros do mural no Vidro líquido, a partir de lg: presa ao topo num vidro em
+   cápsula, com os avisos rolando por baixo (MUR-11). */
+@media (width >= 64rem) {
+  [data-visual="liquido"] .barra-filtros-fixa {
+    @apply glass;
+    /* Mais branca que o `glass`: a lista passa por baixo, com capas de aviso coloridas. */
+    background: linear-gradient(
+      160deg,
+      rgb(255 255 255 / calc(1 - 0.22 * var(--vidro-transparencia))),
+      rgb(255 255 255 / calc(1 - 0.38 * var(--vidro-transparencia)))
+    );
+    position: sticky;
+    top: 0.75rem;
+    z-index: 20;
+    padding: 0.375rem;
+    border-radius: 9999px;
+  }
+  /* O dropdown abre dentro da barra, e um backdrop-filter dentro de outro só enxerga a barra:
+     sem desfoque útil, o painel fica opaco e sem backdrop-filter para o texto da lista não aparecer. */
+  [data-visual="liquido"] .barra-filtros-fixa .glass {
+    background: rgb(255 255 255 / 0.98);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Refração na placa do carrossel (GER-14): o fundo passa pelo filtro SVG #refracao-vidro
+   (CarrosselDestaques), que o desloca nas bordas como uma lente, e só depois é desfocado, com um
+   desfoque menor para a distorção aparecer. Só o Chromium desenha `url()` no backdrop-filter; a
+   classe `refracao` só entra no <html> nele. Sem desfoque, sem vidro ou com transparência
+   reduzida, fica a placa normal. */
+@media not (prefers-reduced-transparency: reduce) {
+  html.refracao[data-visual="liquido"]:not(.sem-desfoque, .no-glass) .refracao-vidro {
+    backdrop-filter: url(#refracao-vidro) blur(calc(var(--vidro-desfoque) * 0.6)) saturate(150%);
+  }
+}
+
+/* Alvo de toque mínimo (44px) abaixo de lg, inclusive nos botões compactos. */
+@media (width < 64rem) {
+  [data-visual="liquido"] .btn {
+    min-height: 2.75rem;
+  }
+}
+
+/* Acessibilidade, fallback e modo sem vidro (class="no-glass" no <html>) */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-modal,
+  .surface,
+  [data-visual="liquido"] [class~="liquido:surface"] {
+    background: rgb(255 255 255 / 0.97);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .glass::before,
+  .glass-modal::before,
+  .surface::before,
+  [class~="liquido:surface"]::before {
+    display: none;
+  }
+  [data-visual="liquido"] .glass-dark,
+  [data-visual="liquido"] [class*="liquido:glass-dark"] {
+    background: rgb(40 0 10 / 0.85);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-modal,
+  .surface {
+    background: rgb(255 255 255 / 0.95);
+  }
+  [data-visual="liquido"] .glass-dark,
+  [data-visual="liquido"] [class*="liquido:glass-dark"] {
+    background: rgb(40 0 10 / 0.8);
+  }
+}
+
+html.no-glass .glass,
+html.no-glass .glass-modal,
+html.no-glass .surface,
+html.no-glass[data-visual="liquido"] [class~="liquido:surface"] {
+  background: rgb(255 255 255 / 0.97);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgb(226 232 240);
+}
+html.no-glass .glass::before,
+html.no-glass .glass-modal::before,
+html.no-glass .surface::before,
+html.no-glass [class~="liquido:surface"]::before {
+  display: none;
+}
+html.no-glass[data-visual="liquido"] [class*="liquido:glass-dark"] {
+  background: rgb(40 0 10 / 0.85);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Desfoque em 0 nas preferências: sem backdrop-filter nenhum, mais leve em máquina antiga. */
+html.sem-desfoque .glass,
+html.sem-desfoque .glass-modal,
+html.sem-desfoque .surface,
+html.sem-desfoque .btn-secondary,
+html.sem-desfoque .btn-danger,
+html.sem-desfoque [class*="liquido:glass-dark"] {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Gradiente do fundo da aplicação (camada fixa do Layout). Estático, como as manchas. */
+.fundo-app {
+  background: linear-gradient(135deg, #f9e8ec 0%, #f8fafc 32%, #e9eff8 68%, #f6e3e8 100%);
+}
+html[data-gradiente="intenso"] .fundo-app {
+  background: linear-gradient(135deg, #f2d0d9 0%, #f4f6fa 34%, #d8e2f1 66%, #eec6d1 100%);
+}
+html[data-gradiente="desligado"] .fundo-app {
+  background: linear-gradient(to bottom right, var(--color-slate-100), var(--color-slate-50), var(--color-slate-100));
+}
+/* No Vidro líquido a cor vem das manchas; o gradiente por baixo é mais claro, para ler como "branco rosado". */
+html[data-visual="liquido"] .fundo-app {
+  background: linear-gradient(160deg, #fbf3f5 0%, var(--color-slate-50) 45%, var(--color-slate-50) 100%);
+}
+html[data-visual="liquido"][data-gradiente="intenso"] .fundo-app {
+  background: linear-gradient(135deg, #f9e8ec 0%, #f8fafc 32%, #e9eff8 68%, #f6e3e8 100%);
+}
+html[data-visual="liquido"][data-gradiente="desligado"] .fundo-app {
+  background: var(--color-slate-50);
+}
+
+/* Dia que chega por "Ver no calendário" (MUR-15): um pulso bordô de 1s, por cima do fundo da célula.
+   Com animações reduzidas, as regras de movimento abaixo encurtam a animação para quase nada. */
+.destaque-dia::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: destaque-dia 1s ease-out both;
+}
+@keyframes destaque-dia {
+  0% {
+    background-color: rgb(179 57 81 / 0);
+    box-shadow: inset 0 0 0 2px rgb(128 0 32 / 0);
+  }
+  20% {
+    background-color: rgb(179 57 81 / 0.22);
+    box-shadow: inset 0 0 0 2px rgb(128 0 32 / 0.9);
+  }
+  100% {
+    background-color: rgb(179 57 81 / 0);
+    box-shadow: inset 0 0 0 2px rgb(128 0 32 / 0);
+  }
+}
+
+/* Com o efeito elástico próprio (useRolagemElastica), o nativo do navegador sai para não somar. */
+@media (hover: hover) and (pointer: fine) {
+  html.rolagem-elastica {
+    overscroll-behavior-y: none;
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-slate-100);
+  }
+  html[data-visual="liquido"] {
+    background: var(--color-slate-50);
+  }
+
+  /* Sem fundo no body: ele seria pintado por cima da camada fixa do Layout (z-index negativo)
+     e esconderia o gradiente e as manchas. */
+  body {
+    min-height: 100dvh;
+    color: var(--color-slate-800);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Preferência "Reduzir animações": o mesmo efeito, escolhido na interface. */
+html.reduzir-animacoes *,
+html.reduzir-animacoes *::before,
+html.reduzir-animacoes *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+}
+
+/* Toasts do Sonner no mesmo vidro do resto da interface */
+html [data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  border-radius: 0.75rem;
+  backdrop-filter: blur(var(--vidro-desfoque)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--vidro-desfoque)) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    0 10px 30px rgb(15 23 42 / 0.08);
+}
+/* Vidro líquido: cápsula (o raio cobre a altura de uma linha; com duas linhas vira retângulo arredondado). */
+html[data-visual="liquido"] [data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  border-radius: 1.75rem;
+  padding: 0.75rem 1.125rem;
+  backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.5)) saturate(170%);
+  -webkit-backdrop-filter: blur(calc(var(--vidro-desfoque) * 1.5)) saturate(170%);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.95),
+    inset 0 -12px 24px -14px rgb(255 255 255 / 0.6),
+    0 12px 40px rgb(59 0 14 / 0.1);
+}
+html.sem-desfoque [data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html [data-sonner-toaster][data-sonner-theme="light"] {
+  --normal-bg: rgb(255 255 255 / calc(1 - 0.34 * var(--vidro-transparencia)));
+  --normal-border: rgb(255 255 255 / 0.75);
+  --normal-text: var(--color-slate-800);
+  --error-bg: rgb(255 245 245 / 0.92);
+  --error-border: rgb(254 202 202);
+  --error-text: var(--color-danger-600);
+  --success-bg: rgb(240 253 244 / 0.92);
+  --success-border: rgb(187 247 208);
+  --success-text: var(--color-green-700);
+  --warning-bg: rgb(255 251 235 / 0.92);
+  --warning-border: rgb(253 230 138);
+  --warning-text: var(--color-amber-800);
+  --info-bg: rgb(239 246 255 / 0.92);
+  --info-border: rgb(191 219 254);
+  --info-text: var(--color-blue-700);
+}
+html[data-visual="liquido"] [data-sonner-toaster][data-sonner-theme="light"] {
+  --normal-bg: rgb(255 255 255 / calc(1 - 0.4 * var(--vidro-transparencia)));
+  --normal-border: rgb(255 255 255 / 0.55);
 }

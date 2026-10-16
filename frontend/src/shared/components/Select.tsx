@@ -9,7 +9,7 @@ const Select = forwardRef<HTMLSelectElement, PropriedadesSelect>(function Select
   return (
     <select
       ref={ref}
-      className={`w-full cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[13.5px] text-slate-800 outline-none focus:border-[#800020] ${className ?? ''}`}
+      className={`field cursor-pointer py-2.5 text-sm disabled:cursor-not-allowed ${className ?? ''}`}
       {...resto}
     >
       {children}

@@ -80,19 +80,19 @@ function PaginaDocumentos() {
 
   return (
     <div>
-      <h1 className="m-0 mb-[22px] text-[24px] sm:text-[31px] font-bold tracking-tight text-slate-900">POPs &amp; documentos</h1>
+      <h1 className="m-0 mb-[22px] text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">POPs &amp; documentos</h1>
 
-      <div className="mb-5 flex flex-wrap items-stretch gap-3.5">
+      <div className="mb-5 flex flex-wrap items-stretch gap-3 sm:gap-3.5">
         <label className="relative block w-full sm:w-auto sm:flex-[0_1_320px]">
           <IconeLupa
             tamanho={16}
-            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500 liquido:left-4"
           />
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por título ou palavra-chave"
-            className="h-full w-full rounded-[10px] border border-slate-200 bg-white py-2.5 pr-3.5 pl-[38px] text-[13px] text-slate-800 shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)] outline-none focus:border-[#800020]"
+            className="field h-full py-2.5 pl-[38px] text-[13.5px] liquido:capsule-field liquido:pl-10 liquido:text-sm"
           />
         </label>
 
@@ -113,31 +113,31 @@ function PaginaDocumentos() {
         />
 
         {podeCriar && (
-          <Botao variante="primario" onClick={abrirNovo} className="flex w-full flex-none items-center justify-center gap-2 whitespace-nowrap sm:ml-auto sm:w-auto">
+          <Botao variante="primario" onClick={abrirNovo} className="w-full flex-none sm:ml-auto sm:w-auto">
             <IconeEnviar tamanho={15} />
             Enviar documento
           </Botao>
         )}
       </div>
 
-      <div className="overflow-hidden rounded-[10px] bg-white shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)]">
+      <div className="surface overflow-hidden">
         <div
-          className={`hidden ${COLUNAS_TABELA} bg-[#800020] px-[18px] py-3 text-[10.5px] font-semibold tracking-wide text-white`}
+          className={`hidden ${COLUNAS_TABELA} tabela-cabecalho px-[18px] py-3 text-xs font-medium tracking-wide uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case`}
         >
-          <span>DOCUMENTO</span>
-          <span>CATEGORIA</span>
-          <span>ATUALIZADO</span>
-          <span>AÇÕES</span>
+          <span>Documento</span>
+          <span>Categoria</span>
+          <span>Atualizado</span>
+          <span>Ações</span>
         </div>
 
         {isLoading ? (
-          <p className="m-0 px-[18px] py-4 text-sm text-slate-500">Carregando documentos…</p>
+          <p className="m-0 px-[18px] py-4 text-sm text-slate-600">Carregando documentos…</p>
         ) : isError ? (
-          <p className="m-0 px-[18px] py-4 text-sm text-red-600">
+          <p className="m-0 px-[18px] py-4 text-sm text-critical">
             Não foi possível carregar os documentos. Tente novamente.
           </p>
         ) : documentosFiltrados.length === 0 ? (
-          <p className="m-0 px-[18px] py-4 text-sm text-slate-500">
+          <p className="m-0 px-[18px] py-4 text-sm text-slate-600">
             {busca.trim() || setorId || categoria
               ? 'Nenhum documento encontrado com esses filtros.'
               : 'Nenhum documento publicado ainda.'}

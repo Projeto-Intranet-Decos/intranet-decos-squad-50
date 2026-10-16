@@ -25,16 +25,16 @@ function descreverEvento(evento: Evento): string {
 
 function PainelProximosEventos({ eventos, aoAbrir }: PropriedadesPainelProximosEventos) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] bg-white shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)]">
-      <div className="flex items-center bg-[#800020] px-[18px] py-3">
-        <span className="flex items-center gap-1.5 text-[10.5px] font-medium tracking-wide text-white">
-          <IconeCalendario tamanho={14} />
-          PRÓXIMOS EVENTOS
+    <div className="flex min-w-0 flex-1 flex-col overflow-hidden surface">
+      <div className="flex items-center border-b border-slate-200/60 bg-white/40 px-[18px] py-3 liquido:border-slate-900/5 liquido:bg-transparent liquido:px-5 liquido:pt-4 liquido:pb-3">
+        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-600 liquido:gap-2 uppercase liquido:text-[15px] liquido:tracking-normal liquido:normal-case liquido:text-slate-900 liquido:[&_svg]:size-[18px]">
+          <IconeCalendario tamanho={16} className="text-brand-600" />
+          Próximos eventos
         </span>
       </div>
-      <div className="flex flex-col gap-3 px-[18px] pt-3.5 pb-[18px]">
+      <div className="flex flex-col gap-3 px-[18px] pt-3.5 pb-[18px] liquido:gap-0 liquido:px-3 liquido:pt-1 liquido:pb-3">
         {eventos.length === 0 && (
-          <p className="m-0 py-3 text-center text-[12.5px] text-slate-500">Nenhum evento programado.</p>
+          <p className="m-0 py-3 text-center text-[13px] text-slate-600 liquido:py-6 liquido:text-sm liquido:text-slate-500">Nenhum evento programado.</p>
         )}
         {eventos.map((evento) => {
           const [dia, mes] = formatarDiaMes(evento.dataInicio).split(' ')
@@ -43,15 +43,16 @@ function PainelProximosEventos({ eventos, aoAbrir }: PropriedadesPainelProximosE
               key={evento.id}
               type="button"
               onClick={() => aoAbrir(evento)}
-              className="-mx-2 flex cursor-pointer gap-3 rounded-[10px] px-2 py-1 text-left hover:bg-slate-50"
+              className="relative -mx-2 flex cursor-pointer gap-3 rounded-[10px] px-2 py-1 text-left transition-colors hover:bg-white/60 liquido:mx-0 liquido:items-center liquido:rounded-inner liquido:py-2 liquido:hover:bg-white/50 liquido:[&+&]:before:absolute liquido:[&+&]:before:top-0 liquido:[&+&]:before:right-2 liquido:[&+&]:before:left-[4.25rem] liquido:[&+&]:before:border-t liquido:[&+&]:before:border-slate-900/5"
             >
-              <div className="flex-none rounded-[10px] bg-slate-50 px-0 py-[7px] text-center" style={{ width: 46 }}>
-                <div className="text-[15px] leading-none font-medium text-slate-900">{dia}</div>
-                <div className="mt-0.5 text-[9.5px] tracking-wide text-slate-400">{mes}</div>
+              {/* Quadrinho da data: no Vidro líquido, um "tile" de calendário. */}
+              <div className="w-[46px] flex-none rounded-[10px] bg-white/55 px-0 py-[7px] text-center ring-1 ring-white/80 liquido:w-12 liquido:rounded-tile liquido:bg-white/60 liquido:py-1.5 liquido:shadow-[inset_0_1px_0_white]">
+                <div className="text-[15px] leading-none font-medium text-slate-900 tabular-nums liquido:text-lg liquido:font-semibold">{dia}</div>
+                <div className="mt-0.5 text-[10px] tracking-wide text-slate-500 liquido:mt-0 liquido:text-[11px] liquido:font-semibold liquido:text-brand-600">{mes}</div>
               </div>
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-[13px] font-semibold text-slate-900">{evento.titulo}</span>
-                <span className="truncate text-[11.5px] text-slate-500">{descreverEvento(evento)}</span>
+                <span className="truncate text-[13px] font-semibold text-slate-900 liquido:text-[15px]">{evento.titulo}</span>
+                <span className="truncate text-xs text-slate-500 liquido:text-[13px]">{descreverEvento(evento)}</span>
               </div>
             </button>
           )

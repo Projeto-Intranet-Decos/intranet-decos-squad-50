@@ -28,11 +28,11 @@ function LinhaDocumento({
 
   return (
     <li
-      className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2.5 ${COLUNAS_TABELA} border-b border-slate-100 px-[18px] py-3.5 last:border-b-0 even:bg-slate-50`}
+      className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2.5 ${COLUNAS_TABELA} tabela-linha px-[18px] py-3.5`}
     >
       <div className="col-span-2 flex min-w-0 items-center gap-3.5 md:col-span-1">
         <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold ${coresExtensao(extensao)}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold liquido:rounded-[0.625rem] ${coresExtensao(extensao)}`}
         >
           {extensao}
         </span>
@@ -40,27 +40,27 @@ function LinhaDocumento({
           type="button"
           onClick={aoVisualizar}
           title={documento.descricao ?? documento.nomeArquivo}
-          className="min-w-0 cursor-pointer truncate text-left text-[13.5px] font-semibold text-slate-900 hover:text-[#800020]"
+          className="min-w-0 cursor-pointer truncate text-left text-sm font-semibold text-slate-900 hover:text-brand-600 liquido:text-[15px]"
         >
           {documento.titulo}
         </button>
       </div>
 
       <div className="flex min-w-0 flex-col">
-        <span className="truncate text-[13px] text-slate-600">{ROTULOS_CATEGORIA[documento.categoria]}</span>
-        <span className="truncate text-[11.5px] text-slate-400">{documento.setorNome}</span>
+        <span className="truncate text-[13px] text-slate-700">{ROTULOS_CATEGORIA[documento.categoria]}</span>
+        <span className="truncate text-xs text-slate-500">{documento.setorNome}</span>
       </div>
 
-      <span className="text-right text-[12px] text-slate-500 md:text-left">{formatarData(documento.atualizadoEm ?? documento.criadoEm)}</span>
+      <span className="text-right text-xs text-slate-600 tabular-nums md:text-left">{formatarData(documento.atualizadoEm ?? documento.criadoEm)}</span>
 
-      <div className="col-span-2 flex items-center justify-between border-t border-slate-100 pt-2.5 md:col-span-1 md:border-t-0 md:pt-0">
+      <div className="col-span-2 flex items-center justify-between border-t border-brand-600/8 liquido:border-brand-600/6 pt-2.5 md:col-span-1 md:border-t-0 md:pt-0">
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={aoVisualizar}
             title="Visualizar"
             aria-label="Visualizar"
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#800020]"
+            className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-brand-600 md:size-8 liquido:btn-icon"
           >
             <IconeOlho tamanho={15} />
           </button>
@@ -71,7 +71,7 @@ function LinhaDocumento({
                 onClick={aoEditar}
                 title="Editar"
                 aria-label="Editar"
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-700 md:size-8 liquido:btn-icon"
               >
                 <IconeLapis tamanho={15} />
               </button>
@@ -80,7 +80,7 @@ function LinhaDocumento({
                 onClick={aoExcluir}
                 title="Excluir"
                 aria-label="Excluir"
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-red-600"
+                className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-danger-50 hover:text-danger-600 md:size-8 liquido:btn-icon is-danger"
               >
                 <IconeLixeira tamanho={15} />
               </button>
@@ -90,7 +90,7 @@ function LinhaDocumento({
         <button
           type="button"
           onClick={aoBaixar}
-          className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-[13px] font-medium text-[#800020] transition-colors hover:border-[#800020] hover:bg-[#800020]/5"
+          className="btn btn-secondary min-h-10 px-3.5 text-[13px] text-brand-600 md:min-h-8"
         >
           <IconeBaixar tamanho={15} />
           Baixar

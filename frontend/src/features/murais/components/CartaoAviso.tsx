@@ -23,70 +23,78 @@ function CartaoAviso({
   aoExcluir,
 }: PropriedadesCartaoAviso) {
   return (
-    <div className="grid grid-cols-[88px_26px_minmax(0,1fr)] items-start">
-      <div className="flex flex-col gap-0.5 pt-3.5 pr-0.5 text-right">
-        {diaTexto && <span className="text-xs font-medium text-slate-800">{diaTexto}</span>}
-        <span className="text-[10px] tracking-wide text-slate-400">{formatarHora(aviso.criadoEm)}</span>
+    // No Vidro líquido, abaixo de sm, data e hora sobem para cima do card numa linha só e a linha do
+    // tempo fica mais à esquerda, ocupando as duas linhas da grade.
+    <div className="grid grid-cols-[48px_20px_minmax(0,1fr)] items-start sm:grid-cols-[88px_26px_minmax(0,1fr)] max-sm:liquido:grid-cols-[16px_minmax(0,1fr)] max-sm:liquido:gap-x-2.5">
+      <div className="flex flex-col gap-0.5 pt-3.5 pr-0.5 text-right max-sm:liquido:col-start-2 max-sm:liquido:row-start-1 max-sm:liquido:flex-row max-sm:liquido:items-baseline max-sm:liquido:gap-2 max-sm:liquido:pt-0 max-sm:liquido:pb-2 max-sm:liquido:text-left">
+        {diaTexto && (
+          <span className="text-xs font-medium text-slate-800 tabular-nums liquido:text-sm liquido:font-semibold">{diaTexto}</span>
+        )}
+        <span className="text-[11px] tracking-wide text-slate-500 tabular-nums liquido:text-xs liquido:tracking-normal">
+          {formatarHora(aviso.criadoEm)}
+        </span>
       </div>
-      <div className="relative flex justify-center self-stretch">
-        <div className="absolute top-0 -bottom-[26px] w-px bg-slate-200" />
+      <div className="relative flex justify-center self-stretch max-sm:liquido:col-start-1 max-sm:liquido:row-span-2 max-sm:liquido:row-start-1">
+        <div className="absolute top-0 -bottom-[26px] w-px bg-slate-300/70 liquido:bg-slate-900/10" />
         <div
-          className="relative mt-[18px] h-2.5 w-2.5 rounded-full"
-          style={{ background: corPonto, boxShadow: '0 0 0 4px #f8fafc' }}
+          className="relative mt-[18px] size-2.5 rounded-full shadow-[0_0_0_4px_var(--color-slate-50)] liquido:size-3 liquido:shadow-none liquido:ring-4 liquido:ring-white/70 max-sm:liquido:mt-1"
+          style={{ background: corPonto }}
         />
       </div>
+      {/* `cartao-aviso`: no Vidro líquido é um `surface` sem backdrop-filter (ver index.css). */}
       <article
         onClick={aoAbrir}
-        className="cursor-pointer rounded-[10px] bg-white p-5 shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgba(30,42,50,0.06),0_18px_34px_-18px_rgba(30,42,50,0.32)]"
+        className="cartao-aviso cursor-pointer rounded-card border border-white/80 bg-gradient-to-br from-white/90 to-white/75 p-4 shadow-[inset_0_1px_0_white,0_1px_2px_rgb(15_23_42/0.04),0_6px_20px_rgb(15_23_42/0.05)] transition-[translate,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_white,0_1px_2px_rgb(15_23_42/0.06),0_14px_30px_rgb(15_23_42/0.09)] sm:p-5 liquido:surface liquido:hover:translate-y-0 max-sm:liquido:col-start-2 max-sm:liquido:row-start-2"
       >
-        <div className="mb-3 flex items-center gap-2.5">
-          <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full bg-slate-300 text-white">
+        <div className="mb-3 flex items-center gap-2.5 liquido:mb-4 liquido:gap-3">
+          <span className="flex size-[30px] flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9">
             <IconeUsuario tamanho={17} />
           </span>
-          <div className="flex flex-col leading-tight">
-            <span className="text-[13px] font-semibold text-slate-900">{aviso.autorNome}</span>
-            <span className="text-[11.5px] text-slate-500">{aviso.setorNome}</span>
+          <div className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-[13px] font-semibold text-slate-900 liquido:text-[15px]">{aviso.autorNome}</span>
+            <span className="truncate text-xs text-slate-500 liquido:text-sm">{aviso.setorNome}</span>
           </div>
           <BadgeCategoria
             categoria={aviso.categoria}
             comImagem={!!aviso.urlImagem}
-            className="ml-auto"
+            className="ml-auto flex-none"
           />
         </div>
-        <div className="mb-3.5 h-0.5 rounded-full bg-[#800020]" />
+        <div className="mb-3.5 h-0.5 rounded-full bg-brand-600 liquido:hidden" />
         {aviso.urlImagem && (
-          <div className="mb-3.5 rounded-[10px] border border-slate-200 bg-slate-50 p-1.5">
+          <div className="mb-3.5 rounded-[10px] bg-white/55 p-1.5 ring-1 ring-slate-200/60 liquido:mb-4 liquido:rounded-inner liquido:ring-white/80 liquido:shadow-[inset_0_1px_0_white]">
             <div
-              className="h-[190px] w-full rounded-md bg-cover bg-center"
+              className="h-[160px] w-full rounded-md bg-cover bg-center sm:h-[190px] liquido:rounded-[10px]"
               style={{ backgroundImage: `url(${aviso.urlImagem})` }}
             />
           </div>
         )}
-        <h3 className="m-0 mb-3 text-lg leading-snug font-bold tracking-tight text-slate-900">
+        <h3 className="m-0 mb-3 text-lg leading-snug font-semibold tracking-tight text-slate-900">
           {aviso.titulo}
         </h3>
         {aviso.dataInicio && (
-          <p className="m-0 mb-3 flex items-center gap-1.5 text-[12.5px] font-medium text-[#800020]">
-            <IconeCalendario tamanho={14} />
+          <p className="m-0 mb-3 flex items-center gap-1.5 text-[13px] font-medium text-brand-600 tabular-nums">
+            <IconeCalendario tamanho={16} />
             {formatarPeriodoEvento(aviso.dataInicio, aviso.dataFim)}
           </p>
         )}
         {aviso.conteudo && (
           <>
-            <div className="mb-3 h-px bg-slate-200" />
-            <p className="m-0 line-clamp-3 text-[13.5px] leading-relaxed text-slate-600 text-balance">
+            <div className="mb-3 h-px bg-slate-200/60 liquido:bg-slate-900/5" />
+            <p className="m-0 line-clamp-3 text-sm leading-relaxed text-balance text-slate-700 liquido:text-[15px]">
               {aviso.conteudo}
             </p>
           </>
         )}
         {podeGerenciar && (
-          <div className="mt-4 flex items-center gap-1 border-t border-slate-100 pt-3.5">
-            <div className="ml-auto flex gap-1">
+          <div className="mt-4 flex items-center gap-1 border-t border-slate-200/60 pt-3.5 liquido:border-slate-900/5">
+            <div className="ml-auto flex gap-1 liquido:gap-2">
               <button
                 type="button"
                 onClick={aoEditar}
                 title="Editar"
-                className="flex h-[30px] w-[30px] items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Editar"
+                className="flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-900/5 hover:text-slate-700 sm:size-[30px] liquido:btn-icon"
               >
                 <IconeLapis tamanho={15} />
               </button>
@@ -94,7 +102,8 @@ function CartaoAviso({
                 type="button"
                 onClick={aoExcluir}
                 title="Excluir"
-                className="flex h-[30px] w-[30px] items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
+                aria-label="Excluir"
+                className="flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-danger-50 hover:text-danger-600 sm:size-[30px] liquido:btn-icon is-danger"
               >
                 <IconeLixeira tamanho={15} />
               </button>

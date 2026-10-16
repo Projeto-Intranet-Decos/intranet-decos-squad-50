@@ -12,7 +12,7 @@ interface PropriedadesListaFaq {
 
 function ListaFaq({ itens, expandidoId, aoAlternar, podeGerenciar, aoEditar, aoExcluir }: PropriedadesListaFaq) {
   if (itens.length === 0) {
-    return <p className="py-6 text-center text-sm text-slate-500">Nenhuma pergunta encontrada.</p>
+    return <p className="py-6 text-center text-sm text-slate-600">Nenhuma pergunta encontrada.</p>
   }
 
   return (

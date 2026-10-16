@@ -12,8 +12,10 @@ interface PropriedadesFormularioAtalho {
   aoConcluir: () => void
 }
 
-const CLASSE_CAMPO =
-  'w-full rounded-md border bg-white px-2 py-1.5 text-[12.5px] text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#800020]'
+const CLASSE_CAMPO = 'field px-2.5 py-1.5 text-[13px] aria-invalid:border-danger-500 liquido:text-sm'
+
+const CLASSE_BOTAO =
+  'flex size-8 flex-none items-center justify-center rounded-lg transition-[color,background-color,scale] lg:size-7 liquido:rounded-full liquido:active:scale-[0.94]'
 
 // Criação/edição inline na barra lateral (ATA-05): Enter salva, Esc cancela.
 function FormularioAtalho({ id, inicial, aoConcluir }: PropriedadesFormularioAtalho) {
@@ -52,36 +54,38 @@ function FormularioAtalho({ id, inicial, aoConcluir }: PropriedadesFormularioAta
           aoConcluir()
         }
       }}
-      className="flex flex-col gap-1.5 rounded-[10px] bg-slate-50 p-2"
+      className="flex flex-col gap-1.5 rounded-xl bg-white/55 p-2 ring-1 ring-white/70 liquido:rounded-2xl liquido:bg-white/40 liquido:ring-slate-900/5"
     >
       <input
         autoFocus
         placeholder="Nome"
         aria-label="Nome do atalho"
+        aria-invalid={errors.titulo ? true : undefined}
         maxLength={100}
-        className={`${CLASSE_CAMPO} ${errors.titulo ? 'border-red-400' : 'border-slate-200'}`}
+        className={CLASSE_CAMPO}
         {...register('titulo', {
           validate: (valor) => valor.trim() !== '' || 'Informe o nome.',
         })}
       />
-      {errors.titulo && <span className="px-0.5 text-[11px] text-red-600">{errors.titulo.message}</span>}
+      {errors.titulo && <span className="px-0.5 text-xs text-critical">{errors.titulo.message}</span>}
       <input
         placeholder="https://..."
         aria-label="URL do atalho"
+        aria-invalid={errors.url ? true : undefined}
         maxLength={500}
-        className={`${CLASSE_CAMPO} ${errors.url ? 'border-red-400' : 'border-slate-200'}`}
+        className={CLASSE_CAMPO}
         {...register('url', {
           validate: (valor) => /^https?:\/\//i.test(valor.trim()) || 'Use um endereço com http:// ou https://',
         })}
       />
-      {errors.url && <span className="px-0.5 text-[11px] text-red-600">{errors.url.message}</span>}
+      {errors.url && <span className="px-0.5 text-xs text-critical">{errors.url.message}</span>}
       <div className="flex justify-end gap-1">
         <button
           type="button"
           onClick={aoConcluir}
           title="Cancelar (Esc)"
           aria-label="Cancelar"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+          className={`${CLASSE_BOTAO} text-slate-500 hover:bg-white/80 hover:text-slate-700`}
         >
           <IconeX tamanho={15} />
         </button>
@@ -90,7 +94,7 @@ function FormularioAtalho({ id, inicial, aoConcluir }: PropriedadesFormularioAta
           disabled={salvar.isPending}
           title="Salvar (Enter)"
           aria-label="Salvar"
-          className="flex h-7 w-7 items-center justify-center rounded-md bg-[#800020] text-white hover:bg-[#6a001a] disabled:opacity-60"
+          className={`${CLASSE_BOTAO} bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-60 liquido:bg-linear-to-b liquido:from-[#8f0a2c] liquido:to-brand-600 liquido:shadow-[inset_0_1px_0_rgb(255_255_255/0.3)]`}
         >
           <IconeCheck tamanho={15} />
         </button>

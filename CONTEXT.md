@@ -51,6 +51,10 @@ _Avoid_: Evento como entidade separada do Aviso, convite
 Tela do mural que posiciona os Eventos nas suas datas (visões de dia, semana, mês e ano). É uma visão, não um módulo; clicar num evento abre o detalhe do aviso.
 _Avoid_: módulo calendário
 
+**Preferências de interface**:
+Ajustes visuais (desfoque e transparência do vidro, gradiente de fundo, efeito elástico na rolagem, animações) escolhidos na página Configurações. Pertencem ao navegador, não ao usuário: moram no `localStorage` e não existem no backend.
+_Avoid_: configurações do usuário, perfil
+
 ## Regra de escopo de edição
 
 Vale pra Aviso (inclusive Evento), FAQ e Documento: o registro guarda o setor de quem criou. `admin_setor` só edita/exclui o que foi criado por alguém do próprio setor; `superadmin` edita/exclui qualquer um. A **visibilidade** de leitura desses três é sempre institucional (todo mundo vê tudo) — o escopo por setor vale só pra edição, não pra leitura.

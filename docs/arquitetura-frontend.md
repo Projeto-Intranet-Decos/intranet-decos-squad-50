@@ -8,6 +8,7 @@
 - **TanStack Query** para data fetching, cache e mutations
 - **React Hook Form** para formulários
 - **Sonner** para notificações (toast)
+- **Lucide** (`lucide-react`) para ícones — única biblioteca de ícones, sempre via `shared/components/icones.tsx`
 
 ## Organização de pastas
 
@@ -38,6 +39,10 @@ src/
       useAuth.ts
       types.ts
     permissions.ts        # lógica de RBAC + escopo por setor
+    preferencias/          # preferências de interface (GER-14): só frontend, sem módulo no backend
+      preferencias.ts
+      usePreferencias.ts
+      PaginaConfiguracoes.tsx
   App.tsx
 ```
 

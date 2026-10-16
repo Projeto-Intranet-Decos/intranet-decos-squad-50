@@ -24,23 +24,25 @@ function PainelFaq({
   aoExcluir,
 }: PropriedadesPainelFaq) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] bg-white shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)]">
-      <div className="flex items-center gap-1.5 bg-[var(--bordeaux)] px-[18px] py-3">
-        <IconeDuvida tamanho={14} className="text-white" />
-        <span className="text-[10.5px] font-semibold tracking-wide text-white">PERGUNTAS FREQUENTES</span>
+    <div className="flex min-w-0 flex-1 flex-col overflow-hidden surface">
+      <div className="flex items-center gap-1.5 border-b border-slate-200/60 bg-white/40 px-[18px] py-3 liquido:gap-2 liquido:border-slate-900/5 liquido:bg-transparent liquido:px-5 liquido:pt-4 liquido:pb-3">
+        <IconeDuvida tamanho={16} className="text-brand-600 liquido:size-[18px]" />
+        <span className="text-xs font-semibold tracking-wide text-slate-600 uppercase liquido:text-[15px] liquido:tracking-normal liquido:normal-case liquido:text-slate-900">
+          Perguntas frequentes
+        </span>
       </div>
 
-      <div className="px-[18px] pt-[18px] pb-[18px]">
+      <div className="px-[18px] pt-[18px] pb-[18px] liquido:px-5 liquido:pt-4">
         <label className="relative mb-1 block">
           <IconeLupa
             tamanho={16}
-            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500 liquido:left-4"
           />
           <input
             value={busca}
             onChange={(e) => aoMudarBusca(e.target.value)}
             placeholder="Qual é a sua dúvida?"
-            className="w-full rounded-[10px] border border-slate-200 bg-white py-2.5 pr-3.5 pl-[38px] text-[13px] text-slate-800 outline-none focus:border-[var(--bordeaux)]"
+            className="field py-2.5 pl-[38px] text-[13.5px] liquido:capsule-field liquido:pl-10 liquido:text-sm"
           />
         </label>
 
