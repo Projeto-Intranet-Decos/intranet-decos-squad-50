@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import Botao from '../../../shared/components/Botao'
 import Modal from '../../../shared/components/Modal'
@@ -9,6 +10,7 @@ import {
 } from '../../../shared/components/icones'
 import { baixarAnexoAviso } from '../api'
 import { formatarDiaMes, formatarHora, formatarPeriodoEvento } from '../formatadores'
+import { chaveDiaDeIso } from '../formatadoresCalendario'
 import BadgeCategoria from './BadgeCategoria'
 import type { Aviso } from '../types'
 
@@ -21,7 +23,17 @@ interface PropriedadesModalDetalheAviso {
 }
 
 function ModalDetalheAviso({ aviso, aoFechar, aoEditar, aoExcluir }: PropriedadesModalDetalheAviso) {
+  const navegar = useNavigate()
+
   if (!aviso) return null
+
+  // Só evento tem data: abre o calendário nela, com o dia destacado (MUR-15).
+  const dataNoCalendario = aviso.categoria === 'evento' && aviso.dataInicio ? chaveDiaDeIso(aviso.dataInicio) : null
+
+  function verNoCalendario() {
+    aoFechar()
+    navegar(`/calendario?data=${dataNoCalendario}`)
+  }
 
   async function baixar(anexoId: string, nome: string) {
     if (!aviso) return
@@ -121,7 +133,13 @@ function ModalDetalheAviso({ aviso, aoFechar, aoEditar, aoExcluir }: Propriedade
             Editar
           </Botao>
         )}
-        <Botao variante="secundario" onClick={aoFechar} className="sm:ml-auto">
+        {dataNoCalendario && (
+          <Botao variante="secundario" onClick={verNoCalendario} className="sm:ml-auto">
+            <IconeCalendario tamanho={16} />
+            Ver no calendário
+          </Botao>
+        )}
+        <Botao variante="secundario" onClick={aoFechar} className={dataNoCalendario ? '' : 'sm:ml-auto'}>
           Fechar
         </Botao>
       </div>

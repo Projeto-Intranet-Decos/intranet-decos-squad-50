@@ -703,6 +703,31 @@ html[data-visual="ios"][data-gradiente="desligado"] .fundo-app {
   background: var(--color-slate-50);
 }
 
+/* Dia que chega por "Ver no calendário" (MUR-15): um pulso bordô de 1s, por cima do fundo da célula.
+   Com animações reduzidas, as regras de movimento abaixo encurtam a animação para quase nada. */
+.destaque-dia::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: destaque-dia 1s ease-out both;
+}
+@keyframes destaque-dia {
+  0% {
+    background-color: rgb(179 57 81 / 0);
+    box-shadow: inset 0 0 0 2px rgb(128 0 32 / 0);
+  }
+  20% {
+    background-color: rgb(179 57 81 / 0.22);
+    box-shadow: inset 0 0 0 2px rgb(128 0 32 / 0.9);
+  }
+  100% {
+    background-color: rgb(179 57 81 / 0);
+    box-shadow: inset 0 0 0 2px rgb(128 0 32 / 0);
+  }
+}
+
 /* Com o efeito elástico próprio (useRolagemElastica), o nativo do navegador sai para não somar. */
 @media (hover: hover) and (pointer: fine) {
   html.rolagem-elastica {

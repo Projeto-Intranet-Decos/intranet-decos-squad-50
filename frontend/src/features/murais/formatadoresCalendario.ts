@@ -24,6 +24,14 @@ export function chaveDeData(data: Date): string {
   return chaveDia(data.getFullYear(), data.getMonth(), data.getDate())
 }
 
+/** O inverso de `chaveDeData`: `null` se a chave não é um dia que existe (ex.: 2026-02-31). */
+export function dataDeChave(chave: string): Date | null {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(chave)
+  if (!partes) return null
+  const data = new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]))
+  return chaveDeData(data) === chave ? data : null
+}
+
 export function chaveDiaDeIso(iso: string): string {
   return chaveDeData(new Date(iso))
 }

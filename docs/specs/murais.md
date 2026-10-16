@@ -232,5 +232,12 @@ feature `murais`. Substitui CAL-08.
 - Clicar num evento abre o **mesmo detalhe do aviso** do mural (capa, conteúdo, anexos), com
   editar/excluir para quem pode gerenciar (GER-12).
 - Painéis de próximos eventos e de aniversariantes do mês (MUR-13).
+- **Dado** o detalhe de um aviso de categoria `evento`, **então** ele tem o botão "Ver no
+  calendário"; avisos de outras categorias não têm. **Quando** o usuário aciona o botão, **então**
+  o detalhe fecha e abre `/calendario?data=AAAA-MM-DD` (o dia de início do evento, no fuso local).
+- **Dado** `/calendario?data=AAAA-MM-DD` com uma data válida, **então** o calendário abre na visão
+  de mês daquela data e o dia recebe um destaque bordô que acende e some em 1s, uma vez só; com
+  animações reduzidas (GER-14 ou `prefers-reduced-motion`) não há animação. Data inválida é
+  ignorada e a tela abre no mês atual. Vale também quando o botão é acionado no próprio calendário.
 - A tela só exibe: **não há botão de criar evento**. Evento é criado no mural, como qualquer aviso
   (MUR-03, MUR-11); não existe formulário de evento separado.

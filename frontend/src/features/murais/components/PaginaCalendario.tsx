@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { podeEditar } from '../../../lib/permissions'
 import { IconeAlerta } from '../../../shared/components/icones'
 import {
   agruparEventosPorDia,
+  dataDeChave,
   deslocarPeriodo,
   intervaloDoPeriodo,
   mesesDoPeriodo,
@@ -25,6 +27,8 @@ import VisaoDia from './VisaoDia'
 import VisaoMes from './VisaoMes'
 import VisaoSemana from './VisaoSemana'
 
+const DURACAO_DESTAQUE_MS = 1000
+
 /**
  * Visão do mural que posiciona os eventos (avisos de categoria `evento`) nas suas datas
  * (MUR-15). Clicar num evento abre o mesmo detalhe de aviso do mural. Só exibe: evento é
@@ -32,11 +36,37 @@ import VisaoSemana from './VisaoSemana'
  */
 function PaginaCalendario() {
   const { usuario } = useAuth()
+  // `?data=AAAA-MM-DD` ("Ver no calendário", MUR-15): abre no mês da data e destaca o dia.
+  const [parametros] = useSearchParams()
+  const { key: chaveDaNavegacao } = useLocation()
+  const diaPedido = parametros.get('data')
+  const dataPedida = diaPedido ? dataDeChave(diaPedido) : null
+
   const [visao, setVisao] = useState<VisaoCalendario>('mes')
-  const [dataReferencia, setDataReferencia] = useState(() => new Date())
+  const [dataReferencia, setDataReferencia] = useState(() => dataPedida ?? new Date())
+  const [diaDestacado, setDiaDestacado] = useState(() => (dataPedida ? diaPedido : null))
+  const [navegacaoAplicada, setNavegacaoAplicada] = useState(chaveDaNavegacao)
   const [modalAberto, setModalAberto] = useState(false)
   const [avisoEditando, setAvisoEditando] = useState<Aviso | null>(null)
   const [detalhe, setDetalhe] = useState<Aviso | null>(null)
+
+  // O botão também funciona com o calendário já aberto: cada navegação nova aplica a data uma vez.
+  if (navegacaoAplicada !== chaveDaNavegacao) {
+    setNavegacaoAplicada(chaveDaNavegacao)
+    if (dataPedida) {
+      setDataReferencia(dataPedida)
+      setVisao('mes')
+      setDiaDestacado(diaPedido)
+    }
+  }
+
+  // O destaque some com a animação (1s, `.destaque-dia` no index.css), para não repetir ao trocar
+  // de mês e voltar.
+  useEffect(() => {
+    if (!diaDestacado) return
+    const id = setTimeout(() => setDiaDestacado(null), DURACAO_DESTAQUE_MS)
+    return () => clearTimeout(id)
+  }, [diaDestacado])
 
   const meses = useMemo(() => mesesDoPeriodo(dataReferencia, visao), [dataReferencia, visao])
 
@@ -135,6 +165,7 @@ function PaginaCalendario() {
               eventosPorDia={eventosPorDia}
               aniversariantesDoDia={aniversariantesDoDia}
               aoAbrirEvento={setDetalhe}
+              diaDestacado={diaDestacado}
             />
           )}
           {visao === 'ano' && (
