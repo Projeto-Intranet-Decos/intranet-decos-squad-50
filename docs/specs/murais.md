@@ -164,10 +164,15 @@ depois do commit, todos os objetos do aviso no bucket. Vale igual para eventos.
 Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste ⬜
 
 - Busca local por título, autor ou conteúdo; filtros por categoria (inclusive `evento`) e setor.
+- No iOS Glass (GER-01), a partir de 1024px, a barra de busca e filtros fica presa ao topo da tela
+  num vidro em cápsula, e a lista rola por baixo dela. Abaixo de 1024px e no Vidro clínico ela rola
+  junto com a página.
 - Eventos aparecem no feed, no carrossel e nos fixados como qualquer aviso; o card e o detalhe de
   um evento mostram a data (e o fim, se houver).
 - Carrossel de destaques com os 5 avisos mais recentes e painel de fixados — ambos **ignoram** os
   filtros da busca.
+- O painel de fixados fica na coluna da direita no desktop; abaixo de 1024px aparece acima da
+  lista, para o aviso fixado ser visto primeiro.
 - Painéis laterais: próximos eventos (a partir de agora, MUR-12) e aniversariantes do mês
   (MUR-13). Clicar num próximo evento abre o detalhe do aviso.
 - "Novo aviso" só para `admin_setor`/`superadmin`; editar/excluir só nos avisos que o usuário pode

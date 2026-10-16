@@ -39,7 +39,8 @@ function BarraFiltrosMural({
   ]
 
   return (
-    <div className="mb-5 flex flex-wrap items-stretch gap-3 sm:gap-3.5">
+    // `barra-filtros-fixa`: no iOS Glass, a partir de lg, fica presa ao topo (ver index.css).
+    <div className="barra-filtros-fixa mb-5 flex flex-wrap items-stretch gap-3 sm:gap-3.5">
       <label className="relative block w-full sm:w-auto sm:flex-[0_1_320px]">
         <IconeLupa
           tamanho={16}
