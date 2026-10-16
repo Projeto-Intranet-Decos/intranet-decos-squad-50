@@ -56,8 +56,8 @@ function PaginaLogin() {
             className="flex w-full flex-col gap-[18px] text-left"
           >
             <label className="flex flex-col gap-[7px]">
-              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:font-semibold ios:tracking-[0.04em]">
-                E-MAIL
+              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:text-sm ios:font-semibold ios:tracking-normal ios:normal-case">
+                E-mail
               </span>
               <input
                 type="email"
@@ -68,8 +68,8 @@ function PaginaLogin() {
             </label>
 
             <label className="flex flex-col gap-[7px]">
-              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:font-semibold ios:tracking-[0.04em]">
-                SENHA
+              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:text-sm ios:font-semibold ios:tracking-normal ios:normal-case">
+                Senha
               </span>
               <div className="relative block">
                 <input

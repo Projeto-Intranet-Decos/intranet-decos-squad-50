@@ -13,11 +13,13 @@ function PainelAniversariantes({ mes, aniversariantes }: PropriedadesPainelAnive
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden surface">
       <div className="flex items-center justify-between gap-3 border-b border-slate-200/60 bg-white/40 px-[18px] py-3 ios:border-slate-900/5 ios:bg-transparent ios:px-5 ios:pt-4 ios:pb-3">
-        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-600 ios:gap-2 ios:text-sm ios:tracking-[0.02em] ios:text-slate-900 ios:[&_svg]:size-[18px]">
+        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-600 ios:gap-2 uppercase ios:text-[15px] ios:tracking-normal ios:normal-case ios:text-slate-900 ios:[&_svg]:size-[18px]">
           <IconeUsuarios tamanho={16} className="text-brand-600" />
-          ANIVERSARIANTES DE {NOMES_MESES[mes - 1].toUpperCase()}
+          Aniversariantes de {NOMES_MESES[mes - 1].toLowerCase()}
         </span>
-        <span className="flex-none text-[11px] text-slate-500 tabular-nums ios:text-sm">{ordenados.length} PESSOAS</span>
+        <span className="flex-none text-[11px] text-slate-500 tabular-nums uppercase ios:text-sm ios:normal-case">
+          {ordenados.length} pessoas
+        </span>
       </div>
       <div className="flex flex-col px-[18px] pb-[18px] ios:px-5 ios:pb-3">
         {ordenados.length === 0 && (

@@ -27,8 +27,8 @@ function PainelFaq({
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden surface">
       <div className="flex items-center gap-1.5 border-b border-slate-200/60 bg-white/40 px-[18px] py-3 ios:gap-2 ios:border-slate-900/5 ios:bg-transparent ios:px-5 ios:pt-4 ios:pb-3">
         <IconeDuvida tamanho={16} className="text-brand-600 ios:size-[18px]" />
-        <span className="text-xs font-semibold tracking-wide text-slate-600 ios:text-sm ios:tracking-[0.02em] ios:text-slate-900">
-          PERGUNTAS FREQUENTES
+        <span className="text-xs font-semibold tracking-wide text-slate-600 uppercase ios:text-[15px] ios:tracking-normal ios:normal-case ios:text-slate-900">
+          Perguntas frequentes
         </span>
       </div>
 

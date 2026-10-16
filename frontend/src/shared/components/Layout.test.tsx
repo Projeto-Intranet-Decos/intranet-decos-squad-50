@@ -87,6 +87,25 @@ function fundoDoUtilitario(nome: string) {
   return fundo
 }
 
+describe('GER-01 — rótulos do menu em frase normal no iOS Glass', () => {
+  beforeEach(() => {
+    const carga = btoa(JSON.stringify({ sub: '1', role: 'superadmin', setor_id: null }))
+    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+  })
+
+  it('o texto é escrito em frase normal e a caixa alta fica só no CSS do Vidro clínico', () => {
+    render(<Aplicacao />)
+
+    for (const rotulo of ['Intranet', 'Páginas', 'Administração', 'Acesso rápido']) {
+      const elemento = screen.getByText(rotulo)
+      expect(elemento.className).toContain('uppercase')
+      expect(elemento.className).toContain('ios:normal-case')
+    }
+  })
+})
+
 describe('GER-18 — vidro do menu e da barra superior', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))

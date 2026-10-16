@@ -26,7 +26,9 @@ drawer aberto por uma barra superior), sem rolagem horizontal da página a parti
 desktop não muda por causa disso. Há dois estilos visuais, escolhidos em Configurações (GER-14):
 **iOS Glass** (padrão), com referência em [`docs/DESIGN_IOS_GLASS.md`](../DESIGN_IOS_GLASS.md), e
 **Vidro clínico**, com referência em [`docs/DESIGN_PROMPT.md`](../DESIGN_PROMPT.md). Os dois mudam
-só a aparência: as telas, os textos e a posição das coisas no desktop são os mesmos. O fundo da
+só a aparência: as telas, os textos e a posição das coisas no desktop são os mesmos. Rótulos curtos
+(títulos de seção do menu, cabeçalhos de painel e de tabela, rótulos de campo) são escritos em frase
+normal e aparecem assim no iOS Glass; no Vidro clínico ficam em caixa alta, só por CSS. O fundo da
 aplicação tem um gradiente suave (ajustável, ver GER-14) e a rolagem tem efeito elástico no
 desktop (GER-15).
 

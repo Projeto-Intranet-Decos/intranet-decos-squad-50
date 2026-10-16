@@ -15,9 +15,9 @@ function TabelaSetores({ setores, podeEditarSetor, podeExcluir, aoEditar, aoExcl
   return (
     <div className="surface overflow-hidden px-4 pb-2 sm:px-6">
       <div className={`${COLUNAS} -mx-4 border-b border-slate-200/60 ios:border-slate-900/5 bg-white/40 px-4 py-3 ios:bg-white/35 sm:-mx-6 sm:px-6`}>
-        <span className="text-xs font-medium tracking-wide text-slate-500 ios:font-semibold ios:tracking-[0.04em]">SETOR</span>
-        <span className="text-xs font-medium tracking-wide text-slate-500 ios:font-semibold ios:tracking-[0.04em]">RAMAIS</span>
-        <span className="text-right text-xs font-medium tracking-wide text-slate-500 ios:font-semibold ios:tracking-[0.04em]">AÇÕES</span>
+        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase ios:font-semibold ios:tracking-normal ios:normal-case">Setor</span>
+        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase ios:font-semibold ios:tracking-normal ios:normal-case">Ramais</span>
+        <span className="text-right text-xs font-medium tracking-wide text-slate-500 uppercase ios:font-semibold ios:tracking-normal ios:normal-case">Ações</span>
       </div>
 
       {setores.length === 0 && (

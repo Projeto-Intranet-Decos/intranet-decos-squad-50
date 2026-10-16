@@ -122,12 +122,12 @@ function PaginaDocumentos() {
 
       <div className="surface overflow-hidden">
         <div
-          className={`hidden ${COLUNAS_TABELA} border-b border-slate-200/60 ios:border-slate-900/5 bg-white/40 px-[18px] py-3 ios:bg-white/35 text-xs font-medium tracking-wide text-slate-500 ios:font-semibold ios:tracking-[0.04em]`}
+          className={`hidden ${COLUNAS_TABELA} border-b border-slate-200/60 ios:border-slate-900/5 bg-white/40 px-[18px] py-3 ios:bg-white/35 text-xs font-medium tracking-wide text-slate-500 uppercase ios:font-semibold ios:tracking-normal ios:normal-case`}
         >
-          <span>DOCUMENTO</span>
-          <span>CATEGORIA</span>
-          <span>ATUALIZADO</span>
-          <span>AÇÕES</span>
+          <span>Documento</span>
+          <span>Categoria</span>
+          <span>Atualizado</span>
+          <span>Ações</span>
         </div>
 
         {isLoading ? (

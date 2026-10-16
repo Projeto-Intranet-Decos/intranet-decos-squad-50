@@ -242,7 +242,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
     >
       <form onSubmit={handleSubmit(aoSubmeter)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium tracking-wide text-slate-700 ios:font-semibold ios:tracking-[0.04em]">IMAGEM DE CAPA</span>
+          <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:text-sm ios:font-semibold ios:tracking-normal ios:normal-case">Imagem de capa</span>
           {urlImagemExibida ? (
             <div className="flex flex-wrap items-center gap-3 rounded-[10px] ios:rounded-inner bg-white/55 p-1.5 ring-1 ring-white/80">
               <img
@@ -289,7 +289,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium tracking-wide text-slate-700 ios:font-semibold ios:tracking-[0.04em]">ANEXOS</span>
+          <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:text-sm ios:font-semibold ios:tracking-normal ios:normal-case">Anexos</span>
           <div
             onDragOver={(e) => {
               e.preventDefault()

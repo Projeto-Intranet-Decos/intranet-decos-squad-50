@@ -85,7 +85,7 @@ function ModalDetalheAviso({ aviso, aoFechar, aoEditar, aoExcluir }: Propriedade
           )}
           {aviso.anexos.length > 0 && (
             <div className="mt-6 flex flex-col gap-2">
-              <span className="text-xs font-medium tracking-wide text-slate-700 ios:font-semibold ios:tracking-[0.04em]">ANEXOS</span>
+              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:text-sm ios:font-semibold ios:tracking-normal ios:normal-case">Anexos</span>
               {aviso.anexos.map((anexo) => (
                 <div
                   key={anexo.id}

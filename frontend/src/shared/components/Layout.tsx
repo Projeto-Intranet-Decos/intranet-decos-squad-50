@@ -213,8 +213,8 @@ function Layout({ children }: PropriedadesLayout) {
           {!compacto && (
             <>
               <img src={logoDecos} alt="Hospital Decós" className="h-9 w-auto max-w-[150px] object-contain" />
-              <span className="text-[10px] tracking-[0.16em] text-slate-500 ios:text-[11px] ios:font-medium ios:tracking-[0.08em]">
-                INTRANET
+              <span className="text-[10px] tracking-[0.16em] text-slate-500 uppercase ios:text-xs ios:font-medium ios:tracking-normal ios:normal-case">
+                Intranet
               </span>
             </>
           )}
@@ -224,8 +224,8 @@ function Layout({ children }: PropriedadesLayout) {
         <motion.div layoutScroll className="min-h-0 flex-1 overflow-y-auto">
           <nav className="flex flex-none flex-col gap-1">
             {!compacto && (
-              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 ios:px-3.5 ios:text-[11px] ios:font-semibold ios:tracking-[0.06em]">
-                PÁGINAS
+              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 uppercase ios:px-3.5 ios:text-xs ios:font-semibold ios:tracking-normal ios:normal-case">
+                Páginas
               </span>
             )}
             {NAV_PRINCIPAL.map((item) => (
@@ -236,8 +236,8 @@ function Layout({ children }: PropriedadesLayout) {
           {usuario?.role === 'superadmin' && (
             <div className="mt-5 flex flex-col gap-1 border-t border-white/70 pt-4 ios:border-slate-900/5">
               {!compacto && (
-                <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 ios:px-3.5 ios:text-[11px] ios:font-semibold ios:tracking-[0.06em]">
-                ADMINISTRAÇÃO
+                <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 uppercase ios:px-3.5 ios:text-xs ios:font-semibold ios:tracking-normal ios:normal-case">
+                Administração
               </span>
               )}
               {NAV_ADMIN.map((item) => (
@@ -248,8 +248,8 @@ function Layout({ children }: PropriedadesLayout) {
 
           <div className="mt-5 flex flex-col gap-1 border-t border-white/70 pt-4 ios:border-slate-900/5">
             {!compacto && (
-              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 ios:px-3.5 ios:text-[11px] ios:font-semibold ios:tracking-[0.06em]">
-                ACESSO RÁPIDO
+              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 uppercase ios:px-3.5 ios:text-xs ios:font-semibold ios:tracking-normal ios:normal-case">
+                Acesso rápido
               </span>
             )}
             {ATALHOS.map((link) => (

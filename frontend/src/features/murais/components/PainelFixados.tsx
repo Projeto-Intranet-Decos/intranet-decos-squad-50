@@ -10,9 +10,9 @@ function PainelFixados({ fixados, aoAbrir }: PropriedadesPainelFixados) {
   return (
     <div className="surface flex w-full flex-none flex-col overflow-hidden lg:w-[316px]">
       <div className="flex items-center justify-between border-b border-slate-200/60 bg-white/40 px-[18px] py-3 ios:border-slate-900/5 ios:bg-transparent ios:px-5 ios:pt-4 ios:pb-3">
-        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-600 ios:gap-2 ios:text-sm ios:tracking-[0.02em] ios:text-slate-900 ios:[&_svg]:size-[18px]">
+        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-600 ios:gap-2 uppercase ios:text-[15px] ios:tracking-normal ios:normal-case ios:text-slate-900 ios:[&_svg]:size-[18px]">
           <IconePin tamanho={16} className="text-brand-600" />
-          FIXADO
+          Fixado
         </span>
       </div>
       <div className="flex flex-col px-[18px] pb-[18px] ios:px-2 ios:pb-2">
@@ -36,9 +36,9 @@ function PainelFixados({ fixados, aoAbrir }: PropriedadesPainelFixados) {
                 <span className="text-[12.5px] font-semibold text-slate-900 ios:text-sm">{aviso.autorNome}</span>
                 <span className="text-[11px] text-slate-500 ios:text-xs">{aviso.setorNome}</span>
               </div>
-              <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-brand-600 ios:text-[11px] ios:font-semibold">
+              <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-brand-600 uppercase ios:text-xs ios:font-semibold ios:normal-case">
                 <IconePin tamanho={13} />
-                FIXADO
+                Fixado
               </span>
             </div>
             {/* Evento pode não ter conteúdo; aí o título ocupa o lugar. */}
