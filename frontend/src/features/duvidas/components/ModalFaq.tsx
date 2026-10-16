@@ -80,7 +80,7 @@ function ModalFaq({ aoFechar, faqEditando, setores }: PropriedadesModalFaq) {
           />
         </Campo>
 
-        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 pt-[18px] sm:flex sm:justify-end">
+        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 ios:border-slate-900/5 pt-[18px] sm:flex sm:justify-end">
           <Botao variante="secundario" onClick={aoFechar}>
             Cancelar
           </Botao>

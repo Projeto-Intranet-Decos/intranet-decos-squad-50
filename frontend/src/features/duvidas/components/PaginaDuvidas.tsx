@@ -69,7 +69,7 @@ function PaginaDuvidas() {
   return (
     <div>
       <div className="mb-[22px] flex flex-wrap items-center justify-between gap-3">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900">Central de dúvidas</h1>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 ios:font-display ios:text-3xl ios:font-bold">Central de dúvidas</h1>
         {podeCriar && (
           <Botao variante="primario" onClick={abrirNovaFaq} className="w-full sm:w-auto">
             <IconeMais tamanho={15} />

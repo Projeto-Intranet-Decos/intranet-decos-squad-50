@@ -23,9 +23,12 @@ Origem: [ESP] · Back — · Front ✅ · Teste —
 Aplicação web de uso interno, pensada para o desktop. Público: colaboradores administrativos e
 assistenciais, exceto o corpo médico. Abaixo de 1024px o layout se adapta (menu lateral vira
 drawer aberto por uma barra superior), sem rolagem horizontal da página a partir de 360px; o
-desktop não muda por causa disso. Visual de referência em
-[`docs/DESIGN_PROMPT.md`](../DESIGN_PROMPT.md); o fundo da aplicação tem um gradiente suave
-(ajustável, ver GER-14) e a rolagem tem efeito elástico no desktop (GER-15).
+desktop não muda por causa disso. Há dois estilos visuais, escolhidos em Configurações (GER-14):
+**iOS Glass** (padrão), com referência em [`docs/DESIGN_IOS_GLASS.md`](../DESIGN_IOS_GLASS.md), e
+**Vidro clínico**, com referência em [`docs/DESIGN_PROMPT.md`](../DESIGN_PROMPT.md). Os dois mudam
+só a aparência: as telas, os textos e a posição das coisas no desktop são os mesmos. O fundo da
+aplicação tem um gradiente suave (ajustável, ver GER-14) e a rolagem tem efeito elástico no
+desktop (GER-15).
 
 ### GER-02 — Autenticação obrigatória
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
@@ -174,6 +177,7 @@ não passam pelo backend e continuam valendo depois de sair e entrar com outro u
 
 | Preferência | Valores | Padrão |
 |---|---|---|
+| Estilo visual (GER-01) | iOS Glass, Vidro clínico | iOS Glass |
 | Desfoque do vidro | 0 a 24 px | 16 px |
 | Transparência do vidro | 0 a 100% | 60% |
 | Gradiente de fundo | desligado, suave, intenso | suave |
@@ -191,10 +195,14 @@ não passam pelo backend e continuam valendo depois de sair e entrar com outro u
   `backdrop-filter`.
 - **Dado** "Reduzir animações" ligado, **então** transições e animações são suprimidas como em
   `prefers-reduced-motion`, e o efeito elástico não acontece.
+- **Dado** o estilo visual escolhido, **então** o `<html>` recebe `data-visual="ios"` ou
+  `data-visual="clinico"` e a interface toda (menu, páginas, modais, toasts e a tela de login) passa
+  a usar aquele estilo. Desfoque e transparência valem nos dois estilos, sempre relativos aos valores
+  do design de cada um.
 - **Quando** o usuário aciona "Restaurar padrão", **então** todas as opções voltam ao padrão.
 
-A tela de login não muda com as preferências. A classe `no-glass` no `<html>` continua
-funcionando só por CSS.
+A tela de login segue o estilo visual, mas não muda com as demais preferências. A classe
+`no-glass` no `<html>` continua funcionando só por CSS, nos dois estilos.
 
 ### GER-15 — Efeito elástico na rolagem
 Origem: [CTX] · Back — · Front ✅ · Teste ✅
@@ -225,7 +233,8 @@ escurece e desfoca de leve a página.
   da página aparecia nítido através dele.
 - O painel tem um vidro próprio (`glass-modal`), tão branco quanto o do menu (GER-18) e com
   sombra mais forte, para não escurecer junto com o fundo. Ele segue as preferências de desfoque e
-  transparência (GER-14).
+  transparência (GER-14). No iOS Glass o painel é mais translúcido que no Vidro clínico, mas ainda
+  mais branco que o menu, para o carrossel bordô atrás não tingir o painel.
 
 ### GER-17 — Transição entre páginas
 Origem: [CTX] · Back — · Front ✅ · Teste ✅
@@ -252,3 +261,6 @@ deles: o conteúdo rola sob a barra superior e o menu abre por cima da página e
   conteúdo atrás: o fundo do vidro é tão branco quanto o do modal e segue as preferências de
   desfoque e transparência (GER-14). 🐞 corrigido: o vidro era transparente demais e, no celular,
   o texto da página atrás competia com o do menu.
+- No iOS Glass o vidro é mais translúcido, como no design; a legibilidade no celular vem do fundo
+  do drawer, que escurece **e desfoca** a página, e da barra superior compacta, que só tem o botão
+  do menu e o logo.

@@ -43,13 +43,13 @@ function BarraFiltrosMural({
       <label className="relative block w-full sm:w-auto sm:flex-[0_1_320px]">
         <IconeLupa
           tamanho={16}
-          className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500"
+          className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500 ios:left-4"
         />
         <input
           value={busca}
           onChange={(e) => aoMudarBusca(e.target.value)}
           placeholder="Buscar aviso por título, autor ou conteúdo"
-          className="field h-full py-2.5 pl-[38px] text-[13.5px]"
+          className="field h-full py-2.5 pl-[38px] text-[13.5px] ios:capsule-field ios:pl-10 ios:text-sm"
         />
       </label>
 

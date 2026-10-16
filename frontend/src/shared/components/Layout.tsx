@@ -81,10 +81,12 @@ function ItemMenu({ rota, label, Icone, compacto, aoNavegar, className }: Propri
       title={label}
       onClick={aoNavegar}
       className={({ isActive }) =>
-        `relative flex min-h-10 flex-none items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] transition-colors ${
-          compacto ? 'justify-center px-0' : 'px-3'
+        `relative flex min-h-10 flex-none items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] transition-[color,background-color,scale] ios:rounded-full ios:text-[15px] ios:active:scale-[0.98] ${
+          compacto ? 'justify-center px-0' : 'px-3 ios:px-3.5'
         } ${
-          isActive ? 'font-semibold text-brand-600' : 'font-medium text-slate-600 hover:bg-white/60 hover:text-slate-900'
+          isActive
+            ? 'font-semibold text-brand-600 ios:text-brand-700 ios:[&_svg]:stroke-2 ios:[&_svg]:text-brand-600'
+            : 'font-medium text-slate-600 hover:bg-white/60 hover:text-slate-900 ios:text-slate-700 ios:hover:bg-white/50'
         } ${className ?? ''}`
       }
     >
@@ -95,7 +97,7 @@ function ItemMenu({ rota, label, Icone, compacto, aoNavegar, className }: Propri
             <motion.span
               layoutId="indicador-do-menu"
               transition={{ type: 'spring', stiffness: 520, damping: 42 }}
-              className="item-ativo absolute inset-0 rounded-[10px]"
+              className="item-ativo absolute inset-0 rounded-[10px] ios:rounded-full"
             />
           )}
           <Icone tamanho={18} className="relative flex-none" />
@@ -156,13 +158,22 @@ function Layout({ children }: PropriedadesLayout) {
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row lg:items-start">
       <div className="fundo-app pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-40 -left-32 size-[34rem] rounded-full bg-brand-100 opacity-70 blur-3xl" />
-        <div className="absolute top-1/4 -right-40 size-[38rem] rounded-full bg-slate-200/80 blur-3xl" />
-        <div className="absolute -bottom-48 left-1/4 size-[32rem] rounded-full bg-slate-200 opacity-80 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 size-[20rem] rounded-full bg-brand-50 blur-3xl" />
+        <div className="contents ios:hidden">
+          <div className="absolute -top-40 -left-32 size-[34rem] rounded-full bg-brand-100 opacity-70 blur-3xl" />
+          <div className="absolute top-1/4 -right-40 size-[38rem] rounded-full bg-slate-200/80 blur-3xl" />
+          <div className="absolute -bottom-48 left-1/4 size-[32rem] rounded-full bg-slate-200 opacity-80 blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 size-[20rem] rounded-full bg-brand-50 blur-3xl" />
+        </div>
+        {/* iOS: cor atrás de cada painel de vidro (menu, carrossel, coluna da direita). */}
+        <div className="hidden ios:contents">
+          <div className="absolute -top-24 -left-40 size-[36rem] rounded-full bg-brand-500 opacity-[0.16] blur-[120px]" />
+          <div className="absolute top-[22rem] left-1/3 size-[40rem] rounded-full bg-brand-600 opacity-[0.09] blur-[140px]" />
+          <div className="absolute top-1/2 -right-32 size-[34rem] rounded-full bg-brand-100 opacity-80 blur-[120px]" />
+          <div className="absolute -bottom-40 left-0 size-[38rem] rounded-full bg-slate-300 opacity-50 blur-[120px]" />
+        </div>
       </div>
 
-      <header className="glass sticky top-3 z-30 mx-3 mt-3 flex h-14 flex-none items-center gap-2 rounded-2xl px-2 lg:hidden">
+      <header className="glass sticky top-3 z-30 mx-3 mt-3 flex h-14 flex-none items-center gap-2 rounded-2xl px-2 lg:hidden ios:h-[3.75rem] ios:gap-3 ios:rounded-full ios:pr-5">
         <button
           ref={botaoMenuRef}
           type="button"
@@ -170,7 +181,7 @@ function Layout({ children }: PropriedadesLayout) {
           aria-label="Abrir menu"
           aria-expanded={drawerAberto}
           aria-controls="menu-lateral"
-          className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-white/60"
+          className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-white/60 ios:btn-icon"
         >
           <IconeMenu tamanho={20} />
         </button>
@@ -179,7 +190,11 @@ function Layout({ children }: PropriedadesLayout) {
       </header>
 
       {drawerAberto && (
-        <div className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden" onClick={fecharMenu} aria-hidden="true" />
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden ios:bg-slate-900/25 ios:backdrop-blur-sm"
+          onClick={fecharMenu}
+          aria-hidden="true"
+        />
       )}
 
       {/* layoutRoot: o menu fica parado na tela, então a rolagem da página não entra na conta
@@ -189,7 +204,7 @@ function Layout({ children }: PropriedadesLayout) {
         id="menu-lateral"
         ref={menuRef}
         inert={!desktop && !menuAberto}
-        className={`glass fixed inset-y-3 left-3 z-50 flex w-[262px] max-w-[calc(100vw-1.5rem)] flex-none flex-col overflow-hidden rounded-2xl transition-[translate,width] duration-200 lg:sticky lg:top-3 lg:z-auto lg:my-3 lg:ml-3 lg:h-[calc(100dvh-1.5rem)] lg:max-w-none lg:translate-x-0 ${
+        className={`glass fixed inset-y-3 left-3 z-50 flex w-[262px] max-w-[calc(100vw-1.5rem)] flex-none flex-col overflow-hidden rounded-2xl transition-[translate,width] duration-200 lg:sticky lg:top-3 lg:z-auto lg:my-3 lg:ml-3 lg:h-[calc(100dvh-1.5rem)] lg:max-w-none lg:translate-x-0 ios:rounded-panel ${
           menuAberto ? 'translate-x-0' : '-translate-x-[calc(100%+1.5rem)]'
         }`}
         style={desktop ? { width: compacto ? '82px' : '262px', padding: compacto ? '24px 11px' : '24px 17px' } : { padding: '24px 17px' }}
@@ -198,7 +213,9 @@ function Layout({ children }: PropriedadesLayout) {
           {!compacto && (
             <>
               <img src={logoDecos} alt="Hospital Decós" className="h-9 w-auto max-w-[150px] object-contain" />
-              <span className="text-[10px] tracking-[0.16em] text-slate-500">INTRANET</span>
+              <span className="text-[10px] tracking-[0.16em] text-slate-500 ios:text-[11px] ios:font-medium ios:tracking-[0.08em]">
+                INTRANET
+              </span>
             </>
           )}
           {compacto && <img src={simboloDecos} alt="Hospital Decós" className="size-9 object-contain" />}
@@ -207,7 +224,9 @@ function Layout({ children }: PropriedadesLayout) {
         <motion.div layoutScroll className="min-h-0 flex-1 overflow-y-auto">
           <nav className="flex flex-none flex-col gap-1">
             {!compacto && (
-              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500">PÁGINAS</span>
+              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 ios:px-3.5 ios:text-[11px] ios:font-semibold ios:tracking-[0.06em]">
+                PÁGINAS
+              </span>
             )}
             {NAV_PRINCIPAL.map((item) => (
               <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
@@ -215,9 +234,11 @@ function Layout({ children }: PropriedadesLayout) {
           </nav>
 
           {usuario?.role === 'superadmin' && (
-            <div className="mt-5 flex flex-col gap-1 border-t border-white/70 pt-4">
+            <div className="mt-5 flex flex-col gap-1 border-t border-white/70 pt-4 ios:border-slate-900/5">
               {!compacto && (
-                <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500">ADMINISTRAÇÃO</span>
+                <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 ios:px-3.5 ios:text-[11px] ios:font-semibold ios:tracking-[0.06em]">
+                ADMINISTRAÇÃO
+              </span>
               )}
               {NAV_ADMIN.map((item) => (
                 <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
@@ -225,9 +246,11 @@ function Layout({ children }: PropriedadesLayout) {
             </div>
           )}
 
-          <div className="mt-5 flex flex-col gap-1 border-t border-white/70 pt-4">
+          <div className="mt-5 flex flex-col gap-1 border-t border-white/70 pt-4 ios:border-slate-900/5">
             {!compacto && (
-              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500">ACESSO RÁPIDO</span>
+              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 ios:px-3.5 ios:text-[11px] ios:font-semibold ios:tracking-[0.06em]">
+                ACESSO RÁPIDO
+              </span>
             )}
             {ATALHOS.map((link) => (
               <a
@@ -237,9 +260,9 @@ function Layout({ children }: PropriedadesLayout) {
                 rel="noopener noreferrer"
                 title={link.label}
                 onClick={fecharMenu}
-                className={`flex items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] ${compacto ? 'justify-center px-0' : 'px-3'} font-medium text-slate-600 no-underline transition-colors hover:bg-white/60 hover:text-brand-600`}
+                className={`flex min-h-10 items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] ${compacto ? 'justify-center px-0' : 'px-3 ios:px-3.5'} font-medium text-slate-600 no-underline transition-[color,background-color,scale] hover:bg-white/60 hover:text-brand-600 ios:rounded-full ios:text-[15px] ios:text-slate-700 ios:hover:bg-white/50 ios:active:scale-[0.98]`}
               >
-                <IconeSetaExterna tamanho={16} className="flex-none text-slate-500" />
+                <IconeSetaExterna tamanho={16} className="flex-none text-slate-500 ios:size-[18px]" />
                 {!compacto && <span className="flex-1 truncate">{link.label}</span>}
               </a>
             ))}
@@ -259,31 +282,37 @@ function Layout({ children }: PropriedadesLayout) {
           type="button"
           onClick={() => setRecolhido((r) => !r)}
           title={compacto ? 'Expandir menu' : 'Recolher menu'}
-          className={`mt-1 hidden flex-none items-center gap-2.5 rounded-lg py-2 lg:flex ${compacto ? 'justify-center px-0' : 'px-3'} text-xs text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700`}
+          className={`mt-1 hidden flex-none items-center gap-2.5 rounded-lg py-2 lg:flex ${compacto ? 'justify-center px-0' : 'px-3 ios:px-3.5'} text-xs text-slate-500 transition-[color,background-color,scale] hover:bg-white/60 hover:text-slate-700 ios:min-h-10 ios:rounded-full ios:text-sm ios:text-slate-600 ios:hover:bg-white/50 ios:active:scale-[0.98]`}
         >
           {compacto ? <IconeSidebarExpandir tamanho={16} /> : <IconeSidebarRecolher tamanho={16} />}
           {!compacto && <span className="flex-1 text-left">Recolher menu</span>}
         </button>
 
-        <div className={`mt-2 flex flex-none items-center gap-2.5 border-t ${compacto ? 'justify-center' : ''} border-white/70 pt-4`}>
-          <span className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700">
+        <div className={`mt-2 flex flex-none items-center gap-2.5 border-t ${compacto ? 'justify-center' : ''} border-white/70 pt-4 ios:border-slate-900/5`}>
+          <span className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 ios:size-9">
             <IconeUsuario tamanho={18} />
           </span>
           {!compacto && (
             <>
               <div className="flex min-w-0 flex-1 flex-col leading-tight">
-                <span className="truncate text-xs text-slate-600">
+                <span className="truncate text-xs text-slate-600 ios:text-[13px] ios:font-medium ios:text-slate-700">
                   {usuario ? ROTULO_PAPEL[usuario.role] : ''}
                 </span>
               </div>
-              <button type="button" title="Notificações" className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 lg:size-8">
+              <button
+                type="button"
+                title="Notificações"
+                aria-label="Notificações"
+                className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 lg:size-8 ios:btn-icon"
+              >
                 <IconeSino tamanho={18} />
               </button>
               <button
                 type="button"
                 onClick={aoSair}
                 title="Sair"
-                className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-brand-600 lg:size-8"
+                aria-label="Sair"
+                className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-brand-600 lg:size-8 ios:btn-icon"
               >
                 <IconeSair tamanho={18} />
               </button>

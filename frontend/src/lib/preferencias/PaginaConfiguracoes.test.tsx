@@ -32,11 +32,23 @@ describe('GER-14 — página Configurações', () => {
     expect(screen.getByRole('link', { name: 'Configurações' }).getAttribute('href')).toBe('/configuracoes')
   })
 
+  it('vem com o iOS Glass escolhido e troca para o Vidro clínico na hora', () => {
+    render(<PaginaConfiguracoes />)
+
+    expect((screen.getByRole('radio', { name: 'iOS Glass' }) as HTMLInputElement).checked).toBe(true)
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Vidro clínico' }))
+
+    expect(raiz.dataset.visual).toBe('clinico')
+    expect((screen.getByRole('radio', { name: 'Vidro clínico' }) as HTMLInputElement).checked).toBe(true)
+  })
+
   it('mostra os valores salvos', () => {
-    definirPreferencias({ desfoque: 6, gradiente: 'desligado', rolagemElastica: false })
+    definirPreferencias({ desfoque: 6, gradiente: 'desligado', visual: 'clinico', rolagemElastica: false })
 
     render(<PaginaConfiguracoes />)
 
+    expect((screen.getByRole('radio', { name: 'Vidro clínico' }) as HTMLInputElement).checked).toBe(true)
     expect((screen.getByLabelText('Desfoque do vidro') as HTMLInputElement).value).toBe('6')
     expect((screen.getByRole('radio', { name: 'Desligado' }) as HTMLInputElement).checked).toBe(true)
     expect((screen.getByRole('switch', { name: 'Efeito elástico na rolagem' }) as HTMLInputElement).checked).toBe(false)
@@ -59,6 +71,7 @@ describe('GER-14 — página Configurações', () => {
       desfoque: 8,
       transparencia: 90,
       gradiente: 'intenso',
+      visual: 'ios',
       rolagemElastica: false,
       reduzirAnimacoes: true,
     })
@@ -66,12 +79,13 @@ describe('GER-14 — página Configurações', () => {
   })
 
   it('"Restaurar padrão" volta todas as opções', () => {
-    definirPreferencias({ desfoque: 0, transparencia: 10, gradiente: 'intenso' })
+    definirPreferencias({ desfoque: 0, transparencia: 10, gradiente: 'intenso', visual: 'clinico' })
     render(<PaginaConfiguracoes />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Restaurar padrão' }))
 
     expect(obterPreferencias()).toEqual(PREFERENCIAS_PADRAO)
+    expect((screen.getByRole('radio', { name: 'iOS Glass' }) as HTMLInputElement).checked).toBe(true)
     expect((screen.getByLabelText('Desfoque do vidro') as HTMLInputElement).value).toBe('16')
     expect((screen.getByRole('radio', { name: 'Suave' }) as HTMLInputElement).checked).toBe(true)
   })

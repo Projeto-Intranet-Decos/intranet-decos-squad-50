@@ -44,10 +44,10 @@ function PaginaLogin() {
           />
         </div>
 
-        <div className="login-card relative my-auto flex w-full max-w-[440px] flex-col items-center rounded-2xl p-6 sm:p-8">
+        <div className="login-card relative my-auto flex w-full max-w-[440px] flex-col items-center rounded-2xl p-6 sm:p-8 ios:rounded-panel">
           <img src={logoDecos} alt="Hospital Decós" className="mb-8 h-12 w-auto" />
 
-          <h1 className="mb-7 text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="mb-7 text-2xl font-semibold tracking-tight text-slate-900 ios:font-display ios:text-3xl ios:font-bold">
             Acesse a intranet
           </h1>
 
@@ -56,33 +56,33 @@ function PaginaLogin() {
             className="flex w-full flex-col gap-[18px] text-left"
           >
             <label className="flex flex-col gap-[7px]">
-              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase">
+              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:font-semibold ios:tracking-[0.04em]">
                 E-MAIL
               </span>
               <input
                 type="email"
                 placeholder="nome.sobrenome@decos.com.br"
-                className="field py-3 text-sm"
+                className="field py-3 text-sm ios:capsule-field ios:px-4 ios:text-[15px]"
                 {...register('email', { required: true })}
               />
             </label>
 
             <label className="flex flex-col gap-[7px]">
-              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase">
+              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:font-semibold ios:tracking-[0.04em]">
                 SENHA
               </span>
               <div className="relative block">
                 <input
                   type={mostrarSenha ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="field py-3 pr-[50px] text-sm"
+                  className="field py-3 pr-[50px] text-sm ios:capsule-field ios:pl-4 ios:text-[15px]"
                   {...register('senha', { required: true })}
                 />
                 <button
                   type="button"
                   onClick={() => setMostrarSenha((prev) => !prev)}
                   title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-                  className="absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-900/5 hover:text-slate-700"
+                  className="absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-900/5 hover:text-slate-700 ios:right-1 ios:rounded-full"
                 >
                   {mostrarSenha ? <IconeOlhoFechado /> : <IconeOlho />}
                 </button>

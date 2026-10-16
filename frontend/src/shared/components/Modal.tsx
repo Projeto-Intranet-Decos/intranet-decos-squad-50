@@ -64,7 +64,7 @@ function Modal({
     <div onClick={aoFechar} className={`fixed inset-0 z-50 flex items-center justify-center ${classes.fundo}`}>
       {/* O fundo é irmão do painel, não pai: um backdrop-filter dentro de outro só enxerga o
           conteúdo do pai, e o painel deixaria de desfocar a página. */}
-      <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[3px]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[3px] ios:bg-slate-900/25 ios:backdrop-blur-sm" aria-hidden="true" />
       <div
         ref={painelRef}
         role="dialog"
@@ -74,21 +74,22 @@ function Modal({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{ width: largura }}
-        className={`glass-modal relative flex max-h-full w-full max-w-full flex-col overflow-hidden rounded-2xl outline-none ${classes.painel}`}
+        className={`glass-modal relative flex max-h-full w-full max-w-full flex-col overflow-hidden rounded-2xl outline-none ios:rounded-panel ${classes.painel}`}
       >
         {/* A rolagem fica num filho para o brilho da borda (::before do vidro) não rolar junto. */}
         <div className={`flex min-h-0 flex-1 flex-col overflow-auto ${classes.conteudo}`}>
           <div className={`flex items-center gap-4 ${classes.cabecalho}`}>
             {cabecalho ?? (
-              <h2 id={idTitulo} className="m-0 text-lg font-semibold tracking-tight text-slate-900">
+              <h2 id={idTitulo} className="m-0 text-lg font-semibold tracking-tight text-slate-900 ios:font-display ios:text-xl">
                 {titulo}
               </h2>
             )}
             <button
               type="button"
               onClick={aoFechar}
-              className="-mr-2 ml-auto flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-800 sm:size-8"
+              className="-mr-2 ml-auto flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-800 sm:size-8 ios:mr-0 ios:btn-icon"
               title="Fechar"
+              aria-label="Fechar"
             >
               <IconeX tamanho={18} />
             </button>

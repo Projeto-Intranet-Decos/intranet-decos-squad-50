@@ -13,4 +13,5 @@ afterEach(() => {
   raiz.removeAttribute('style')
   raiz.removeAttribute('class')
   delete raiz.dataset.gradiente
+  delete raiz.dataset.visual
 })

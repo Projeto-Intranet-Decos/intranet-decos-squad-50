@@ -1,13 +1,56 @@
 import { useId } from 'react'
 import Botao from '../../shared/components/Botao'
-import { LIMITES, definirPreferencias, restaurarPreferencias, type GradienteFundo } from './preferencias'
+import {
+  LIMITES,
+  definirPreferencias,
+  restaurarPreferencias,
+  type EstiloVisual,
+  type GradienteFundo,
+} from './preferencias'
 import { usePreferencias } from './usePreferencias'
+
+const VISUAIS: { valor: EstiloVisual; rotulo: string }[] = [
+  { valor: 'ios', rotulo: 'iOS Glass' },
+  { valor: 'clinico', rotulo: 'Vidro clínico' },
+]
 
 const GRADIENTES: { valor: GradienteFundo; rotulo: string }[] = [
   { valor: 'desligado', rotulo: 'Desligado' },
   { valor: 'suave', rotulo: 'Suave' },
   { valor: 'intenso', rotulo: 'Intenso' },
 ]
+
+interface PropriedadesSegmentado<T extends string> {
+  nome: string
+  opcoes: { valor: T; rotulo: string }[]
+  valor: T
+  aoMudar: (valor: T) => void
+}
+
+function Segmentado<T extends string>({ nome, opcoes, valor, aoMudar }: PropriedadesSegmentado<T>) {
+  return (
+    <div className="flex gap-[3px] rounded-[10px] bg-slate-900/5 p-[3px] ios:rounded-full ios:p-1">
+      {opcoes.map((opcao) => (
+        <label
+          key={opcao.valor}
+          className={`flex min-h-10 cursor-pointer items-center rounded-lg px-[13px] text-[13px] font-medium transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-500 sm:min-h-8 ios:rounded-full ios:px-4 ios:text-sm max-lg:ios:min-h-11 ${
+            opcao.valor === valor ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <input
+            type="radio"
+            name={nome}
+            value={opcao.valor}
+            checked={opcao.valor === valor}
+            onChange={() => aoMudar(opcao.valor)}
+            className="sr-only"
+          />
+          {opcao.rotulo}
+        </label>
+      ))}
+    </div>
+  )
+}
 
 interface PropriedadesDeslizante {
   rotulo: string
@@ -94,14 +137,33 @@ function PaginaConfiguracoes() {
   return (
     <div className="max-w-[720px]">
       <div className="mb-6">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900">Configurações</h1>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 ios:font-display ios:text-3xl ios:font-bold">
+          Configurações
+        </h1>
         <p className="m-0 mt-1.5 text-sm text-slate-600">
           Ajustes de aparência da intranet. Valem na hora e ficam salvos neste navegador.
         </p>
       </div>
 
       <section className="surface mb-5 p-5 sm:p-6">
-        <h2 className="m-0 mb-4 text-base font-semibold text-slate-900">Vidro</h2>
+        <h2 className="m-0 mb-4 text-base font-semibold text-slate-900 ios:text-[17px]">Estilo visual</h2>
+        <fieldset className="m-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-0 p-0">
+          <legend className="sr-only">Estilo visual</legend>
+          <p id="ajuda-estilo-visual" className="m-0 max-w-[380px] text-xs text-slate-500">
+            O iOS Glass tem vidro mais translúcido, cantos arredondados e controles em cápsula. O Vidro
+            clínico é o visual anterior, mais sóbrio e opaco.
+          </p>
+          <Segmentado
+            nome="visual"
+            opcoes={VISUAIS}
+            valor={preferencias.visual}
+            aoMudar={(visual) => definirPreferencias({ visual })}
+          />
+        </fieldset>
+      </section>
+
+      <section className="surface mb-5 p-5 sm:p-6">
+        <h2 className="m-0 mb-4 text-base font-semibold text-slate-900 ios:text-[17px]">Vidro</h2>
         <div className="flex flex-col gap-5">
           <Deslizante
             rotulo="Desfoque do vidro"
@@ -124,35 +186,19 @@ function PaginaConfiguracoes() {
       </section>
 
       <section className="surface mb-5 p-5 sm:p-6">
-        <h2 className="m-0 mb-4 text-base font-semibold text-slate-900">Fundo e movimento</h2>
+        <h2 className="m-0 mb-4 text-base font-semibold text-slate-900 ios:text-[17px]">Fundo e movimento</h2>
 
         <fieldset className="m-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-0 p-0 pb-3.5">
           <legend className="float-left p-0 text-sm font-medium text-slate-700">Gradiente de fundo</legend>
-          <div className="flex gap-[3px] rounded-[10px] bg-slate-900/5 p-[3px]">
-            {GRADIENTES.map((opcao) => (
-              <label
-                key={opcao.valor}
-                className={`flex min-h-10 cursor-pointer items-center rounded-lg px-[13px] text-[13px] font-medium transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-500 sm:min-h-8 ${
-                  opcao.valor === preferencias.gradiente
-                    ? 'bg-white text-brand-700 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="gradiente"
-                  value={opcao.valor}
-                  checked={opcao.valor === preferencias.gradiente}
-                  onChange={() => definirPreferencias({ gradiente: opcao.valor })}
-                  className="sr-only"
-                />
-                {opcao.rotulo}
-              </label>
-            ))}
-          </div>
+          <Segmentado
+            nome="gradiente"
+            opcoes={GRADIENTES}
+            valor={preferencias.gradiente}
+            aoMudar={(gradiente) => definirPreferencias({ gradiente })}
+          />
         </fieldset>
 
-        <div className="divide-y divide-slate-200/60 border-t border-slate-200/60">
+        <div className="divide-y divide-slate-200/60 border-t border-slate-200/60 ios:divide-slate-900/5 ios:border-slate-900/5">
           <Interruptor
             rotulo="Efeito elástico na rolagem"
             ajuda="Ao rolar além do topo ou do fim da página, o conteúdo estica e volta ao lugar."

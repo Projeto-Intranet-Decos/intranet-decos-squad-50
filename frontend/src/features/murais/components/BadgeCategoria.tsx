@@ -20,14 +20,17 @@ interface PropriedadesBadgeCategoria {
 
 function BadgeCategoria({ categoria, comImagem, sobreFoto, className }: PropriedadesBadgeCategoria) {
   const cores = sobreFoto
-    ? 'bg-white/15 text-white ring-white/30'
+    ? 'bg-white/15 text-white ring-white/30 ios:ring-white/25'
     : comImagem
       ? 'bg-brand-600 text-white ring-brand-600'
       : CORES[categoria]
 
   return (
-    <span className={`rounded-full px-2.5 py-1 text-[10.5px] font-medium tracking-wide ring-1 ${cores} ${className ?? ''}`}>
-      {ROTULO_CATEGORIA[categoria].toUpperCase()}
+    // A caixa alta é do Vidro clínico; no iOS Glass o selo é uma cápsula em frase normal.
+    <span
+      className={`rounded-full px-2.5 py-1 text-[10.5px] font-medium tracking-wide uppercase ring-1 ios:pill ${cores} ${className ?? ''}`}
+    >
+      {ROTULO_CATEGORIA[categoria]}
     </span>
   )
 }

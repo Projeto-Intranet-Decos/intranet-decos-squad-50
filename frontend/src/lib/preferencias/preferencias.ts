@@ -2,12 +2,16 @@
 
 export type GradienteFundo = 'desligado' | 'suave' | 'intenso'
 
+/** `ios`: iOS Glass (docs/DESIGN_IOS_GLASS.md). `clinico`: Vidro clínico (docs/DESIGN_PROMPT.md). */
+export type EstiloVisual = 'ios' | 'clinico'
+
 export interface PreferenciasInterface {
   /** Desfoque do vidro estrutural, em px. */
   desfoque: number
   /** Transparência do vidro, em %. */
   transparencia: number
   gradiente: GradienteFundo
+  visual: EstiloVisual
   rolagemElastica: boolean
   reduzirAnimacoes: boolean
 }
@@ -18,6 +22,7 @@ export const PREFERENCIAS_PADRAO: PreferenciasInterface = {
   desfoque: 16,
   transparencia: 60,
   gradiente: 'suave',
+  visual: 'ios',
   rolagemElastica: true,
   reduzirAnimacoes: false,
 }
@@ -28,12 +33,17 @@ export const LIMITES = {
 }
 
 const GRADIENTES: GradienteFundo[] = ['desligado', 'suave', 'intenso']
+const VISUAIS: EstiloVisual[] = ['ios', 'clinico']
 
 let atuais = PREFERENCIAS_PADRAO
 const inscritos = new Set<() => void>()
 
 function numeroValido(valor: unknown, limite: { minimo: number; maximo: number }, padrao: number) {
   return typeof valor === 'number' && valor >= limite.minimo && valor <= limite.maximo ? valor : padrao
+}
+
+function opcaoValida<T extends string>(valor: unknown, opcoes: T[], padrao: T): T {
+  return opcoes.includes(valor as T) ? (valor as T) : padrao
 }
 
 function booleanoValido(valor: unknown, padrao: boolean) {
@@ -46,9 +56,8 @@ function normalizar(bruto: unknown): PreferenciasInterface {
   return {
     desfoque: numeroValido(dados.desfoque, LIMITES.desfoque, PREFERENCIAS_PADRAO.desfoque),
     transparencia: numeroValido(dados.transparencia, LIMITES.transparencia, PREFERENCIAS_PADRAO.transparencia),
-    gradiente: GRADIENTES.includes(dados.gradiente as GradienteFundo)
-      ? (dados.gradiente as GradienteFundo)
-      : PREFERENCIAS_PADRAO.gradiente,
+    gradiente: opcaoValida(dados.gradiente, GRADIENTES, PREFERENCIAS_PADRAO.gradiente),
+    visual: opcaoValida(dados.visual, VISUAIS, PREFERENCIAS_PADRAO.visual),
     rolagemElastica: booleanoValido(dados.rolagemElastica, PREFERENCIAS_PADRAO.rolagemElastica),
     reduzirAnimacoes: booleanoValido(dados.reduzirAnimacoes, PREFERENCIAS_PADRAO.reduzirAnimacoes),
   }
@@ -74,7 +83,7 @@ function gravar(preferencias: PreferenciasInterface) {
 // O CSS (index.css) lê estas variáveis e classes no <html>.
 function aplicar(preferencias: PreferenciasInterface) {
   const raiz = document.documentElement
-  const { desfoque, transparencia, gradiente, rolagemElastica, reduzirAnimacoes } = preferencias
+  const { desfoque, transparencia, gradiente, visual, rolagemElastica, reduzirAnimacoes } = preferencias
 
   raiz.style.setProperty('--vidro-desfoque', `${desfoque}px`)
   // 1 = transparência do design original (o padrão); 0 = sólido.
@@ -83,6 +92,8 @@ function aplicar(preferencias: PreferenciasInterface) {
     String(Number((transparencia / PREFERENCIAS_PADRAO.transparencia).toFixed(3))),
   )
   raiz.dataset.gradiente = gradiente
+  // A variante `ios:` do Tailwind e os blocos `@variant ios` do index.css leem este atributo.
+  raiz.dataset.visual = visual
   raiz.classList.toggle('sem-desfoque', desfoque === 0)
   raiz.classList.toggle('reduzir-animacoes', reduzirAnimacoes)
   raiz.classList.toggle('rolagem-elastica', rolagemElastica && !reduzirAnimacoes)

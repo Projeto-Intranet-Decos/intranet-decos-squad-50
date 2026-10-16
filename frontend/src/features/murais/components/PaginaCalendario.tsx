@@ -89,7 +89,7 @@ function PaginaCalendario() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-3">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900">Calendário</h1>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 ios:font-display ios:text-3xl ios:font-bold">Calendário</h1>
       </div>
 
       {isLoading && <p className="mb-4 text-sm text-slate-600">Carregando eventos…</p>}
@@ -104,7 +104,7 @@ function PaginaCalendario() {
       )}
 
       <div className="grid grid-cols-1 items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_316px]">
-        <div className="surface min-w-0 p-4 sm:p-5">
+        <div className="surface min-w-0 p-4 sm:p-5 ios:sm:p-6">
           <CabecalhoCalendario
             titulo={tituloDoPeriodo(dataReferencia, visao)}
             visao={visao}

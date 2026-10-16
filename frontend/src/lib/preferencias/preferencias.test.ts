@@ -23,6 +23,7 @@ describe('GER-14 — preferências de interface', () => {
     expect(raiz.style.getPropertyValue('--vidro-desfoque')).toBe('16px')
     expect(raiz.style.getPropertyValue('--vidro-transparencia')).toBe('1')
     expect(raiz.dataset.gradiente).toBe('suave')
+    expect(raiz.dataset.visual).toBe('ios')
     expect(raiz.classList.contains('rolagem-elastica')).toBe(true)
     expect(raiz.classList.contains('reduzir-animacoes')).toBe(false)
     expect(raiz.classList.contains('sem-desfoque')).toBe(false)
@@ -47,6 +48,19 @@ describe('GER-14 — preferências de interface', () => {
     expect(aoMudar).toHaveBeenCalledTimes(1)
   })
 
+  it('troca o estilo visual no <html> e grava a escolha', () => {
+    iniciarPreferencias()
+
+    definirPreferencias({ visual: 'clinico' })
+
+    expect(raiz.dataset.visual).toBe('clinico')
+    expect(salvo()).toMatchObject({ visual: 'clinico' })
+
+    definirPreferencias({ visual: 'ios' })
+
+    expect(raiz.dataset.visual).toBe('ios')
+  })
+
   it('restaura o que foi salvo ao iniciar de novo (recarregar a página)', () => {
     iniciarPreferencias()
     definirPreferencias({ desfoque: 4, rolagemElastica: false })
@@ -63,7 +77,14 @@ describe('GER-14 — preferências de interface', () => {
   it('volta ao padrão só o campo inválido e mantém os demais', () => {
     localStorage.setItem(
       CHAVE_PREFERENCIAS,
-      JSON.stringify({ desfoque: 999, transparencia: 'muita', gradiente: 'arco-iris', rolagemElastica: false, reduzirAnimacoes: 1 }),
+      JSON.stringify({
+        desfoque: 999,
+        transparencia: 'muita',
+        gradiente: 'arco-iris',
+        visual: 'android',
+        rolagemElastica: false,
+        reduzirAnimacoes: 1,
+      }),
     )
 
     iniciarPreferencias()
@@ -99,13 +120,21 @@ describe('GER-14 — preferências de interface', () => {
 
   it('restaurar padrão desfaz todas as mudanças', () => {
     iniciarPreferencias()
-    definirPreferencias({ desfoque: 0, transparencia: 100, gradiente: 'desligado', rolagemElastica: false, reduzirAnimacoes: true })
+    definirPreferencias({
+      desfoque: 0,
+      transparencia: 100,
+      gradiente: 'desligado',
+      visual: 'clinico',
+      rolagemElastica: false,
+      reduzirAnimacoes: true,
+    })
 
     restaurarPreferencias()
 
     expect(obterPreferencias()).toEqual(PREFERENCIAS_PADRAO)
     expect(raiz.style.getPropertyValue('--vidro-desfoque')).toBe('16px')
     expect(raiz.dataset.gradiente).toBe('suave')
+    expect(raiz.dataset.visual).toBe('ios')
     expect(salvo()).toEqual(PREFERENCIAS_PADRAO)
   })
 })
