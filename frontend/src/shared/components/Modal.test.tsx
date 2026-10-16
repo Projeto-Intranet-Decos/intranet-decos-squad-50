@@ -45,6 +45,59 @@ describe('GER-16 — modais', () => {
     expect(aoFechar).not.toHaveBeenCalled()
   })
 
+  it('Tab no último elemento volta ao primeiro e Shift+Tab no primeiro vai ao último', () => {
+    render(
+      <Modal aberto titulo="Novo aviso" aoFechar={() => {}}>
+        <input aria-label="Título" />
+        <button type="button">Publicar</button>
+      </Modal>,
+    )
+    const fechar = screen.getByTitle('Fechar')
+    const publicar = screen.getByRole('button', { name: 'Publicar' })
+
+    publicar.focus()
+    fireEvent.keyDown(document, { key: 'Tab' })
+    expect(document.activeElement).toBe(fechar)
+
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(publicar)
+  })
+
+  it('Shift+Tab com o foco no painel vai ao último elemento', () => {
+    render(
+      <Modal aberto titulo="Novo aviso" aoFechar={() => {}}>
+        <button type="button">Publicar</button>
+      </Modal>,
+    )
+    expect(document.activeElement).toBe(screen.getByRole('dialog'))
+
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Publicar' }))
+  })
+
+  it('ao fechar, devolve o foco a quem estava focado antes', () => {
+    function Tela({ aberto }: { aberto: boolean }) {
+      return (
+        <>
+          <button type="button">Novo aviso</button>
+          <Modal aberto={aberto} titulo="Novo aviso" aoFechar={() => {}}>
+            <p>Conteúdo</p>
+          </Modal>
+        </>
+      )
+    }
+    const { rerender } = render(<Tela aberto={false} />)
+    const gatilho = screen.getByRole('button', { name: 'Novo aviso' })
+    gatilho.focus()
+
+    rerender(<Tela aberto />)
+    expect(document.activeElement).toBe(screen.getByRole('dialog'))
+
+    rerender(<Tela aberto={false} />)
+    expect(document.activeElement).toBe(gatilho)
+  })
+
   it('fecha com Esc e pelo botão Fechar', () => {
     const { aoFechar } = montar()
 

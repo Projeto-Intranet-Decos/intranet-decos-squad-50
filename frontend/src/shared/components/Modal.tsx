@@ -24,6 +24,9 @@ const CLASSES_VARIANTE = {
   },
 }
 
+const SELETOR_FOCAVEIS =
+  'a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+
 function Modal({
   aberto,
   titulo,
@@ -48,6 +51,32 @@ function Modal({
 
     function aoTeclar(e: KeyboardEvent) {
       if (e.key === 'Escape') aoFecharRef.current()
+      if (e.key === 'Tab') prenderFoco(e)
+    }
+
+    // Tab no último volta ao primeiro, Shift+Tab no primeiro (ou no painel) vai ao último: o foco
+    // não sai para a página atrás. No meio da lista o navegador segue sozinho.
+    function prenderFoco(e: KeyboardEvent) {
+      const painel = painelRef.current
+      if (!painel) return
+      // Os inputs de arquivo dos formulários ficam ocultos (display: none) e não recebem foco.
+      const focaveis = [...painel.querySelectorAll<HTMLElement>(SELETOR_FOCAVEIS)].filter(
+        (el) => !el.closest('[inert]') && (typeof el.checkVisibility !== 'function' || el.checkVisibility()),
+      )
+      if (focaveis.length === 0) {
+        e.preventDefault()
+        return
+      }
+      const primeiro = focaveis[0]
+      const ultimo = focaveis[focaveis.length - 1]
+      const atual = document.activeElement
+      if (e.shiftKey && (atual === primeiro || atual === painel || !painel.contains(atual))) {
+        e.preventDefault()
+        ultimo.focus()
+      } else if (!e.shiftKey && (atual === ultimo || !painel.contains(atual))) {
+        e.preventDefault()
+        primeiro.focus()
+      }
     }
     document.addEventListener('keydown', aoTeclar)
     return () => {

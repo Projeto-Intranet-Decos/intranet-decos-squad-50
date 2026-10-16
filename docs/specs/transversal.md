@@ -227,6 +227,10 @@ escurece e desfoca de leve a página.
 
 - **Dado** um modal aberto, **quando** o usuário clica fora do painel, aperta `Esc` ou aciona
   "Fechar", **então** o modal fecha; clicar dentro do painel não fecha.
+- **Dado** um modal aberto, **então** o foco fica preso no painel: `Tab` no último elemento focável
+  volta ao primeiro e `Shift+Tab` no primeiro (ou com o foco no próprio painel) vai ao último; o
+  foco nunca passa para a página atrás.
+- **Quando** o modal fecha, **então** o foco volta ao elemento que estava focado antes de ele abrir.
 - **Dado** um modal aberto, **então** o painel desfoca o que está atrás dele: o painel não pode
   ficar dentro do elemento que desfoca a página, porque um `backdrop-filter` aninhado em outro só
   enxerga o conteúdo do pai, não a página. 🐞 corrigido: o painel ficava dentro do fundo e o texto
