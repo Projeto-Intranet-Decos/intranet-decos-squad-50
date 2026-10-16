@@ -25,6 +25,7 @@ src/
     documentos/       # inclui upload de arquivos
     setores/
     duvidas/
+    atalhos/          # links de acesso rápido da barra lateral
     usuarios/          # rota exclusiva superadmin
     logs/               # rota exclusiva superadmin
   shared/

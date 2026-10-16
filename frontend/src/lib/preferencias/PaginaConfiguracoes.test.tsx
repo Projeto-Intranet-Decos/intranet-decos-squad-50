@@ -1,10 +1,16 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../App'
 import { simularConsultasDeMidia, simularNavegador } from '../../testes/apoio'
 import PaginaConfiguracoes from './PaginaConfiguracoes'
 import { CHAVE_PREFERENCIAS, PREFERENCIAS_PADRAO, definirPreferencias, iniciarPreferencias, obterPreferencias } from './preferencias'
+
+vi.mock('../../features/atalhos/api', async (original) => ({
+  ...(await original<typeof import('../../features/atalhos/api')>()),
+  listarAtalhos: vi.fn(async () => []),
+}))
 
 const raiz = document.documentElement
 
@@ -23,9 +29,11 @@ describe('GER-14 — página Configurações', () => {
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
 
     render(
-      <MemoryRouter initialEntries={['/configuracoes']}>
-        <App />
-      </MemoryRouter>,
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={['/configuracoes']}>
+          <App />
+        </MemoryRouter>
+      </QueryClientProvider>,
     )
 
     expect(screen.getByRole('heading', { level: 1, name: 'Configurações' })).toBeTruthy()

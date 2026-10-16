@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from 'react'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
 import { useAuth } from '../../lib/auth/useAuth'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
 import { useRolagemElastica } from '../hooks/useRolagemElastica'
@@ -16,7 +17,6 @@ import {
   IconeMegafone,
   IconeMenu,
   IconeSair,
-  IconeSetaExterna,
   IconeSidebarExpandir,
   IconeSidebarRecolher,
   IconeSino,
@@ -36,11 +36,6 @@ const NAV_PRINCIPAL = [
 const NAV_ADMIN = [
   { rota: '/usuarios', label: 'Usuários', Icone: IconeUsuarios },
   { rota: '/logs', label: 'Registro de Atividades', Icone: IconeHistorico },
-]
-
-const ATALHOS = [
-  { label: 'Prontuário eletrônico', url: '#' },
-  { label: 'Portal do colaborador', url: '#' },
 ]
 
 const ROTULO_PAPEL = {
@@ -246,27 +241,7 @@ function Layout({ children }: PropriedadesLayout) {
             </div>
           )}
 
-          <div className="mt-5 flex flex-col gap-1 border-t border-white/70 pt-4 liquido:border-slate-900/5">
-            {!compacto && (
-              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 uppercase liquido:px-3.5 liquido:text-xs liquido:font-semibold liquido:tracking-normal liquido:normal-case">
-                Acesso rápido
-              </span>
-            )}
-            {ATALHOS.map((link) => (
-              <a
-                key={link.label}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={link.label}
-                onClick={fecharMenu}
-                className={`flex min-h-10 items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] ${compacto ? 'justify-center px-0' : 'px-3 liquido:px-3.5'} font-medium text-slate-600 no-underline transition-[color,background-color,scale] hover:bg-white/60 hover:text-brand-600 liquido:rounded-full liquido:text-[15px] liquido:text-slate-700 liquido:hover:bg-white/50 liquido:active:scale-[0.98]`}
-              >
-                <IconeSetaExterna tamanho={16} className="flex-none text-slate-500 liquido:size-[18px]" />
-                {!compacto && <span className="flex-1 truncate">{link.label}</span>}
-              </a>
-            ))}
-          </div>
+          <ListaAtalhos compacto={compacto} aoNavegar={fecharMenu} />
         </motion.div>
 
         <ItemMenu

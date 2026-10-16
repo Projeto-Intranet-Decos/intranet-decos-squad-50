@@ -4,6 +4,7 @@ import {
   Bell,
   Building2,
   Calendar,
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -89,6 +90,7 @@ export const IconeMenos = criarIcone(Minus)
 export const IconeLapis = criarIcone(Pencil)
 export const IconeLixeira = criarIcone(Trash)
 export const IconeX = criarIcone(X)
+export const IconeCheck = criarIcone(Check)
 export const IconePin = criarIcone(Pin)
 export const IconeOlho = criarIcone(Eye)
 export const IconeOlhoFechado = criarIcone(EyeOff)

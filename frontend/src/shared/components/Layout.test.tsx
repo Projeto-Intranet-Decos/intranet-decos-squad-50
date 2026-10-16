@@ -1,20 +1,28 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { definirPreferencias, iniciarPreferencias } from '../../lib/preferencias/preferencias'
 import { simularConsultasDeMidia } from '../../testes/apoio'
 import estilos from '../../index.css?raw'
 import Layout from './Layout'
 
+vi.mock('../../features/atalhos/api', async (original) => ({
+  ...(await original<typeof import('../../features/atalhos/api')>()),
+  listarAtalhos: vi.fn(async () => []),
+}))
+
 // Mesmo arranjo do App: cada rota embrulha a própria página no Layout.
 function Aplicacao() {
   return (
-    <MemoryRouter initialEntries={['/mural']}>
-      <Routes>
-        <Route path="/mural" element={<Layout><p>Página do mural</p></Layout>} />
-        <Route path="/documentos" element={<Layout><p>Página de documentos</p></Layout>} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter initialEntries={['/mural']}>
+        <Routes>
+          <Route path="/mural" element={<Layout><p>Página do mural</p></Layout>} />
+          <Route path="/documentos" element={<Layout><p>Página de documentos</p></Layout>} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   )
 }
 
