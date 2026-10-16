@@ -111,7 +111,11 @@ function PaginaMural() {
         aoNovoAviso={abrirNovoAviso}
       />
 
+      {/* Fixados vem antes no DOM pra ficar no topo no mobile; no desktop volta pra coluna da direita */}
       <div className="grid grid-cols-1 items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_316px]">
+        <div className="lg:col-start-2 lg:row-start-1">
+          <PainelFixados fixados={fixados} aoAbrir={setDetalhe} />
+        </div>
         <ListaAvisos
           avisos={avisosFiltrados}
           podeGerenciarAviso={podeGerenciarEsteAviso}
@@ -119,7 +123,6 @@ function PaginaMural() {
           aoEditar={abrirEdicao}
           aoExcluir={aoExcluir}
         />
-        <PainelFixados fixados={fixados} aoAbrir={setDetalhe} />
       </div>
 
       {modalAberto && (
