@@ -13,3 +13,8 @@ export function podeDeletar(usuario: Usuario, recurso: { setorId: string }): boo
 
 
 export const podeEditar = podeDeletar
+
+// Atalhos do acesso rápido são globais: só o superadmin mantém.
+export function podeGerenciarAtalhos(usuario: Usuario | null | undefined): boolean {
+  return usuario?.role === 'superadmin'
+}
