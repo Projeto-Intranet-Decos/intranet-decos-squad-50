@@ -78,7 +78,7 @@ function PaginaSetores() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 ios:font-display ios:text-3xl ios:font-bold">Setores e ramais</h1>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">Setores e ramais</h1>
       </div>
 
       <BarraFiltrosSetores

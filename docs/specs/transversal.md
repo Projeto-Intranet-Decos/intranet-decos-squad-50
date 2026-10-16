@@ -24,11 +24,11 @@ Aplicação web de uso interno, pensada para o desktop. Público: colaboradores 
 assistenciais, exceto o corpo médico. Abaixo de 1024px o layout se adapta (menu lateral vira
 drawer aberto por uma barra superior), sem rolagem horizontal da página a partir de 360px; o
 desktop não muda por causa disso. Há dois estilos visuais, escolhidos em Configurações (GER-14):
-**iOS Glass** (padrão), com referência em [`docs/DESIGN_IOS_GLASS.md`](../DESIGN_IOS_GLASS.md), e
+**Vidro líquido** (padrão), com referência em [`docs/DESIGN_VIDRO_LIQUIDO.md`](../DESIGN_VIDRO_LIQUIDO.md), e
 **Vidro clínico**, com referência em [`docs/DESIGN_PROMPT.md`](../DESIGN_PROMPT.md). Os dois mudam
 só a aparência: as telas, os textos e a posição das coisas no desktop são os mesmos. Rótulos curtos
 (títulos de seção do menu, cabeçalhos de painel e de tabela, rótulos de campo) são escritos em frase
-normal e aparecem assim no iOS Glass; no Vidro clínico ficam em caixa alta, só por CSS. O fundo da
+normal e aparecem assim no Vidro líquido; no Vidro clínico ficam em caixa alta, só por CSS. O fundo da
 aplicação tem um gradiente suave (ajustável, ver GER-14) e a rolagem tem efeito elástico no
 desktop (GER-15).
 
@@ -179,7 +179,7 @@ não passam pelo backend e continuam valendo depois de sair e entrar com outro u
 
 | Preferência | Valores | Padrão |
 |---|---|---|
-| Estilo visual (GER-01) | iOS Glass, Vidro clínico | iOS Glass |
+| Estilo visual (GER-01) | Vidro líquido, Vidro clínico | Vidro líquido |
 | Desfoque do vidro | 0 a 24 px | 16 px |
 | Transparência do vidro | 0 a 100% | 60% |
 | Refração no carrossel | ligado/desligado | ligado |
@@ -198,11 +198,11 @@ não passam pelo backend e continuam valendo depois de sair e entrar com outro u
   `backdrop-filter`.
 - **Dado** "Reduzir animações" ligado, **então** transições e animações são suprimidas como em
   `prefers-reduced-motion`, e o efeito elástico não acontece.
-- **Dado** o estilo visual escolhido, **então** o `<html>` recebe `data-visual="ios"` ou
+- **Dado** o estilo visual escolhido, **então** o `<html>` recebe `data-visual="liquido"` ou
   `data-visual="clinico"` e a interface toda (menu, páginas, modais, toasts e a tela de login) passa
   a usar aquele estilo. Desfoque e transparência valem nos dois estilos, sempre relativos aos valores
   do design de cada um.
-- **Dado** "Refração no carrossel" ligado, o iOS Glass e um navegador Chromium (Chrome, Edge), **então**
+- **Dado** "Refração no carrossel" ligado, o Vidro líquido e um navegador Chromium (Chrome, Edge), **então**
   o `<html>` recebe a classe `refracao` e a placa de vidro do carrossel distorce o fundo nas bordas,
   como uma lente (filtro SVG `feDisplacementMap` no `backdrop-filter`). Em outros navegadores o
   interruptor fica desativado, com a explicação, e a placa usa só o desfoque. Desfoque 0, `no-glass`
@@ -245,7 +245,7 @@ escurece e desfoca de leve a página.
   da página aparecia nítido através dele.
 - O painel tem um vidro próprio (`glass-modal`), tão branco quanto o do menu (GER-18) e com
   sombra mais forte, para não escurecer junto com o fundo. Ele segue as preferências de desfoque e
-  transparência (GER-14). No iOS Glass o painel é mais translúcido que no Vidro clínico, mas ainda
+  transparência (GER-14). No Vidro líquido o painel é mais translúcido que no Vidro clínico, mas ainda
   mais branco que o menu, para o carrossel bordô atrás não tingir o painel.
 
 ### GER-17 — Transição entre páginas
@@ -273,6 +273,6 @@ deles: o conteúdo rola sob a barra superior e o menu abre por cima da página e
   conteúdo atrás: o fundo do vidro é tão branco quanto o do modal e segue as preferências de
   desfoque e transparência (GER-14). 🐞 corrigido: o vidro era transparente demais e, no celular,
   o texto da página atrás competia com o do menu.
-- No iOS Glass o vidro é mais translúcido, como no design; a legibilidade no celular vem do fundo
+- No Vidro líquido o vidro é mais translúcido, como no design; a legibilidade no celular vem do fundo
   do drawer, que escurece **e desfoca** a página, e da barra superior compacta, que só tem o botão
   do menu e o logo.

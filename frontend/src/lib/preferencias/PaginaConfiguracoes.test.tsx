@@ -32,10 +32,10 @@ describe('GER-14 — página Configurações', () => {
     expect(screen.getByRole('link', { name: 'Configurações' }).getAttribute('href')).toBe('/configuracoes')
   })
 
-  it('vem com o iOS Glass escolhido e troca para o Vidro clínico na hora', () => {
+  it('vem com o Vidro líquido escolhido e troca para o Vidro clínico na hora', () => {
     render(<PaginaConfiguracoes />)
 
-    expect((screen.getByRole('radio', { name: 'iOS Glass' }) as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByRole('radio', { name: 'Vidro líquido' }) as HTMLInputElement).checked).toBe(true)
 
     fireEvent.click(screen.getByRole('radio', { name: 'Vidro clínico' }))
 
@@ -71,7 +71,7 @@ describe('GER-14 — página Configurações', () => {
       desfoque: 8,
       transparencia: 90,
       gradiente: 'intenso',
-      visual: 'ios',
+      visual: 'liquido',
       refracao: true,
       rolagemElastica: false,
       reduzirAnimacoes: true,
@@ -87,7 +87,7 @@ describe('GER-14 — página Configurações', () => {
     expect(screen.getByText(/só no Chrome ou no Edge/)).toBeTruthy()
   })
 
-  it('refração no carrossel: liga e desliga no Chromium com o iOS Glass', () => {
+  it('refração no carrossel: liga e desliga no Chromium com o Vidro líquido', () => {
     simularNavegador(['Chromium'])
     iniciarPreferencias()
     render(<PaginaConfiguracoes />)
@@ -110,7 +110,7 @@ describe('GER-14 — página Configurações', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Restaurar padrão' }))
 
     expect(obterPreferencias()).toEqual(PREFERENCIAS_PADRAO)
-    expect((screen.getByRole('radio', { name: 'iOS Glass' }) as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByRole('radio', { name: 'Vidro líquido' }) as HTMLInputElement).checked).toBe(true)
     expect((screen.getByLabelText('Desfoque do vidro') as HTMLInputElement).value).toBe('16')
     expect((screen.getByRole('radio', { name: 'Suave' }) as HTMLInputElement).checked).toBe(true)
   })

@@ -164,7 +164,7 @@ depois do commit, todos os objetos do aviso no bucket. Vale igual para eventos.
 Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste ⬜
 
 - Busca local por título, autor ou conteúdo; filtros por categoria (inclusive `evento`) e setor.
-- No iOS Glass (GER-01), a partir de 1024px, a barra de busca e filtros fica presa ao topo da tela
+- No Vidro líquido (GER-01), a partir de 1024px, a barra de busca e filtros fica presa ao topo da tela
   num vidro em cápsula, e a lista rola por baixo dela. Abaixo de 1024px e no Vidro clínico ela rola
   junto com a página.
 - Eventos aparecem no feed, no carrossel e nos fixados como qualquer aviso; o card e o detalhe de

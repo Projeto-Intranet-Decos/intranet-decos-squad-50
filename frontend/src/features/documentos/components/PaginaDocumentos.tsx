@@ -80,19 +80,19 @@ function PaginaDocumentos() {
 
   return (
     <div>
-      <h1 className="m-0 mb-[22px] text-2xl font-semibold tracking-tight text-slate-900 ios:font-display ios:text-3xl ios:font-bold">POPs &amp; documentos</h1>
+      <h1 className="m-0 mb-[22px] text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">POPs &amp; documentos</h1>
 
       <div className="mb-5 flex flex-wrap items-stretch gap-3 sm:gap-3.5">
         <label className="relative block w-full sm:w-auto sm:flex-[0_1_320px]">
           <IconeLupa
             tamanho={16}
-            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500 ios:left-4"
+            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500 liquido:left-4"
           />
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por título ou palavra-chave"
-            className="field h-full py-2.5 pl-[38px] text-[13.5px] ios:capsule-field ios:pl-10 ios:text-sm"
+            className="field h-full py-2.5 pl-[38px] text-[13.5px] liquido:capsule-field liquido:pl-10 liquido:text-sm"
           />
         </label>
 
@@ -122,7 +122,7 @@ function PaginaDocumentos() {
 
       <div className="surface overflow-hidden">
         <div
-          className={`hidden ${COLUNAS_TABELA} border-b border-slate-200/60 ios:border-slate-900/5 bg-white/40 px-[18px] py-3 ios:bg-white/35 text-xs font-medium tracking-wide text-slate-500 uppercase ios:font-semibold ios:tracking-normal ios:normal-case`}
+          className={`hidden ${COLUNAS_TABELA} border-b border-slate-200/60 liquido:border-slate-900/5 bg-white/40 px-[18px] py-3 liquido:bg-white/35 text-xs font-medium tracking-wide text-slate-500 uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case`}
         >
           <span>Documento</span>
           <span>Categoria</span>

@@ -242,13 +242,13 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
     >
       <form onSubmit={handleSubmit(aoSubmeter)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:text-sm ios:font-semibold ios:tracking-normal ios:normal-case">Imagem de capa</span>
+          <span className="text-xs font-medium tracking-wide text-slate-700 uppercase liquido:text-sm liquido:font-semibold liquido:tracking-normal liquido:normal-case">Imagem de capa</span>
           {urlImagemExibida ? (
-            <div className="flex flex-wrap items-center gap-3 rounded-[10px] ios:rounded-inner bg-white/55 p-1.5 ring-1 ring-white/80">
+            <div className="flex flex-wrap items-center gap-3 rounded-[10px] liquido:rounded-inner bg-white/55 p-1.5 ring-1 ring-white/80">
               <img
                 src={urlImagemExibida}
                 alt="Pré-visualização da capa"
-                className="h-[96px] w-full flex-none rounded-md object-cover sm:w-[160px] ios:rounded-[10px]"
+                className="h-[96px] w-full flex-none rounded-md object-cover sm:w-[160px] liquido:rounded-[10px]"
               />
               <div className="ml-auto flex gap-2 pr-1.5 pb-1.5 sm:pb-0">
                 <Botao variante="secundario" onClick={() => inputImagemRef.current?.click()}>
@@ -263,7 +263,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
             <button
               type="button"
               onClick={() => inputImagemRef.current?.click()}
-              className="flex cursor-pointer items-center gap-2.5 rounded-[10px] ios:rounded-inner border border-dashed border-slate-300 bg-white/55 p-4 text-left transition-colors hover:bg-white/75"
+              className="flex cursor-pointer items-center gap-2.5 rounded-[10px] liquido:rounded-inner border border-dashed border-slate-300 bg-white/55 p-4 text-left transition-colors hover:bg-white/75"
             >
               <IconeImagem tamanho={20} className="flex-none text-brand-600" />
               <div className="flex flex-col leading-snug">
@@ -289,7 +289,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium tracking-wide text-slate-700 uppercase ios:text-sm ios:font-semibold ios:tracking-normal ios:normal-case">Anexos</span>
+          <span className="text-xs font-medium tracking-wide text-slate-700 uppercase liquido:text-sm liquido:font-semibold liquido:tracking-normal liquido:normal-case">Anexos</span>
           <div
             onDragOver={(e) => {
               e.preventDefault()
@@ -302,7 +302,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
               setArrastando(false)
             }}
             onClick={() => inputArquivoRef.current?.click()}
-            className={`flex cursor-pointer items-center gap-2.5 rounded-[10px] ios:rounded-inner border border-dashed p-4 transition-colors ${
+            className={`flex cursor-pointer items-center gap-2.5 rounded-[10px] liquido:rounded-inner border border-dashed p-4 transition-colors ${
               arrastando ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-white/55 hover:bg-white/75'
             }`}
           >
@@ -332,7 +332,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
           {anexos.length > 0 && (
             <div className="flex flex-col gap-2">
               {anexos.map((anexo, i) => (
-                <div key={anexo.id ?? `${anexo.nome}-${i}`} className="flex items-center gap-2.5 rounded-[10px] ios:rounded-inner bg-white/55 px-3 py-1.5 ring-1 ring-white/80">
+                <div key={anexo.id ?? `${anexo.nome}-${i}`} className="flex items-center gap-2.5 rounded-[10px] liquido:rounded-inner bg-white/55 px-3 py-1.5 ring-1 ring-white/80">
                   <IconeArquivoTexto tamanho={16} className="flex-none text-brand-600" />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-800">
                     {anexo.nome}
@@ -342,7 +342,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
                     type="button"
                     onClick={() => removerAnexo(i)}
                     title="Remover"
-                    className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-danger-50 hover:text-danger-600 sm:size-8 ios:btn-icon is-danger"
+                    className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-danger-50 hover:text-danger-600 sm:size-8 liquido:btn-icon is-danger"
                   >
                     <IconeX tamanho={14} />
                   </button>
@@ -433,7 +433,7 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
           Fixar no topo do mural
         </label>
 
-        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 ios:border-slate-900/5 pt-[18px] sm:flex sm:justify-end">
+        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 liquido:border-slate-900/5 pt-[18px] sm:flex sm:justify-end">
           <Botao variante="secundario" onClick={aoFechar}>
             Cancelar
           </Botao>

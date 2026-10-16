@@ -11,7 +11,7 @@ const ESTILOS: Record<VarianteBotao, string> = {
   secundario: 'btn btn-secondary',
   perigo: 'btn btn-danger',
   icone:
-    'flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 sm:size-8 ios:btn-icon',
+    'flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 sm:size-8 liquido:btn-icon',
 }
 
 const Botao = forwardRef<HTMLButtonElement, PropriedadesBotao>(function Botao(

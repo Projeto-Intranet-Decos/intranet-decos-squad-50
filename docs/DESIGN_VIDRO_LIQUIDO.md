@@ -1,10 +1,10 @@
-# Redesign visual "iOS Glass" · Intranet Hospital Decós
+# Redesign visual "Vidro líquido" · Intranet Hospital Decós
 
-Este documento descreve um **redesign visual** da intranet que **já existe**, no estilo "liquid glass" do iOS 26: vidro com espessura, cantos concêntricos, controles em cápsula e tipografia de sistema, sobre a identidade bordô do Hospital Decós.
+Este documento descreve um **redesign visual** da intranet que **já existe**, no estilo "vidro líquido": vidro com espessura, cantos concêntricos, controles em cápsula e tipografia de sistema, sobre a identidade bordô do Hospital Decós.
 
 O objetivo é trocar só a aparência (cores, superfícies, raios, sombras, tipografia, ícones, espaçamento interno) e manter intactos a estrutura, o conteúdo e o funcionamento. A única mudança de comportamento permitida é a de **responsividade**.
 
-> **Decisões posteriores a este documento** (valem sobre o texto abaixo): o iOS Glass não substitui o visual "Vidro clínico" de [`DESIGN_PROMPT.md`](./DESIGN_PROMPT.md). Os dois convivem e o usuário escolhe em **Configurações** (preferência "Estilo visual", GER-14); o iOS Glass é o padrão. O `<html>` recebe `data-visual="ios"` ou `data-visual="clinico"`; no CSS, os utilitários compartilhados (`glass`, `surface`, `btn-*`, `field`) têm um bloco `@variant ios`, e os componentes usam a variante `ios:` do Tailwind para o que muda só neste estilo. Os ajustes de desfoque e transparência continuam valendo, relativos aos valores deste documento. Regras em [`specs/transversal.md`](./specs/transversal.md), GER-01 e GER-14. Das sugestões da seção 18, foram implementadas: a barra de busca e filtros fixa no topo do mural (MUR-11, só no iOS Glass e a partir de 1024px), a refração com filtro SVG na placa do carrossel (opção "Refração no carrossel", só no Chromium) e o foco preso nos modais (GER-16). Os rótulos curtos foram reescritos em frase normal; o Vidro clínico mantém a caixa alta por CSS.
+> **Decisões posteriores a este documento** (valem sobre o texto abaixo): o Vidro líquido não substitui o visual "Vidro clínico" de [`DESIGN_PROMPT.md`](./DESIGN_PROMPT.md). Os dois convivem e o usuário escolhe em **Configurações** (preferência "Estilo visual", GER-14); o Vidro líquido é o padrão. O `<html>` recebe `data-visual="liquido"` ou `data-visual="clinico"`; no CSS, os utilitários compartilhados (`glass`, `surface`, `btn-*`, `field`) têm um bloco `@variant liquido`, e os componentes usam a variante `liquido:` do Tailwind para o que muda só neste estilo. Os ajustes de desfoque e transparência continuam valendo, relativos aos valores deste documento. Regras em [`specs/transversal.md`](./specs/transversal.md), GER-01 e GER-14. Das sugestões da seção 18, foram implementadas: a barra de busca e filtros fixa no topo do mural (MUR-11, só no Vidro líquido e a partir de 1024px), a refração com filtro SVG na placa do carrossel (opção "Refração no carrossel", só no Chromium) e o foco preso nos modais (GER-16). Os rótulos curtos foram reescritos em frase normal; o Vidro clínico mantém a caixa alta por CSS.
 
 Stack de referência: **Tailwind CSS v4** e ícones **Lucide**. Se o projeto usar Tailwind v3, adapte `@theme` e `@utility` para `tailwind.config` + `@layer components`. Se não usar Tailwind, traduza as utilities para CSS puro (`.glass`, `.surface`, `.capsule` etc.) em vez de introduzir um framework novo. Se o projeto já usa outra biblioteca de ícones, mantenha-a.
 
@@ -45,14 +45,14 @@ Stack de referência: **Tailwind CSS v4** e ícones **Lucide**. Se o projeto usa
 
 ## 3. Contexto
 
-O sistema é a **intranet do Hospital Decós**. É usado por médicos, enfermagem, farmácia e administrativo, muitas vezes em turnos longos e em computadores modestos. O visual deve parecer moderno e "nativo de Apple", sem perder a sobriedade de um ambiente clínico: **bordô é a única cor de marca** e o resto é branco translúcido e cinza-azulado.
+O sistema é a **intranet do Hospital Decós**. É usado por médicos, enfermagem, farmácia e administrativo, muitas vezes em turnos longos e em computadores modestos. O visual deve parecer moderno e "nativo", sem perder a sobriedade de um ambiente clínico: **bordô é a única cor de marca** e o resto é branco translúcido e cinza-azulado.
 
-O que separa um "card branco com sombra" de um "vidro do iOS" são quatro coisas, e todas precisam estar presentes:
+O que separa um "card branco com sombra" de um "vidro líquido" são quatro coisas, e todas precisam estar presentes:
 
 1. **Conteúdo colorido atrás do vidro.** Sem manchas de cor no fundo, o vidro vira papel.
 2. **Vidro translúcido de verdade**, com 38–62% de branco, blur alto e saturação.
 3. **Espessura**, criada por brilhos e sombras internas que imitam a borda de uma lente.
-4. **Geometria iOS:** cantos grandes e concêntricos, e controles em cápsula.
+4. **Geometria:** cantos grandes e concêntricos, e controles em cápsula.
 
 ## 4. Marca e logotipos
 
@@ -239,7 +239,7 @@ Esses valores são intencionalmente mais intensos que os de um design web comum 
 ## 9. Utilities de controles (cápsulas)
 
 ```css
-/* Campo e filtro em cápsula: o "vidro escuro sutil" do iOS */
+/* Campo e filtro em cápsula: o "vidro escuro sutil" */
 @utility capsule-field {
   display: inline-flex; align-items: center; gap: 0.5rem;
   min-height: 2.75rem; padding: 0 1rem;
@@ -374,11 +374,11 @@ Aplique cada item **ao elemento equivalente que já existe**. Se a aplicação n
 - A linha entre cabeçalho e corpo vira `border-slate-900/5`, ou só espaçamento (`pt-1`).
 - Estado vazio ("Nenhum aniversariante…"): `text-sm text-slate-500`, centralizado, com `py-6`.
 - **Tile de data** (17 / OUT): `rounded-tile bg-white/60 ring-1 ring-white/80 shadow-[inset_0_1px_0_white] w-12 py-1.5 text-center`. Dia em `text-lg font-semibold text-slate-900 tabular-nums`; mês em `text-[11px] font-semibold text-brand-600`.
-- Itens de lista dentro do card: separadores com recuo, começando depois do tile ou avatar (`ml-16 border-t border-slate-900/5`), como nas listas do iOS.
+- Itens de lista dentro do card: separadores com recuo, começando depois do tile ou avatar (`ml-16 border-t border-slate-900/5`), como nas listas de sistemas móveis.
 
 ### Título de página ("Mural de avisos")
 
-`font-display text-3xl font-bold tracking-tight text-slate-900` (o *large title* do iOS).
+`font-display text-3xl font-bold tracking-tight text-slate-900` (o *large title*).
 
 ### Barra de busca e filtros
 
@@ -436,7 +436,7 @@ Pode mudar a disposição em telas pequenas, desde que **nada seja removido** e 
 - **Linha do tempo:** abaixo de `sm`, a coluna de data/hora passa para cima do card (data e hora numa linha só) e a linha vertical fica mais à esquerda.
 - **Tabelas:** dentro de `overflow-x-auto`. Colunas só podem ser ocultadas se o dado aparecer em outro ponto da linha.
 - **Raios:** abaixo de `sm`, reduza os raios redefinindo as variáveis: `@media (width < 40rem) { :root { --radius-panel: 1.375rem; --radius-card: 1.25rem; } }`.
-- **Alvos de toque:** mínimo 44×44px abaixo de `lg` (a medida da Apple).
+- **Alvos de toque:** mínimo 44×44px abaixo de `lg` (a medida recomendada para toque).
 - **Sem rolagem horizontal da página** a partir de 360px de largura.
 
 ## 13. Tipografia e ícones
@@ -487,7 +487,7 @@ Pode mudar a disposição em telas pequenas, desde que **nada seja removido** e 
 ## 18. Sugestões para listar, não implementar
 
 Coloque no resumo final, sem implementar:
-- Barra de busca e filtros fixa no topo, com os avisos rolando por baixo do vidro (é a assinatura do iOS 26, mas muda o posicionamento).
+- Barra de busca e filtros fixa no topo, com os avisos rolando por baixo do vidro (é a assinatura do vidro líquido, mas muda o posicionamento).
 - Efeito de refração real com filtro SVG (`feDisplacementMap`) no hero; só funciona em navegadores Chromium.
 - Prender o foco em modais e fechar com Esc, se ainda não existir.
 - Qualquer outra melhoria funcional que você perceber durante o trabalho.

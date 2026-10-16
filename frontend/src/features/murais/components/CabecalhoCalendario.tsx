@@ -20,14 +20,14 @@ interface PropriedadesCabecalhoCalendario {
 function CabecalhoCalendario({ titulo, visao, aoMudarVisao, aoAnterior, aoProximo }: PropriedadesCabecalhoCalendario) {
   return (
     <div className="mb-[18px] flex flex-wrap items-center gap-3.5">
-      <h2 className="m-0 w-full text-base font-semibold text-slate-900 sm:w-auto ios:text-lg ios:tracking-tight">{titulo}</h2>
-      <div className="flex gap-[3px] rounded-[10px] bg-slate-900/5 p-[3px] sm:ml-auto ios:rounded-full ios:p-1">
+      <h2 className="m-0 w-full text-base font-semibold text-slate-900 sm:w-auto liquido:text-lg liquido:tracking-tight">{titulo}</h2>
+      <div className="flex gap-[3px] rounded-[10px] bg-slate-900/5 p-[3px] sm:ml-auto liquido:rounded-full liquido:p-1">
         {VISOES.map((opcao) => (
           <button
             key={opcao.valor}
             type="button"
             onClick={() => aoMudarVisao(opcao.valor)}
-            className={`min-h-10 cursor-pointer rounded-lg px-[13px] py-1.5 text-[13px] font-medium transition-colors sm:min-h-0 ios:rounded-full ios:px-3.5 ios:text-sm max-lg:ios:min-h-11 ${
+            className={`min-h-10 cursor-pointer rounded-lg px-[13px] py-1.5 text-[13px] font-medium transition-colors sm:min-h-0 liquido:rounded-full liquido:px-3.5 liquido:text-sm max-lg:liquido:min-h-11 ${
               opcao.valor === visao ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >

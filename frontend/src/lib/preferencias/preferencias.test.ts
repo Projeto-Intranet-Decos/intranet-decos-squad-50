@@ -24,7 +24,7 @@ describe('GER-14 — preferências de interface', () => {
     expect(raiz.style.getPropertyValue('--vidro-desfoque')).toBe('16px')
     expect(raiz.style.getPropertyValue('--vidro-transparencia')).toBe('1')
     expect(raiz.dataset.gradiente).toBe('suave')
-    expect(raiz.dataset.visual).toBe('ios')
+    expect(raiz.dataset.visual).toBe('liquido')
     expect(raiz.classList.contains('rolagem-elastica')).toBe(true)
     expect(raiz.classList.contains('reduzir-animacoes')).toBe(false)
     expect(raiz.classList.contains('sem-desfoque')).toBe(false)
@@ -57,9 +57,9 @@ describe('GER-14 — preferências de interface', () => {
     expect(raiz.dataset.visual).toBe('clinico')
     expect(salvo()).toMatchObject({ visual: 'clinico' })
 
-    definirPreferencias({ visual: 'ios' })
+    definirPreferencias({ visual: 'liquido' })
 
-    expect(raiz.dataset.visual).toBe('ios')
+    expect(raiz.dataset.visual).toBe('liquido')
   })
 
   it('refração: marca o <html> só no Chromium e com a opção ligada', () => {
@@ -150,7 +150,7 @@ describe('GER-14 — preferências de interface', () => {
     expect(obterPreferencias()).toEqual(PREFERENCIAS_PADRAO)
     expect(raiz.style.getPropertyValue('--vidro-desfoque')).toBe('16px')
     expect(raiz.dataset.gradiente).toBe('suave')
-    expect(raiz.dataset.visual).toBe('ios')
+    expect(raiz.dataset.visual).toBe('liquido')
     expect(salvo()).toEqual(PREFERENCIAS_PADRAO)
   })
 })

@@ -39,18 +39,18 @@ function BarraFiltrosMural({
   ]
 
   return (
-    // `barra-filtros-fixa`: no iOS Glass, a partir de lg, fica presa ao topo (ver index.css).
+    // `barra-filtros-fixa`: no Vidro líquido, a partir de lg, fica presa ao topo (ver index.css).
     <div className="barra-filtros-fixa mb-5 flex flex-wrap items-stretch gap-3 sm:gap-3.5">
       <label className="relative block w-full sm:w-auto sm:flex-[0_1_320px]">
         <IconeLupa
           tamanho={16}
-          className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500 ios:left-4"
+          className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500 liquido:left-4"
         />
         <input
           value={busca}
           onChange={(e) => aoMudarBusca(e.target.value)}
           placeholder="Buscar aviso por título, autor ou conteúdo"
-          className="field h-full py-2.5 pl-[38px] text-[13.5px] ios:capsule-field ios:pl-10 ios:text-sm"
+          className="field h-full py-2.5 pl-[38px] text-[13.5px] liquido:capsule-field liquido:pl-10 liquido:text-sm"
         />
       </label>
 

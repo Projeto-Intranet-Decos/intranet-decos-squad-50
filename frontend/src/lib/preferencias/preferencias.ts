@@ -2,8 +2,8 @@
 
 export type GradienteFundo = 'desligado' | 'suave' | 'intenso'
 
-/** `ios`: iOS Glass (docs/DESIGN_IOS_GLASS.md). `clinico`: Vidro clínico (docs/DESIGN_PROMPT.md). */
-export type EstiloVisual = 'ios' | 'clinico'
+/** `liquido`: Vidro líquido (docs/DESIGN_VIDRO_LIQUIDO.md). `clinico`: Vidro clínico (docs/DESIGN_PROMPT.md). */
+export type EstiloVisual = 'liquido' | 'clinico'
 
 export interface PreferenciasInterface {
   /** Desfoque do vidro estrutural, em px. */
@@ -12,7 +12,7 @@ export interface PreferenciasInterface {
   transparencia: number
   gradiente: GradienteFundo
   visual: EstiloVisual
-  /** Refração na placa do carrossel; só tem efeito no iOS Glass e no Chromium. */
+  /** Refração na placa do carrossel; só tem efeito no Vidro líquido e no Chromium. */
   refracao: boolean
   rolagemElastica: boolean
   reduzirAnimacoes: boolean
@@ -24,7 +24,7 @@ export const PREFERENCIAS_PADRAO: PreferenciasInterface = {
   desfoque: 16,
   transparencia: 60,
   gradiente: 'suave',
-  visual: 'ios',
+  visual: 'liquido',
   refracao: true,
   rolagemElastica: true,
   reduzirAnimacoes: false,
@@ -36,7 +36,7 @@ export const LIMITES = {
 }
 
 const GRADIENTES: GradienteFundo[] = ['desligado', 'suave', 'intenso']
-const VISUAIS: EstiloVisual[] = ['ios', 'clinico']
+const VISUAIS: EstiloVisual[] = ['liquido', 'clinico']
 
 let atuais = PREFERENCIAS_PADRAO
 const inscritos = new Set<() => void>()
@@ -105,7 +105,7 @@ function aplicar(preferencias: PreferenciasInterface) {
     String(Number((transparencia / PREFERENCIAS_PADRAO.transparencia).toFixed(3))),
   )
   raiz.dataset.gradiente = gradiente
-  // A variante `ios:` do Tailwind e os blocos `@variant ios` do index.css leem este atributo.
+  // A variante `liquido:` do Tailwind e os blocos `@variant liquido` do index.css leem este atributo.
   raiz.dataset.visual = visual
   raiz.classList.toggle('sem-desfoque', desfoque === 0)
   raiz.classList.toggle('refracao', refracao && suportaRefracao())

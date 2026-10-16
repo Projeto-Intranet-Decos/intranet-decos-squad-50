@@ -31,23 +31,23 @@ function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento 
   )
 
   function classesCelula(indice: number, hoje: boolean) {
-    return `flex min-w-0 flex-col gap-1 border-b border-slate-200/60 ios:border-slate-900/5 p-1 ${indice < 6 ? 'border-r' : ''} ${
+    return `flex min-w-0 flex-col gap-1 border-b border-slate-200/60 liquido:border-slate-900/5 p-1 ${indice < 6 ? 'border-r' : ''} ${
       hoje ? 'bg-brand-50/60' : 'bg-white/50'
     }`
   }
 
   const classesRotulo =
-    'border-r border-b border-slate-200/60 ios:border-slate-900/5 bg-white/40 px-2.5 py-2 text-right text-[11px] text-slate-500 tabular-nums'
+    'border-r border-b border-slate-200/60 liquido:border-slate-900/5 bg-white/40 px-2.5 py-2 text-right text-[11px] text-slate-500 tabular-nums'
 
   return (
     // Abaixo de lg a grade rola na horizontal dentro do card, sem esmagar os eventos.
-    <div className="overflow-x-auto rounded-[10px] ios:rounded-inner border border-slate-200/60 ios:border-slate-900/5">
+    <div className="overflow-x-auto rounded-[10px] liquido:rounded-inner border border-slate-200/60 liquido:border-slate-900/5">
       <div className="grid min-w-[640px] grid-cols-[64px_repeat(7,minmax(0,1fr))] lg:min-w-0">
-        <span className="border-r border-b border-slate-200/60 ios:border-slate-900/5 bg-white/40" />
+        <span className="border-r border-b border-slate-200/60 liquido:border-slate-900/5 bg-white/40" />
         {colunas.map((coluna, indice) => (
           <div
             key={coluna.chave}
-            className={`border-b border-slate-200/60 ios:border-slate-900/5 py-[9px] text-center ${indice < 6 ? 'border-r' : ''} ${
+            className={`border-b border-slate-200/60 liquido:border-slate-900/5 py-[9px] text-center ${indice < 6 ? 'border-r' : ''} ${
               coluna.hoje ? 'bg-brand-50/80' : 'bg-white/40'
             }`}
           >
@@ -69,7 +69,7 @@ function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento 
                     type="button"
                     onClick={() => aoAbrirEvento(evento)}
                     title={evento.titulo}
-                    className="min-w-0 cursor-pointer truncate rounded-md bg-brand-500 ios:rounded-lg px-1.5 py-[5px] text-left text-[11px] leading-snug text-white transition-colors hover:bg-brand-600"
+                    className="min-w-0 cursor-pointer truncate rounded-md bg-brand-500 liquido:rounded-lg px-1.5 py-[5px] text-left text-[11px] leading-snug text-white transition-colors hover:bg-brand-600"
                   >
                     {evento.titulo}
                   </button>
@@ -78,7 +78,7 @@ function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento 
                   <div
                     key={pessoa.id}
                     title={`Aniversário · ${pessoa.nome}`}
-                    className="min-w-0 truncate rounded-md bg-slate-900/5 ios:rounded-lg px-1.5 py-[5px] text-[11px] leading-snug text-slate-700"
+                    className="min-w-0 truncate rounded-md bg-slate-900/5 liquido:rounded-lg px-1.5 py-[5px] text-[11px] leading-snug text-slate-700"
                   >
                     Aniversário · {pessoa.nome}
                   </div>
@@ -101,7 +101,7 @@ function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento 
                       type="button"
                       onClick={() => aoAbrirEvento(evento)}
                       title={evento.titulo}
-                      className="min-w-0 cursor-pointer truncate rounded-md bg-brand-500 ios:rounded-lg px-1.5 py-[5px] text-left text-[11px] leading-snug text-white transition-colors hover:bg-brand-600"
+                      className="min-w-0 cursor-pointer truncate rounded-md bg-brand-500 liquido:rounded-lg px-1.5 py-[5px] text-left text-[11px] leading-snug text-white transition-colors hover:bg-brand-600"
                     >
                       <div className="text-[10px] tabular-nums opacity-80">{formatarHora(evento.dataInicio)}</div>
                       {evento.titulo}

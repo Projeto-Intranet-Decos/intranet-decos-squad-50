@@ -24,8 +24,8 @@ interface PropriedadesItemAgenda {
 
 function LinhaHorario({ rotulo, children }: PropriedadesLinhaHorario) {
   return (
-    <div className="grid min-h-[58px] grid-cols-[64px_minmax(0,1fr)] border-b border-slate-200/60 ios:border-slate-900/5 last:border-b-0 sm:grid-cols-[76px_minmax(0,1fr)]">
-      <span className="border-r border-slate-200/60 ios:border-slate-900/5 bg-white/40 px-2.5 py-[9px] text-right text-[11px] text-slate-500 tabular-nums sm:px-3">
+    <div className="grid min-h-[58px] grid-cols-[64px_minmax(0,1fr)] border-b border-slate-200/60 liquido:border-slate-900/5 last:border-b-0 sm:grid-cols-[76px_minmax(0,1fr)]">
+      <span className="border-r border-slate-200/60 liquido:border-slate-900/5 bg-white/40 px-2.5 py-[9px] text-right text-[11px] text-slate-500 tabular-nums sm:px-3">
         {rotulo}
       </span>
       <div className="flex flex-col gap-1.5 px-2.5 py-[7px]">{children}</div>
@@ -37,7 +37,7 @@ function ItemAgenda({ horario, titulo, detalhe, destaque, aoClicar }: Propriedad
   return (
     <div
       onClick={aoClicar}
-      className={`flex flex-col gap-1 rounded-[10px] ios:rounded-inner px-3 py-[9px] sm:flex-row sm:items-baseline sm:gap-3 ${
+      className={`flex flex-col gap-1 rounded-[10px] liquido:rounded-inner px-3 py-[9px] sm:flex-row sm:items-baseline sm:gap-3 ${
         destaque ? 'bg-brand-500 text-white' : 'bg-slate-900/5 text-slate-700'
       } ${aoClicar ? 'cursor-pointer transition-opacity hover:opacity-90' : ''}`}
     >
@@ -60,7 +60,7 @@ function VisaoDia({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento }: 
   const horas = faixaDeHoras(eventos)
 
   return (
-    <div className="overflow-hidden rounded-[10px] ios:rounded-inner border border-slate-200/60 ios:border-slate-900/5">
+    <div className="overflow-hidden rounded-[10px] liquido:rounded-inner border border-slate-200/60 liquido:border-slate-900/5">
       {(aniversariantes.length > 0 || continuacoes.length > 0) && (
         <LinhaHorario rotulo="Dia todo">
           {continuacoes.map((evento) => (

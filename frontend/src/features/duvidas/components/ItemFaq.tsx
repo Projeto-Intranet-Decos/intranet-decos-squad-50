@@ -12,16 +12,16 @@ interface PropriedadesItemFaq {
 
 function ItemFaq({ faq, expandido, aoAlternar, podeGerenciar, aoEditar, aoExcluir }: PropriedadesItemFaq) {
   return (
-    <div className="border-t border-slate-200/60 ios:border-slate-900/5 py-4 first:border-t-0">
+    <div className="border-t border-slate-200/60 liquido:border-slate-900/5 py-4 first:border-t-0">
       <button
         type="button"
         onClick={aoAlternar}
         className="flex w-full items-center gap-3 rounded-lg text-left sm:gap-4"
       >
-        <span className="w-16 flex-none text-[11px] font-semibold tracking-wide text-slate-500 uppercase ios:text-xs ios:tracking-normal ios:normal-case">
+        <span className="w-16 flex-none text-[11px] font-semibold tracking-wide text-slate-500 uppercase liquido:text-xs liquido:tracking-normal liquido:normal-case">
           {faq.setorNome}
         </span>
-        <span className="flex-1 text-[15px] font-semibold text-slate-900 ios:tracking-tight">{faq.pergunta}</span>
+        <span className="flex-1 text-[15px] font-semibold text-slate-900 liquido:tracking-tight">{faq.pergunta}</span>
         <span className="flex size-10 flex-none items-center justify-center text-slate-500 sm:size-6">
           {expandido ? <IconeMenos tamanho={18} /> : <IconeMais tamanho={18} />}
         </span>
@@ -49,7 +49,7 @@ function ItemFaq({ faq, expandido, aoAlternar, podeGerenciar, aoEditar, aoExclui
               </button>
             </div>
           )}
-          <p className="m-0 text-sm leading-relaxed text-slate-700 ios:text-[15px]">{faq.resposta}</p>
+          <p className="m-0 text-sm leading-relaxed text-slate-700 liquido:text-[15px]">{faq.resposta}</p>
         </div>
       )}
     </div>

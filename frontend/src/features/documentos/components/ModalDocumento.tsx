@@ -124,7 +124,7 @@ function ModalDocumento({ aoFechar, documentoEditando, setores, escolheSetor }: 
           }}
           onDragLeave={() => setArrastando(false)}
           onDrop={aoSoltar}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[10px] ios:rounded-inner border border-dashed px-4 py-8 text-center sm:px-6 sm:py-10 transition-colors ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[10px] liquido:rounded-inner border border-dashed px-4 py-8 text-center sm:px-6 sm:py-10 transition-colors ${
             arrastando ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-white/55 hover:bg-white/75'
           }`}
         >
@@ -182,7 +182,7 @@ function ModalDocumento({ aoFechar, documentoEditando, setores, escolheSetor }: 
           )}
         </div>
 
-        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 ios:border-slate-900/5 pt-[18px] sm:flex sm:justify-end">
+        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 liquido:border-slate-900/5 pt-[18px] sm:flex sm:justify-end">
           <Botao variante="secundario" onClick={aoFechar}>
             Cancelar
           </Botao>

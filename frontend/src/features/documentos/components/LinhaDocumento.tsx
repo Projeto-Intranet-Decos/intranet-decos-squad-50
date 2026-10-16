@@ -28,11 +28,11 @@ function LinhaDocumento({
 
   return (
     <li
-      className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2.5 ${COLUNAS_TABELA} border-b border-slate-200/60 ios:border-slate-900/5 px-[18px] py-3.5 transition-colors last:border-b-0 hover:bg-white/60 ios:hover:bg-white/50`}
+      className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2.5 ${COLUNAS_TABELA} border-b border-slate-200/60 liquido:border-slate-900/5 px-[18px] py-3.5 transition-colors last:border-b-0 hover:bg-white/60 liquido:hover:bg-white/50`}
     >
       <div className="col-span-2 flex min-w-0 items-center gap-3.5 md:col-span-1">
         <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold ios:rounded-[0.625rem] ${coresExtensao(extensao)}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold liquido:rounded-[0.625rem] ${coresExtensao(extensao)}`}
         >
           {extensao}
         </span>
@@ -40,7 +40,7 @@ function LinhaDocumento({
           type="button"
           onClick={aoVisualizar}
           title={documento.descricao ?? documento.nomeArquivo}
-          className="min-w-0 cursor-pointer truncate text-left text-sm font-semibold text-slate-900 hover:text-brand-600 ios:text-[15px]"
+          className="min-w-0 cursor-pointer truncate text-left text-sm font-semibold text-slate-900 hover:text-brand-600 liquido:text-[15px]"
         >
           {documento.titulo}
         </button>
@@ -53,14 +53,14 @@ function LinhaDocumento({
 
       <span className="text-right text-xs text-slate-600 tabular-nums md:text-left">{formatarData(documento.atualizadoEm ?? documento.criadoEm)}</span>
 
-      <div className="col-span-2 flex items-center justify-between border-t border-slate-200/60 ios:border-slate-900/5 pt-2.5 md:col-span-1 md:border-t-0 md:pt-0">
+      <div className="col-span-2 flex items-center justify-between border-t border-slate-200/60 liquido:border-slate-900/5 pt-2.5 md:col-span-1 md:border-t-0 md:pt-0">
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={aoVisualizar}
             title="Visualizar"
             aria-label="Visualizar"
-            className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-brand-600 md:size-8 ios:btn-icon"
+            className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-brand-600 md:size-8 liquido:btn-icon"
           >
             <IconeOlho tamanho={15} />
           </button>
@@ -71,7 +71,7 @@ function LinhaDocumento({
                 onClick={aoEditar}
                 title="Editar"
                 aria-label="Editar"
-                className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-700 md:size-8 ios:btn-icon"
+                className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-700 md:size-8 liquido:btn-icon"
               >
                 <IconeLapis tamanho={15} />
               </button>
@@ -80,7 +80,7 @@ function LinhaDocumento({
                 onClick={aoExcluir}
                 title="Excluir"
                 aria-label="Excluir"
-                className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-danger-50 hover:text-danger-600 md:size-8 ios:btn-icon is-danger"
+                className="flex size-10 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-danger-50 hover:text-danger-600 md:size-8 liquido:btn-icon is-danger"
               >
                 <IconeLixeira tamanho={15} />
               </button>

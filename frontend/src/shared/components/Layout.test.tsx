@@ -87,7 +87,7 @@ function fundoDoUtilitario(nome: string) {
   return fundo
 }
 
-describe('GER-01 — rótulos do menu em frase normal no iOS Glass', () => {
+describe('GER-01 — rótulos do menu em frase normal no Vidro líquido', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'superadmin', setor_id: null }))
     localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
@@ -101,7 +101,7 @@ describe('GER-01 — rótulos do menu em frase normal no iOS Glass', () => {
     for (const rotulo of ['Intranet', 'Páginas', 'Administração', 'Acesso rápido']) {
       const elemento = screen.getByText(rotulo)
       expect(elemento.className).toContain('uppercase')
-      expect(elemento.className).toContain('ios:normal-case')
+      expect(elemento.className).toContain('liquido:normal-case')
     }
   })
 })
