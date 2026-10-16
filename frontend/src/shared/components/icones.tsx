@@ -138,6 +138,8 @@ export const IconeLixeira = criarIcone(
 
 export const IconeX = criarIcone(<path d="m6 6 12 12M18 6 6 18" />)
 
+export const IconeCheck = criarIcone(<path d="m5 12.5 4.5 4.5L19 7" />)
+
 export const IconePin = criarIcone(
   <path d="M12 2c-3 0-5.5 2.3-5.5 5.6 0 3.7 4 8.6 5.1 9.9a.5.5 0 0 0 .8 0c1.1-1.3 5.1-6.2 5.1-9.9C17.5 4.3 15 2 12 2Zm0 8a2.2 2.2 0 1 1 0-4.4 2.2 2.2 0 0 1 0 4.4Z" />,
 )

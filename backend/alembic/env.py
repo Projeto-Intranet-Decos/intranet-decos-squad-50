@@ -13,6 +13,7 @@ import app.modules.usuarios.models  # noqa: F401
 import app.modules.murais.models  # noqa: F401
 import app.modules.documentos.models  # noqa: F401
 import app.modules.duvidas.models  # noqa: F401
+import app.modules.atalhos.models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", configuracoes.database_url)

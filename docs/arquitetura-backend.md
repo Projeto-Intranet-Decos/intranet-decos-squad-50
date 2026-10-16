@@ -32,6 +32,7 @@ backend/
         storage.py          # layout das chaves do módulo no bucket (usa core/armazenamento.py)
       setores/
       duvidas/
+      atalhos/            # links de acesso rápido da barra lateral (só superadmin escreve)
       logs/
     core/
       config.py           # env vars, settings

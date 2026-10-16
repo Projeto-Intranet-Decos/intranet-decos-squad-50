@@ -15,6 +15,7 @@ aceite verificáveis. Os critérios de aceite viram testes.
 | [`documentos.md`](./documentos.md) | `DOC` | Repositório de POPs e documentos |
 | [`duvidas.md`](./duvidas.md) | `DUV` | Central de dúvidas (FAQ) |
 | [`logs.md`](./logs.md) | `LOG` | Registro de atividades (auditoria) |
+| [`atalhos.md`](./atalhos.md) | `ATA` | Links de acesso rápido da barra lateral |
 
 **Specs × design:** `docs/specs/` descreve comportamento e é vivo (sempre reflete o sistema).
 `docs/superpowers/specs/` e `docs/superpowers/plans/` guardam o design e o plano de **uma

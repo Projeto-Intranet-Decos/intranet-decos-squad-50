@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
 import { useAuth } from '../../lib/auth/useAuth'
 import logoDecos from '../assets/logo-decos.png'
 import simboloDecos from '../assets/simbolo.png'
@@ -11,7 +12,6 @@ import {
   IconeHistorico,
   IconeMegafone,
   IconeSair,
-  IconeSetaExterna,
   IconeSidebarExpandir,
   IconeSidebarRecolher,
   IconeSino,
@@ -31,11 +31,6 @@ const NAV_PRINCIPAL = [
 const NAV_ADMIN = [
   { rota: '/usuarios', label: 'Usuários', Icone: IconeUsuarios },
   { rota: '/logs', label: 'Registro de Atividades', Icone: IconeHistorico },
-]
-
-const ATALHOS = [
-  { label: 'Prontuário eletrônico', url: '#' },
-  { label: 'Portal do colaborador', url: '#' },
 ]
 
 const ROTULO_PAPEL = {
@@ -108,24 +103,7 @@ function Layout({ children }: PropriedadesLayout) {
             </div>
           )}
 
-          <div className="mt-5 flex flex-col gap-1 border-t border-slate-100 pt-4">
-            {!recolhido && (
-              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-400">ACESSO RÁPIDO</span>
-            )}
-            {ATALHOS.map((link) => (
-              <a
-                key={link.label}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={link.label}
-                className={`flex items-center gap-2.5 rounded-[10px] py-2.5 text-[13px] ${recolhido ? 'justify-center px-0' : 'px-3'} font-medium text-slate-600 no-underline hover:bg-slate-100 hover:text-[#800020]`}
-              >
-                <IconeSetaExterna tamanho={15} className="flex-none text-slate-400" />
-                {!recolhido && <span className="flex-1 truncate">{link.label}</span>}
-              </a>
-            ))}
-          </div>
+          <ListaAtalhos recolhido={recolhido} />
         </div>
 
         <button
