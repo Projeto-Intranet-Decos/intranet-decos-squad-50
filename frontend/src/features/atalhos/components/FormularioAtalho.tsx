@@ -94,7 +94,7 @@ function FormularioAtalho({ id, inicial, aoConcluir }: PropriedadesFormularioAta
           disabled={salvar.isPending}
           title="Salvar (Enter)"
           aria-label="Salvar"
-          className={`${CLASSE_BOTAO} bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-60 liquido:bg-linear-to-b liquido:from-[#8f0a2c] liquido:to-brand-600 liquido:shadow-[inset_0_1px_0_rgb(255_255_255/0.3),0_4px_12px_rgb(128_0_32/0.3)]`}
+          className={`${CLASSE_BOTAO} bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-60 liquido:bg-linear-to-b liquido:from-[#8f0a2c] liquido:to-brand-600 liquido:shadow-[inset_0_1px_0_rgb(255_255_255/0.3)]`}
         >
           <IconeCheck tamanho={15} />
         </button>
