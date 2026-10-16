@@ -14,10 +14,10 @@ const COLUNAS = 'grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] gap-3 sm:gr
 function TabelaSetores({ setores, podeEditarSetor, podeExcluir, aoEditar, aoExcluir }: PropriedadesTabelaSetores) {
   return (
     <div className="surface overflow-hidden px-4 pb-2 sm:px-6">
-      <div className={`${COLUNAS} -mx-4 border-b border-slate-200/60 liquido:border-slate-900/5 bg-white/40 px-4 py-3 liquido:bg-white/35 sm:-mx-6 sm:px-6`}>
-        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Setor</span>
-        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Ramais</span>
-        <span className="text-right text-xs font-medium tracking-wide text-slate-500 uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Ações</span>
+      <div className={`${COLUNAS} -mx-4 tabela-cabecalho px-4 py-3 sm:-mx-6 sm:px-6`}>
+        <span className="text-xs font-medium tracking-wide uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Setor</span>
+        <span className="text-xs font-medium tracking-wide uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Ramais</span>
+        <span className="text-right text-xs font-medium tracking-wide uppercase liquido:font-semibold liquido:tracking-normal liquido:normal-case">Ações</span>
       </div>
 
       {setores.length === 0 && (
@@ -27,7 +27,7 @@ function TabelaSetores({ setores, podeEditarSetor, podeExcluir, aoEditar, aoExcl
       {setores.map((setor) => (
         <div
           key={setor.id}
-          className={`${COLUNAS} -mx-4 items-center border-b border-slate-200/60 liquido:border-slate-900/5 px-4 py-[13px] transition-colors last:border-b-0 hover:bg-white/60 liquido:hover:bg-white/50 sm:-mx-6 sm:px-6`}
+          className={`${COLUNAS} -mx-4 items-center tabela-linha px-4 py-[13px] sm:-mx-6 sm:px-6`}
         >
           <span className="text-sm font-medium text-slate-900 liquido:text-[15px]">{setor.nome}</span>
           <div className="flex flex-wrap gap-1.5">

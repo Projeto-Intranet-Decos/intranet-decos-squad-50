@@ -28,7 +28,7 @@ function LinhaDocumento({
 
   return (
     <li
-      className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2.5 ${COLUNAS_TABELA} border-b border-slate-200/60 liquido:border-slate-900/5 px-[18px] py-3.5 transition-colors last:border-b-0 hover:bg-white/60 liquido:hover:bg-white/50`}
+      className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2.5 ${COLUNAS_TABELA} tabela-linha px-[18px] py-3.5`}
     >
       <div className="col-span-2 flex min-w-0 items-center gap-3.5 md:col-span-1">
         <span
@@ -53,7 +53,7 @@ function LinhaDocumento({
 
       <span className="text-right text-xs text-slate-600 tabular-nums md:text-left">{formatarData(documento.atualizadoEm ?? documento.criadoEm)}</span>
 
-      <div className="col-span-2 flex items-center justify-between border-t border-slate-200/60 liquido:border-slate-900/5 pt-2.5 md:col-span-1 md:border-t-0 md:pt-0">
+      <div className="col-span-2 flex items-center justify-between border-t border-brand-600/8 liquido:border-brand-600/6 pt-2.5 md:col-span-1 md:border-t-0 md:pt-0">
         <div className="flex items-center gap-1">
           <button
             type="button"

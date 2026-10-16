@@ -10,7 +10,7 @@ function TabelaAtividades({ atividades }: PropriedadesTabelaAtividades) {
     <div className="surface overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-left">
-          <thead className="border-b border-slate-200/60 bg-white/40 text-slate-500 liquido:border-slate-900/5 liquido:bg-white/35">
+          <thead className="tabela-cabecalho">
             <tr className="text-xs font-medium tracking-wide uppercase liquido:tracking-normal liquido:normal-case">
               <th className="w-[19%] px-6 py-3.5 font-medium liquido:font-semibold">Data</th>
               <th className="w-[22%] px-6 py-3.5 font-medium liquido:font-semibold">Usuário</th>
@@ -27,7 +27,7 @@ function TabelaAtividades({ atividades }: PropriedadesTabelaAtividades) {
               </tr>
             ) : (
               atividades.map((atividade) => (
-                <tr key={atividade.id} className="border-b border-slate-200/60 liquido:border-slate-900/5 transition-colors last:border-b-0 hover:bg-white/60 liquido:hover:bg-white/50">
+                <tr key={atividade.id} className="tabela-linha">
                   <td className="px-6 py-4 font-mono text-[13px] whitespace-nowrap text-slate-600 tabular-nums">
                     <time dateTime={atividade.criadoEm}>{formatarDataHora(atividade.criadoEm)}</time>
                   </td>
@@ -37,7 +37,7 @@ function TabelaAtividades({ atividades }: PropriedadesTabelaAtividades) {
                     <p className="m-0 mt-0.5 text-[13px] text-slate-500">{atividade.detalhe}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-block rounded-full bg-slate-100 px-2.5 py-1 text-xs whitespace-nowrap text-slate-700 ring-1 ring-slate-200 liquido:pill liquido:bg-slate-900/5 liquido:ring-slate-900/5">
+                    <span className="inline-block rounded-full bg-brand-50 px-2.5 py-1 text-xs whitespace-nowrap text-brand-700 ring-1 ring-brand-100 liquido:pill liquido:bg-brand-600/8 liquido:ring-brand-600/10">
                       {ROTULO_AREA[atividade.area]}
                     </span>
                   </td>
