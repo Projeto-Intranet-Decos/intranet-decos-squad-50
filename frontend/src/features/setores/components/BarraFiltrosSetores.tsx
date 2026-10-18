@@ -1,26 +1,15 @@
-import Dropdown from '../../../shared/components/Dropdown'
-import { IconeFunil, IconeLupa, IconeMais } from '../../../shared/components/icones'
-import type { OrdemSetores } from '../types'
+import { IconeLupa, IconeMais } from '../../../shared/components/icones'
 
 interface PropriedadesBarraFiltrosSetores {
   busca: string
   aoMudarBusca: (valor: string) => void
-  ordem: OrdemSetores
-  aoMudarOrdem: (valor: OrdemSetores) => void
   podeCriar: boolean
   aoNovoSetor: () => void
 }
 
-const OPCOES_ORDEM = [
-  { valor: 'nome', rotulo: 'Nome (A–Z)' },
-  { valor: 'ramal', rotulo: 'Ramal crescente' },
-]
-
 function BarraFiltrosSetores({
   busca,
   aoMudarBusca,
-  ordem,
-  aoMudarOrdem,
   podeCriar,
   aoNovoSetor,
 }: PropriedadesBarraFiltrosSetores) {
@@ -38,15 +27,6 @@ function BarraFiltrosSetores({
           className="field h-full py-2.5 pl-[38px] text-[13.5px] liquido:capsule-field liquido:pl-10 liquido:text-sm"
         />
       </label>
-
-      <Dropdown
-        rotuloPadrao="Ordenar"
-        icone={<IconeFunil tamanho={15} />}
-        opcoes={OPCOES_ORDEM}
-        valor={ordem}
-        valorPadrao="nome"
-        aoMudar={(valor) => aoMudarOrdem(valor as OrdemSetores)}
-      />
 
       {podeCriar && (
         <button

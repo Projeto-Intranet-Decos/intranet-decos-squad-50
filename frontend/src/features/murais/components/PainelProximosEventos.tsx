@@ -26,9 +26,9 @@ function descreverEvento(evento: Evento): string {
 function PainelProximosEventos({ eventos, aoAbrir }: PropriedadesPainelProximosEventos) {
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden surface">
-      <div className="flex items-center border-b border-slate-200/60 bg-white/40 px-[18px] py-3 liquido:border-slate-900/5 liquido:bg-transparent liquido:px-5 liquido:pt-4 liquido:pb-3">
-        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-600 liquido:gap-2 uppercase liquido:text-[15px] liquido:tracking-normal liquido:normal-case liquido:text-slate-900 liquido:[&_svg]:size-[18px]">
-          <IconeCalendario tamanho={16} className="text-brand-600" />
+      <div className="tabela-cabecalho flex items-center px-[18px] py-3 liquido:px-5 liquido:pt-4 liquido:pb-3">
+        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide liquido:gap-2 uppercase liquido:text-[15px] liquido:tracking-normal liquido:normal-case liquido:[&_svg]:size-[18px]">
+          <IconeCalendario tamanho={16} />
           Próximos eventos
         </span>
       </div>

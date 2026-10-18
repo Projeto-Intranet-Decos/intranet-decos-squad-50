@@ -1,25 +1,61 @@
+import CabecalhoOrdenavel from '../../../shared/components/CabecalhoOrdenavel'
 import { IconeLapis, IconeLixeira } from '../../../shared/components/icones'
 import Botao from '../../../shared/components/Botao'
-import { ROTULOS_PAPEL, type UsuarioCadastro } from '../types'
+import Skeleton from '../../../shared/components/Skeleton'
+import type { DirecaoOrdenacao } from '../../../shared/hooks/useOrdenacaoClique'
+import { ROTULOS_PAPEL, type ColunaUsuario, type UsuarioCadastro } from '../types'
 
 interface Propriedades {
   usuarios: UsuarioCadastro[]
+  isLoading: boolean
   setores: Map<string, string>
+  ordenarPor: ColunaUsuario
+  direcao: DirecaoOrdenacao
+  aoClicarColuna: (coluna: ColunaUsuario) => void
   edicaoDisponivel: boolean
   aoEditar: (usuario: UsuarioCadastro) => void
   aoExcluir: (usuario: UsuarioCadastro) => void
 }
 
-export default function TabelaUsuarios({ usuarios, setores, edicaoDisponivel, aoEditar, aoExcluir }: Propriedades) {
+const COLUNAS: { coluna: ColunaUsuario; titulo: string }[] = [
+  { coluna: 'nome', titulo: 'Usuário' },
+  { coluna: 'perfil', titulo: 'Perfil' },
+  { coluna: 'setor', titulo: 'Setor' },
+  { coluna: 'status', titulo: 'Status' },
+]
+
+const LINHAS_SKELETON = 6
+
+function LinhaSkeleton({ indice }: { indice: number }) {
+  return (
+    <tr>
+      <td className="px-4 py-3"><Skeleton className={`h-4 ${indice % 2 === 0 ? 'w-36' : 'w-28'}`} /><Skeleton className="mt-1.5 h-3 w-40" /></td>
+      <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
+      <td className="px-4 py-3"><Skeleton className="h-4 w-28" /></td>
+      <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+      <td className="px-4 py-3"><div className="flex gap-1"><Skeleton className="size-8 rounded-lg" /><Skeleton className="size-8 rounded-lg" /></div></td>
+    </tr>
+  )
+}
+
+export default function TabelaUsuarios({ usuarios, isLoading, setores, ordenarPor, direcao, aoClicarColuna, edicaoDisponivel, aoEditar, aoExcluir }: Propriedades) {
   return (
     <div className="surface overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Usuários da Intranet Decós</caption>
         <thead className="tabela-cabecalho text-xs font-medium uppercase liquido:normal-case">
-          <tr>{['Usuário', 'Perfil', 'Setor', 'Status', 'Ações'].map(titulo => <th key={titulo} scope="col" className="px-4 py-3">{titulo}</th>)}</tr>
+          <tr>
+            {COLUNAS.map(({ coluna, titulo }) => (
+              <th key={coluna} scope="col" aria-sort={ordenarPor === coluna ? (direcao === 'asc' ? 'ascending' : 'descending') : 'none'} className="px-4 py-3">
+                <CabecalhoOrdenavel rotulo={titulo} ativo={ordenarPor === coluna} direcao={direcao} aoClicar={() => aoClicarColuna(coluna)} />
+              </th>
+            ))}
+            <th scope="col" className="px-4 py-3">Ações</th>
+          </tr>
         </thead>
         <tbody className="divide-y divide-brand-100/50">
-          {usuarios.map(usuario => <tr key={usuario.id} className="tabela-linha">
+          {isLoading && Array.from({ length: LINHAS_SKELETON }, (_, indice) => <LinhaSkeleton key={indice} indice={indice} />)}
+          {!isLoading && usuarios.map(usuario => <tr key={usuario.id} className="tabela-linha">
             <td className="px-4 py-3"><span className="font-medium text-slate-800">{usuario.nome}</span><span className="block text-xs text-slate-500">{usuario.email}</span></td>
             <td className="px-4 py-3 text-slate-600">{ROTULOS_PAPEL[usuario.role]}</td>
             <td className="px-4 py-3 text-slate-600">{usuario.setorId ? setores.get(usuario.setorId) ?? 'Setor indisponível' : 'Sem setor'}</td>
@@ -29,7 +65,7 @@ export default function TabelaUsuarios({ usuarios, setores, edicaoDisponivel, ao
               <Botao variante="icone" title="Excluir (desativar) usuário" aria-label={`Excluir ${usuario.nome}`} disabled={!usuario.ativo} onClick={() => aoExcluir(usuario)}><IconeLixeira tamanho={18} /></Botao>
             </div></td>
           </tr>)}
-          {!usuarios.length && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">Nenhum usuário encontrado com esses filtros.</td></tr>}
+          {!isLoading && !usuarios.length && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">Nenhum usuário encontrado com esses filtros.</td></tr>}
         </tbody>
       </table>
     </div>

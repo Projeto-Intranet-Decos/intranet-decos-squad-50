@@ -1,4 +1,6 @@
+import { AnimatePresence, motion } from 'motion/react'
 import { IconeLapis, IconeLixeira, IconeMais, IconeMenos } from '../../../shared/components/icones'
+import { useReduzirAnimacoes } from '../../../shared/hooks/useReduzirAnimacoes'
 import type { Faq } from '../types'
 
 interface PropriedadesItemFaq {
@@ -11,6 +13,7 @@ interface PropriedadesItemFaq {
 }
 
 function ItemFaq({ faq, expandido, aoAlternar, podeGerenciar, aoEditar, aoExcluir }: PropriedadesItemFaq) {
+  const semAnimacao = useReduzirAnimacoes()
   return (
     <div className="border-t border-slate-200/60 liquido:border-slate-900/5 py-4 first:border-t-0">
       <button
@@ -27,31 +30,42 @@ function ItemFaq({ faq, expandido, aoAlternar, podeGerenciar, aoEditar, aoExclui
         </span>
       </button>
 
-      {expandido && (
-        <div className="mt-3 sm:pl-20">
-          {podeGerenciar && (
-            <div className="mb-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => aoEditar(faq)}
-                className="btn btn-secondary min-h-10 px-3 text-[13px] sm:min-h-8"
-              >
-                <IconeLapis tamanho={13} />
-                Editar
-              </button>
-              <button
-                type="button"
-                onClick={() => aoExcluir(faq)}
-                className="btn btn-danger min-h-10 px-3 text-[13px] sm:min-h-8"
-              >
-                <IconeLixeira tamanho={13} />
-                Excluir
-              </button>
+      <AnimatePresence initial={false}>
+        {expandido && (
+          <motion.div
+            key="resposta"
+            initial={semAnimacao ? false : { height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={semAnimacao ? undefined : { height: 0, opacity: 0 }}
+            transition={semAnimacao ? { duration: 0 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="mt-3 sm:pl-20">
+              {podeGerenciar && (
+                <div className="mb-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => aoEditar(faq)}
+                    className="btn btn-secondary min-h-10 px-3 text-[13px] sm:min-h-8"
+                  >
+                    <IconeLapis tamanho={13} />
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => aoExcluir(faq)}
+                    className="btn btn-danger min-h-10 px-3 text-[13px] sm:min-h-8"
+                  >
+                    <IconeLixeira tamanho={13} />
+                    Excluir
+                  </button>
+                </div>
+              )}
+              <p className="m-0 text-sm leading-relaxed text-slate-700 liquido:text-[15px]">{faq.resposta}</p>
             </div>
-          )}
-          <p className="m-0 text-sm leading-relaxed text-slate-700 liquido:text-[15px]">{faq.resposta}</p>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -1,25 +1,60 @@
+import CabecalhoOrdenavel from '../../../shared/components/CabecalhoOrdenavel'
+import Skeleton from '../../../shared/components/Skeleton'
+import type { DirecaoOrdenacao } from '../../../shared/hooks/useOrdenacaoClique'
 import { formatarDataHora } from '../formatadores'
-import { ROTULO_AREA, type Atividade } from '../types'
+import { ROTULO_AREA, type Atividade, type ColunaAtividade } from '../types'
 
 interface PropriedadesTabelaAtividades {
   atividades: Atividade[]
+  isLoading: boolean
+  ordenarPor: ColunaAtividade
+  direcao: DirecaoOrdenacao
+  aoClicarColuna: (coluna: ColunaAtividade) => void
 }
 
-function TabelaAtividades({ atividades }: PropriedadesTabelaAtividades) {
+const COLUNAS: { coluna: ColunaAtividade; titulo: string; largura: string }[] = [
+  { coluna: 'data', titulo: 'Data', largura: 'w-[19%]' },
+  { coluna: 'usuario', titulo: 'Usuário', largura: 'w-[22%]' },
+  { coluna: 'acao', titulo: 'Ação', largura: '' },
+  { coluna: 'area', titulo: 'Área', largura: 'w-[16%]' },
+]
+
+const LINHAS_SKELETON = 6
+
+function LinhaSkeleton({ indice }: { indice: number }) {
+  return (
+    <tr>
+      <td className="px-6 py-4"><Skeleton className="h-3.5 w-24" /></td>
+      <td className="px-6 py-4"><Skeleton className={`h-4 ${indice % 2 === 0 ? 'w-32' : 'w-24'}`} /></td>
+      <td className="px-6 py-4"><Skeleton className="h-4 w-48" /><Skeleton className="mt-1.5 h-3 w-32" /></td>
+      <td className="px-6 py-4"><Skeleton className="h-5 w-16 rounded-full" /></td>
+    </tr>
+  )
+}
+
+function TabelaAtividades({ atividades, isLoading, ordenarPor, direcao, aoClicarColuna }: PropriedadesTabelaAtividades) {
   return (
     <div className="surface overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-left">
           <thead className="tabela-cabecalho">
             <tr className="text-xs font-medium tracking-wide uppercase liquido:tracking-normal liquido:normal-case">
-              <th className="w-[19%] px-6 py-3.5 font-medium liquido:font-semibold">Data</th>
-              <th className="w-[22%] px-6 py-3.5 font-medium liquido:font-semibold">Usuário</th>
-              <th className="px-6 py-3.5 font-medium liquido:font-semibold">Ação</th>
-              <th className="w-[16%] px-6 py-3.5 font-medium liquido:font-semibold">Área</th>
+              {COLUNAS.map(({ coluna, titulo, largura }) => (
+                <th
+                  key={coluna}
+                  scope="col"
+                  aria-sort={ordenarPor === coluna ? (direcao === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  className={`${largura} px-6 py-3.5 font-medium liquido:font-semibold`}
+                >
+                  <CabecalhoOrdenavel rotulo={titulo} ativo={ordenarPor === coluna} direcao={direcao} aoClicar={() => aoClicarColuna(coluna)} />
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {atividades.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: LINHAS_SKELETON }, (_, indice) => <LinhaSkeleton key={indice} indice={indice} />)
+            ) : atividades.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-10 text-center text-sm text-slate-600">
                   Nenhuma atividade encontrada.

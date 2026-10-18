@@ -9,9 +9,9 @@ interface PropriedadesPainelFixados {
 function PainelFixados({ fixados, aoAbrir }: PropriedadesPainelFixados) {
   return (
     <div className="surface flex w-full flex-none flex-col overflow-hidden lg:w-[316px]">
-      <div className="flex items-center justify-between border-b border-slate-200/60 bg-white/40 px-[18px] py-3 liquido:border-slate-900/5 liquido:bg-transparent liquido:px-5 liquido:pt-4 liquido:pb-3">
-        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-600 liquido:gap-2 uppercase liquido:text-[15px] liquido:tracking-normal liquido:normal-case liquido:text-slate-900 liquido:[&_svg]:size-[18px]">
-          <IconePin tamanho={16} className="text-brand-600" />
+      <div className="tabela-cabecalho flex items-center justify-between px-[18px] py-3 liquido:px-5 liquido:pt-4 liquido:pb-3">
+        <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide liquido:gap-2 uppercase liquido:text-[15px] liquido:tracking-normal liquido:normal-case liquido:[&_svg]:size-[18px]">
+          <IconePin tamanho={16} />
           Fixado
         </span>
       </div>
@@ -36,10 +36,6 @@ function PainelFixados({ fixados, aoAbrir }: PropriedadesPainelFixados) {
                 <span className="text-[12.5px] font-semibold text-slate-900 liquido:text-sm">{aviso.autorNome}</span>
                 <span className="text-[11px] text-slate-500 liquido:text-xs">{aviso.setorNome}</span>
               </div>
-              <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-brand-600 uppercase liquido:text-xs liquido:font-semibold liquido:normal-case">
-                <IconePin tamanho={13} />
-                Fixado
-              </span>
             </div>
             {/* Evento pode não ter conteúdo; aí o título ocupa o lugar. */}
             <p className="m-0 line-clamp-2 text-[13px] leading-relaxed text-slate-700 liquido:text-sm">

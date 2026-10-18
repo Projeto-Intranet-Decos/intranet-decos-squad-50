@@ -1,4 +1,5 @@
 import { IconeDuvida, IconeLupa } from '../../../shared/components/icones'
+import Skeleton from '../../../shared/components/Skeleton'
 import type { Faq } from '../types'
 import ListaFaq from './ListaFaq'
 
@@ -6,6 +7,7 @@ interface PropriedadesPainelFaq {
   busca: string
   aoMudarBusca: (valor: string) => void
   itens: Faq[]
+  isLoading: boolean
   expandidoId: string | null
   aoAlternar: (id: string) => void
   podeGerenciar: (faq: Faq) => boolean
@@ -13,10 +15,20 @@ interface PropriedadesPainelFaq {
   aoExcluir: (faq: Faq) => void
 }
 
+function ItemFaqSkeleton({ indice }: { indice: number }) {
+  return (
+    <div className="flex items-center gap-3 border-t border-slate-200/60 py-4 first:border-t-0 sm:gap-4 liquido:border-slate-900/5">
+      <Skeleton className="h-3 w-12 flex-none" />
+      <Skeleton className={`h-4 ${indice % 2 === 0 ? 'w-72' : 'w-56'}`} />
+    </div>
+  )
+}
+
 function PainelFaq({
   busca,
   aoMudarBusca,
   itens,
+  isLoading,
   expandidoId,
   aoAlternar,
   podeGerenciar,
@@ -46,14 +58,20 @@ function PainelFaq({
           />
         </label>
 
-        <ListaFaq
-          itens={itens}
-          expandidoId={expandidoId}
-          aoAlternar={aoAlternar}
-          podeGerenciar={podeGerenciar}
-          aoEditar={aoEditar}
-          aoExcluir={aoExcluir}
-        />
+        {isLoading ? (
+          <div className="flex flex-col">
+            {Array.from({ length: 4 }, (_, indice) => <ItemFaqSkeleton key={indice} indice={indice} />)}
+          </div>
+        ) : (
+          <ListaFaq
+            itens={itens}
+            expandidoId={expandidoId}
+            aoAlternar={aoAlternar}
+            podeGerenciar={podeGerenciar}
+            aoEditar={aoEditar}
+            aoExcluir={aoExcluir}
+          />
+        )}
       </div>
     </div>
   )

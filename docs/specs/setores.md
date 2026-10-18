@@ -13,7 +13,7 @@ setor e andar" `[ESP]`.
 | SET-06 | Listar ramais de um setor | ✅ | — | ⬜ |
 | SET-07 | Cadastrar ramal | ✅ | ✅ | ⬜ |
 | SET-08 | Editar e remover ramal | ✅ | ✅ | ⬜ |
-| SET-09 | Busca e ordenação na tela de setores | — | ✅ | ⬜ |
+| SET-09 | Busca e ordenação na tela de setores | — | ✅ | ✅ |
 | SET-10 | Andar do setor | ⬜ | ⬜ | ⬜ |
 | SET-11 | Guia de contatos (busca de colaboradores) | ❓ | ❓ | ⬜ |
 
@@ -76,11 +76,12 @@ Origem: [ENT H5] · Back ✅ · Front ✅ · Teste ⬜
 encontrado"`. Edição respeita a mesma validação e unicidade.
 
 ### SET-09 — Busca e ordenação na tela de setores
-Origem: [ESP] [ENT] · Back — · Front ✅ · Teste ⬜
+Origem: [ESP] [ENT] · Back — · Front ✅ · Teste ✅
 
 - Campo de busca filtra por nome do setor (sem diferenciar maiúsculas) **ou** por trecho de
   número de ramal.
-- Ordenação: nome (A–Z, padrão) ou ramal crescente.
+- Ordenação pelo cabeçalho da tabela (GER-20): colunas "Setor" (nome, A–Z por padrão) e "Ramais"
+  (pelo primeiro ramal). Coluna "Ações" não ordena.
 - Edição de ramais aparece só para quem pode editar aquele setor (GER-12).
 
 ### SET-10 — Andar do setor

@@ -1,13 +1,16 @@
 import type { ComponentType, ReactNode } from 'react'
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
 import { useAuth } from '../../lib/auth/useAuth'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
+import { useConsultaDeMidia } from '../hooks/useConsultaDeMidia'
+import { useReduzirAnimacoes } from '../hooks/useReduzirAnimacoes'
 import { useRolagemElastica } from '../hooks/useRolagemElastica'
 import logoDecos from '../assets/logo-decos.png'
 import simboloDecos from '../assets/simbolo.png'
+import SecaoMenu from './SecaoMenu'
 import {
   IconeAjustes,
   IconeArquivos,
@@ -46,19 +49,6 @@ const ROTULO_PAPEL = {
 
 // Abaixo de lg o menu lateral vira drawer, aberto pelo botão da barra superior.
 const CONSULTA_DESKTOP = '(min-width: 1024px)'
-const CONSULTA_MENOS_MOVIMENTO = '(prefers-reduced-motion: reduce)'
-
-function useConsultaDeMidia(consulta: string) {
-  const inscrever = useCallback(
-    (aoMudar: () => void) => {
-      const lista = window.matchMedia(consulta)
-      lista.addEventListener('change', aoMudar)
-      return () => lista.removeEventListener('change', aoMudar)
-    },
-    [consulta],
-  )
-  return useSyncExternalStore(inscrever, () => window.matchMedia(consulta).matches)
-}
 
 interface PropriedadesItemMenu {
   rota: string
@@ -114,12 +104,11 @@ function Layout({ children }: PropriedadesLayout) {
   const { usuario, sair } = useAuth()
   const navegar = useNavigate()
   const { pathname } = useLocation()
-  const prefereMenosMovimento = useConsultaDeMidia(CONSULTA_MENOS_MOVIMENTO)
   const menuRef = useRef<HTMLElement>(null)
   const botaoMenuRef = useRef<HTMLButtonElement>(null)
   const conteudoRef = useRef<HTMLDivElement>(null)
   const preferencias = usePreferencias()
-  const semAnimacao = preferencias.reduzirAnimacoes || prefereMenosMovimento
+  const semAnimacao = useReduzirAnimacoes()
 
   // "Recolher menu" só vale no desktop; o drawer sempre abre inteiro.
   const compacto = recolhido && desktop
@@ -217,31 +206,26 @@ function Layout({ children }: PropriedadesLayout) {
         </div>
 
         <motion.div layoutScroll className="min-h-0 flex-1 overflow-y-auto">
-          <nav className="flex flex-none flex-col gap-1">
-            {!compacto && (
-              <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 uppercase liquido:px-3.5 liquido:text-xs liquido:font-semibold liquido:tracking-normal liquido:normal-case">
-                Páginas
-              </span>
-            )}
+          <SecaoMenu titulo="Páginas" compacto={compacto} semAnimacao={semAnimacao} as="nav">
             {NAV_PRINCIPAL.map((item) => (
               <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
             ))}
-          </nav>
+          </SecaoMenu>
 
           {usuario?.role === 'superadmin' && (
-            <div className="mt-5 flex flex-col gap-1 border-t border-white/70 pt-4 liquido:border-slate-900/5">
-              {!compacto && (
-                <span className="px-3 pb-2 text-[10px] tracking-[0.12em] text-slate-500 uppercase liquido:px-3.5 liquido:text-xs liquido:font-semibold liquido:tracking-normal liquido:normal-case">
-                Administração
-              </span>
-              )}
+            <SecaoMenu
+              titulo="Administração"
+              compacto={compacto}
+              semAnimacao={semAnimacao}
+              className="mt-5 border-t border-white/70 pt-4 liquido:border-slate-900/5"
+            >
               {NAV_ADMIN.map((item) => (
                 <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
               ))}
-            </div>
+            </SecaoMenu>
           )}
 
-          <ListaAtalhos compacto={compacto} aoNavegar={fecharMenu} />
+          <ListaAtalhos compacto={compacto} semAnimacao={semAnimacao} aoNavegar={fecharMenu} />
         </motion.div>
 
         <ItemMenu

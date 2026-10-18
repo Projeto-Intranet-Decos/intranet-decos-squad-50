@@ -22,3 +22,5 @@ export interface Atividade {
   detalhe: string
   area: AreaAtividade
 }
+
+export type ColunaAtividade = 'data' | 'usuario' | 'acao' | 'area'

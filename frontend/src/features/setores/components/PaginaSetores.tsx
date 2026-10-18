@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { podeEditar } from '../../../lib/permissions'
+import { useOrdenacaoClique } from '../../../shared/hooks/useOrdenacaoClique'
 import { useExcluirSetor } from '../hooks/useExcluirSetor'
 import { useSetores } from '../hooks/useSetores'
 import type { OrdemSetores, SetorComRamais } from '../types'
@@ -22,7 +23,7 @@ function PaginaSetores() {
   const excluirSetor = useExcluirSetor()
 
   const [busca, setBusca] = useState('')
-  const [ordem, setOrdem] = useState<OrdemSetores>('nome')
+  const { coluna: ordem, direcao, aoClicarColuna } = useOrdenacaoClique<OrdemSetores>('nome')
   const [modalAberto, setModalAberto] = useState(false)
   const [setorEditando, setSetorEditando] = useState<SetorComRamais | null>(null)
 
@@ -36,10 +37,11 @@ function PaginaSetores() {
             setor.nome.toLowerCase().includes(termo) || setor.ramais.some((ramal) => ramal.numero.includes(termo)),
         )
       : setores
-    return [...filtrados].sort((a, b) =>
+    const ordenados = [...filtrados].sort((a, b) =>
       ordem === 'ramal' ? compararPrimeiroRamal(a, b) : a.nome.localeCompare(b.nome, 'pt-BR'),
     )
-  }, [setores, busca, ordem])
+    return direcao === 'desc' ? ordenados.reverse() : ordenados
+  }, [setores, busca, ordem, direcao])
 
   function podeEditarSetor(setor: SetorComRamais) {
     return usuario ? podeEditar(usuario, { setorId: setor.id }) : false
@@ -67,10 +69,6 @@ function PaginaSetores() {
     }
   }
 
-  if (isLoading) {
-    return <p className="text-sm text-slate-600">Carregando setores…</p>
-  }
-
   if (isError) {
     return <p className="text-sm text-critical">Não foi possível carregar os setores. Tente novamente.</p>
   }
@@ -84,14 +82,16 @@ function PaginaSetores() {
       <BarraFiltrosSetores
         busca={busca}
         aoMudarBusca={setBusca}
-        ordem={ordem}
-        aoMudarOrdem={setOrdem}
         podeCriar={superadmin}
         aoNovoSetor={abrirNovoSetor}
       />
 
       <TabelaSetores
         setores={setoresVisiveis}
+        isLoading={isLoading}
+        ordem={ordem}
+        direcao={direcao}
+        aoClicarColuna={aoClicarColuna}
         podeEditarSetor={podeEditarSetor}
         podeExcluir={superadmin}
         aoEditar={abrirEdicao}

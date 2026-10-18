@@ -114,6 +114,47 @@ describe('GER-01 — rótulos do menu em frase normal no Vidro líquido', () => 
   })
 })
 
+describe('GER-19 — seções colapsáveis do menu lateral', () => {
+  beforeEach(() => {
+    const carga = btoa(JSON.stringify({ sub: '1', role: 'superadmin', setor_id: null }))
+    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+  })
+
+  it('clicar no cabeçalho da seção alterna aria-expanded', () => {
+    render(<Aplicacao />)
+
+    const cabecalho = screen.getByRole('button', { name: 'Páginas' })
+    expect(cabecalho.getAttribute('aria-expanded')).toBe('true')
+
+    fireEvent.click(cabecalho)
+    expect(cabecalho.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(cabecalho)
+    expect(cabecalho.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('com animações reduzidas, colapsar some com os itens na hora', () => {
+    definirPreferencias({ reduzirAnimacoes: true })
+    render(<Aplicacao />)
+
+    expect(screen.getByRole('link', { name: 'Usuários' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Administração' }))
+    expect(screen.queryByRole('link', { name: 'Usuários' })).toBeNull()
+  })
+
+  it('no menu recolhido para ícones, a seção colapsada ainda mostra os itens', async () => {
+    render(<Aplicacao />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Páginas' }))
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'Mural de avisos' })).toBeNull())
+
+    fireEvent.click(screen.getByTitle('Recolher menu'))
+    expect(screen.getByTitle('Mural de avisos')).toBeTruthy()
+  })
+})
+
 describe('GER-18 — vidro do menu e da barra superior', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))

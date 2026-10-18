@@ -276,3 +276,55 @@ deles: o conteúdo rola sob a barra superior e o menu abre por cima da página e
 - No Vidro líquido o vidro é mais translúcido, como no design; a legibilidade no celular vem do fundo
   do drawer, que escurece **e desfoca** a página, e da barra superior compacta, que só tem o botão
   do menu e o logo.
+
+### GER-20 — Ordenação pelo cabeçalho da tabela
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+Toda coluna ordenável de uma tabela (cabeçalho real `<th>` ou cabeçalho em grid) ordena a lista ao
+clicar no próprio nome da coluna, com uma seta indicando a direção. Não se aplica à coluna de
+Ações.
+
+- **Dado** uma tabela com colunas ordenáveis, **quando** o usuário clica no nome de uma coluna,
+  **então** a lista ordena por ela em ordem crescente (alfabética ou numérica, conforme o tipo do
+  dado) e a seta aponta para cima.
+- **Dado** a coluna já ativa, **quando** o usuário clica nela de novo, **então** a direção
+  inverte (decrescente, seta para baixo).
+- **Dado** outra coluna, **quando** o usuário clica nela, **então** ela passa a ordenar (sempre
+  crescente de início) e a seta da coluna anterior desaparece.
+- Cada tabela tem uma coluna e direção padrão ao carregar a página (ex: nome A–Z, ou mais recente
+  primeiro quando a tela já tinha esse padrão antes desta regra existir).
+
+### GER-21 — Carregamento com skeleton
+Origem: [CTX] · Back — · Front ✅ · Teste 🟡
+
+Toda página que busca dados da API mostra blocos skeleton (cinza, pulsando) no formato aproximado
+do conteúdo final, em vez de só um texto "Carregando…", enquanto a requisição não termina.
+
+- **Dado** uma página carregando dados, **então** aparecem blocos skeleton no lugar do conteúdo
+  (linhas de tabela, cards, painéis); cabeçalho e filtros que não dependem do dado continuam
+  visíveis e usáveis.
+- **Dado** "Reduzir animações" (GER-14) ou `prefers-reduced-motion`, **então** o skeleton aparece
+  sem a pulsação (só o bloco estático) — efeito automático, porque a pulsação é a mesma animação
+  CSS que essas preferências já suprimem (GER-14, GER-17).
+- **Quando** o carregamento termina, **então** o skeleton é substituído pelo conteúdo real (sucesso)
+  ou pela mensagem de erro (falha).
+- 🟡 Implementado em `setores`, `usuarios`, `documentos`, `logs`, `murais` (mural e calendário) e
+  `duvidas`. Teste automatizado só em `setores` (`PaginaSetores.test.tsx`); falta replicar nas
+  outras páginas.
+
+### GER-19 — Seções colapsáveis do menu lateral
+Origem: [CTX] · Back — · Front ✅ · Teste ✅
+
+Cada seção do menu lateral ("Páginas", "Administração" quando visível, "Acesso rápido") pode ser
+colapsada e expandida pelo próprio cabeçalho, com animação. O estado é só da sessão da página (não
+persiste em `localStorage` nem recarregando).
+
+- **Dado** o menu expandido (não recolhido para ícones), **quando** o usuário clica no cabeçalho de
+  uma seção, **então** os itens dela somem com animação e a seta do cabeçalho gira; clicar de novo
+  expande de volta.
+- **Dado** o menu recolhido para ícones (GER-17), **então** todas as seções mostram seus itens
+  (ícones), sem cabeçalho nem controle de colapso — o estado de colapso de cada seção não se aplica
+  nesse modo.
+- **Dado** "Reduzir animações" ligado (GER-14) ou `prefers-reduced-motion`, **então** colapsar ou
+  expandir é imediato, sem animação.
+- **Quando** a página é recarregada, **então** todas as seções voltam a expandidas.
