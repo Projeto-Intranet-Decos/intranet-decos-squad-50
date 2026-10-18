@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import fachada from '../../shared/assets/fachada.png'
 import logoDecos from '../../shared/assets/logo-decos.png'
-import simboloDecos from '../../shared/assets/simbolo.png'
 import { IconeOlho, IconeOlhoFechado } from '../../shared/components/icones'
 import { api } from '../api'
 import { useAuth } from './useAuth'
@@ -32,22 +31,16 @@ function PaginaLogin() {
   })
 
   return (
-    <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-2">
-      <div className="bg-bordeaux-gradient relative flex min-h-dvh flex-col items-center justify-between overflow-hidden px-4 py-10 text-center sm:px-6 lg:px-[6vw] lg:py-14">
-        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <div className="absolute -top-32 -left-32 size-[28rem] rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -right-24 -bottom-40 size-[30rem] rounded-full bg-black/20 blur-3xl" />
+    <div className="grid min-h-screen grid-cols-1 bg-white lg:grid-cols-2">
+      <div className="flex min-h-screen flex-col items-center justify-between px-6 py-12 text-center lg:px-[8vw] lg:py-14">
+        <div className="my-auto flex w-full max-w-[400px] flex-col items-center">
           <img
-            src={simboloDecos}
-            alt=""
-            className="absolute top-1/2 -right-24 h-[70%] w-auto -translate-y-1/2 opacity-[0.07] brightness-0 invert"
+            src={logoDecos}
+            alt="Hospital Decós"
+            className="mb-11 h-11 w-[168px] object-contain"
           />
-        </div>
 
-        <div className="login-card relative my-auto flex w-full max-w-[440px] flex-col items-center rounded-2xl p-6 sm:p-8 liquido:rounded-panel">
-          <img src={logoDecos} alt="Hospital Decós" className="mb-8 h-12 w-auto" />
-
-          <h1 className="mb-7 text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">
+          <h1 className="mb-[34px] text-[30px] font-bold tracking-[-0.025em] text-slate-800">
             Acesse a intranet
           </h1>
 
@@ -56,33 +49,33 @@ function PaginaLogin() {
             className="flex w-full flex-col gap-[18px] text-left"
           >
             <label className="flex flex-col gap-[7px]">
-              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase liquido:text-sm liquido:font-semibold liquido:tracking-normal liquido:normal-case">
-                E-mail
+              <span className="text-[11px] font-medium tracking-[0.07em] text-slate-500 uppercase">
+                E-MAIL
               </span>
               <input
                 type="email"
                 placeholder="nome.sobrenome@decos.com.br"
-                className="field py-3 text-sm liquido:capsule-field liquido:px-4 liquido:text-[15px]"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-[14px] py-[13px] text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#800020]"
                 {...register('email', { required: true })}
               />
             </label>
 
             <label className="flex flex-col gap-[7px]">
-              <span className="text-xs font-medium tracking-wide text-slate-700 uppercase liquido:text-sm liquido:font-semibold liquido:tracking-normal liquido:normal-case">
-                Senha
+              <span className="text-[11px] font-medium tracking-[0.07em] text-slate-500 uppercase">
+                SENHA
               </span>
               <div className="relative block">
                 <input
                   type={mostrarSenha ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="field py-3 pr-[50px] text-sm liquido:capsule-field liquido:pl-4 liquido:text-[15px]"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-[13px] pr-[46px] pl-[14px] text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#800020]"
                   {...register('senha', { required: true })}
                 />
                 <button
                   type="button"
                   onClick={() => setMostrarSenha((prev) => !prev)}
                   title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-                  className="absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-900/5 hover:text-slate-700 liquido:right-1 liquido:rounded-full"
+                  className="absolute right-[6px] top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
                 >
                   {mostrarSenha ? <IconeOlhoFechado /> : <IconeOlho />}
                 </button>
@@ -92,14 +85,14 @@ function PaginaLogin() {
             <button
               type="submit"
               disabled={isPending}
-              className="btn btn-primary mt-3 min-h-12 w-full"
+              className="mt-[12px] w-full rounded-lg bg-[#800020] py-[14px] text-center text-sm font-medium text-white transition-colors hover:bg-[#3b000e] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPending ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
         </div>
 
-        <span className="relative pt-10 text-xs text-white/80">
+        <span className="pt-12 text-[11.5px] text-slate-400">
           Hospital Decós · Uso restrito a colaboradores
         </span>
       </div>
