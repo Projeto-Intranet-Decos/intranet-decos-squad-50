@@ -52,6 +52,11 @@ Origem: [COD] · Back ✅ · Front ✅ · Teste 🟡
 - O indicador do usuário logado, no rodapé do menu lateral, mostra o `nome` do payload. O papel
   só aparece, abaixo do nome, para o `superadmin`. Mudança de nome segue a mesma regra de papel e
   setor: aparece quando o access token é renovado.
+- **Dado** que o access token é renovado (AUT-04), **então** o indicador e o resto da UX passam a
+  usar o token novo sem recarregar a página. 🐞 corrigido: o usuário era lido do token só ao montar
+  a tela.
+- **Dado** um access token emitido antes de o `nome` entrar no payload, **então** o frontend
+  renova a sessão uma vez, na hora, e o indicador mostra o nome. 🐞 corrigido: ficava vazio.
 
 ### AUT-04 — Renovação automática no frontend
 Origem: [COD] · Back — · Front ✅ · Teste ⬜

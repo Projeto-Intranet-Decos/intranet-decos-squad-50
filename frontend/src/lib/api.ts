@@ -17,7 +17,8 @@ interface RequisicaoComRetentativa extends InternalAxiosRequestConfig {
 
 let promessaRenovacao: Promise<string> | null = null
 
-function renovarAccessToken(): Promise<string> {
+/** Troca o refresh token por um access token novo; pedidos simultâneos compartilham uma renovação. */
+export function renovarAccessToken(): Promise<string> {
   if (!promessaRenovacao) {
     const refreshToken = obterRefreshToken()
     promessaRenovacao = (

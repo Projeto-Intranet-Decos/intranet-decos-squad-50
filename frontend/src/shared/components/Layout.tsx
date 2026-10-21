@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
+import { renovarAccessToken } from '../../lib/api'
 import ModalAlterarSenha from '../../lib/auth/ModalAlterarSenha'
 import { useAuth } from '../../lib/auth/useAuth'
 import { canAcessarAdministracao } from '../../lib/permissions'
@@ -106,12 +107,21 @@ function Layout({ children }: PropriedadesLayout) {
   const menuRef = useRef<HTMLElement>(null)
   const botaoMenuRef = useRef<HTMLButtonElement>(null)
   const conteudoRef = useRef<HTMLDivElement>(null)
+  const completouSessaoAntiga = useRef(false)
   const preferencias = usePreferencias()
   const semAnimacao = useReduzirAnimacoes()
 
   // "Recolher menu" só vale no desktop; o drawer sempre abre inteiro.
   const compacto = recolhido && desktop
   const drawerAberto = menuAberto && !desktop
+
+  // Token emitido antes de o nome entrar no payload (AUT-03): renova uma vez para o indicador
+  // mostrar o nome. Se a renovação falhar, o interceptor cuida disso na próxima requisição.
+  useEffect(() => {
+    if (!usuario || usuario.nome || completouSessaoAntiga.current) return
+    completouSessaoAntiga.current = true
+    renovarAccessToken().catch(() => {})
+  }, [usuario])
 
   useRolagemElastica(conteudoRef, preferencias.rolagemElastica && !preferencias.reduzirAnimacoes && !drawerAberto)
 
