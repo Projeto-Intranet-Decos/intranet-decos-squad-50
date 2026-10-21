@@ -98,4 +98,4 @@ O cliente pede busca de **colaboradores** além dos ramais. Hoje `GET /usuarios`
 
 - ❓ Definir: endpoint de diretório para qualquer autenticado com dados mínimos (nome, setor,
   cargo — USU-06, andar e ramais do setor), sem e-mail/data de nascimento? Usuários desativados
-  ficam de fora?
+  ficam de fora? (Usuários pendentes, USU-02, ficariam de fora como nos aniversariantes.)

@@ -6,9 +6,9 @@ aceite verificáveis. Os critérios de aceite viram testes.
 
 | Arquivo | Prefixo | Domínio |
 |---|---|---|
-| [`transversal.md`](./transversal.md) | `GER` | Regras que valem pra todos os módulos (auth obrigatória, RBAC, escopo por setor, erros, arquivos, saúde) |
-| [`autenticacao.md`](./autenticacao.md) | `AUT` | Login, refresh, sessão no frontend |
-| [`usuarios.md`](./usuarios.md) | `USU` | Cadastro e desativação de colaboradores |
+| [`transversal.md`](./transversal.md) | `GER` | Regras que valem pra todos os módulos (auth obrigatória, RBAC, escopo por setor, erros, arquivos, saúde, envio de e-mail) |
+| [`autenticacao.md`](./autenticacao.md) | `AUT` | Login, refresh, sessão no frontend, magic link e ativação de conta |
+| [`usuarios.md`](./usuarios.md) | `USU` | Cadastro por convite, desativação e senha dos colaboradores |
 | [`setores.md`](./setores.md) | `SET` | Setores, ramais e guia de contatos |
 | [`murais.md`](./murais.md) | `MUR` | Mural de avisos, eventos, capa e anexos, aniversariantes e tela de calendário |
 | [`calendario.md`](./calendario.md) | ~~`CAL`~~ | Absorvido pelo mural (IDs riscados apontando para `MUR`) |
@@ -128,6 +128,10 @@ pytest tests/murais                         # um módulo
   `armazenamento_falso`); código que chegar ao cliente MinIO real quebra o teste.
   `armazenamento_falso.objetos` mostra o que foi gravado (`conteudo` e `tipo_conteudo`) e
   `armazenamento_falso.indisponivel = True` simula o MinIO fora do ar (503).
+- **E-mail:** sempre substituído por `CorreioFalso` (fixture `correio_falso`); código que chegar
+  ao Mailgun real quebra o teste. `correio_falso.enviados` lista os e-mails,
+  `correio_falso.ultimo_token()` lê o token do magic link do último e
+  `correio_falso.indisponivel = True` simula o provedor fora do ar (GER-19).
 - **Cenário pronto:** fixtures `cliente`, `sessao`, `setor` ("Enfermagem"), `comum` e
   `admin_setor` nesse setor, e `superadmin` sem setor (como o real). Outros setores/usuários com
   `fabrica.setor(...)` e `fabrica.usuario(Papel.X, setor)`. Token: `headers=autenticar(usuario)`.

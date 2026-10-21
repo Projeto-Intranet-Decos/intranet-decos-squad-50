@@ -36,7 +36,10 @@ desktop (GER-15).
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
 
 Toda rota da API exige access token válido, exceto: `POST /auth/login`, `POST /auth/refresh`,
-`GET /murais/avisos/{id}/imagem` (ver MUR-09) e `GET /saude`.
+`GET /murais/avisos/{id}/imagem` (ver MUR-09), `GET /saude` e as rotas de magic link (AUT-08):
+`POST /auth/convite/verificar`, `POST /auth/convite/aceitar` (AUT-09), `POST
+/auth/redefinicao-senha`, `POST /auth/redefinicao-senha/verificar` e `POST
+/auth/redefinicao-senha/confirmar` (USU-07).
 
 - **Dado** uma rota protegida, **quando** a requisição vem sem `Authorization`, com token
   malformado, com assinatura inválida ou expirado, **então** responde `401`
@@ -328,3 +331,32 @@ persiste em `localStorage` nem recarregando).
 - **Dado** "Reduzir animações" ligado (GER-14) ou `prefers-reduced-motion`, **então** colapsar ou
   expandir é imediato, sem animação.
 - **Quando** a página é recarregada, **então** todas as seções voltam a expandidas.
+
+### GER-19 — Envio de e-mail
+Origem: [CTX] · Back ✅ · Front — · Teste ✅
+
+Serviço único de e-mail em `core/`, usado por qualquer módulo (hoje: convite, USU-02/USU-08, e
+redefinição de senha, USU-07). O provedor é escolhido por `EMAIL_PROVEDOR`:
+
+- `mailgun` — API HTTP do Mailgun, com `MAILGUN_API_KEY` (uma *Domain Sending Key*, restrita ao
+  domínio de envio, e não a chave principal da conta), `MAILGUN_DOMINIO` e `MAILGUN_URL_BASE`
+  (`https://api.mailgun.net` ou `https://api.eu.mailgun.net`, conforme a região da conta).
+- `console` — padrão em desenvolvimento: escreve destinatário, assunto e texto (com o link) no log,
+  sem enviar nada. Ninguém do time precisa da chave do Mailgun para rodar o projeto.
+- Nos testes, o envio é sempre substituído por um falso em memória (como o MinIO, GER-07); código
+  que chegar ao Mailgun real quebra o teste.
+
+Critérios:
+
+- Todo e-mail tem versão HTML e texto puro, remetente `EMAIL_REMETENTE`, e os links são montados a
+  partir de `URL_FRONTEND`.
+- **Dado** uma ação que grava no banco e envia e-mail, **então** o envio só acontece depois do
+  commit.
+- **Dado** que o provedor falha (erro HTTP ou timeout de 10 s), **então** a gravação não é desfeita:
+  a falha vira `logger.warning` e a resposta indica que o e-mail não saiu onde o requisito pedir
+  (`email_enviado: false`).
+- **Dado** `EMAIL_PROVEDOR=mailgun` sem `MAILGUN_API_KEY` ou `MAILGUN_DOMINIO`, **então** a API não
+  sobe (erro de configuração no startup).
+- ❓ Domínio de envio (subdomínio do hospital com SPF e DKIM, para não cair em quarentena) — a
+  combinar com a TI do hospital. O domínio *sandbox* do Mailgun só entrega para destinatários
+  autorizados manualmente e serve só para teste.

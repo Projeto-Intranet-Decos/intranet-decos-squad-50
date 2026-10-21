@@ -37,6 +37,7 @@ backend/
     core/
       config.py           # env vars, settings
       armazenamento.py     # cliente MinIO compartilhado entre os módulos
+      correio.py           # envio de e-mail (Mailgun, console ou falso nos testes)
       security.py          # hash de senha, criação/validação de JWT
       permissions.py        # lógica de RBAC + escopo por setor
       database.py            # engine, sessão do SQLAlchemy
@@ -112,6 +113,44 @@ restrita ao bucket) e não há rotina de limpeza de objetos órfãos.
 - **Refresh token**: expira em 7 dias, usado só para obter um novo access token via endpoint `/auth/refresh` (não acessa a API diretamente).
 - Refresh token deve ser rastreável no banco (permite revogação/logout remoto).
 - Frontend intercepta 401 do access token expirado, chama `/auth/refresh` automaticamente e repete a requisição original (via interceptor do axios).
+
+### Magic link (convite e redefinição de senha)
+
+Um mecanismo só para todo link de uso único enviado por e-mail (AUT-08). A tabela
+`tokens_uso_unico` (módulo `autenticacao`, ao lado de `tokens_atualizacao`) guarda `usuario_id`,
+`finalidade`, `token_hash`, `expira_em` e `usado_em`. Finalidade nova (ex: troca de e-mail) é um
+valor novo, não uma tabela nova.
+
+- O token é opaco (`secrets.token_urlsafe`), não JWT, e é guardado só como hash SHA-256 — o mesmo
+  tratamento do refresh token. Revogar é apagar ou marcar a linha, sem depender de expiração.
+- O usuário convidado já existe em `usuarios` desde o convite, com `senha_hash` nulo; "pendente" é
+  derivado disso (`convite_pendente` na resposta), não é uma coluna de status a mais. Login,
+  aniversariantes e diretórios ignoram pendentes.
+- Verificar o token não consome; só a confirmação grava `usado_em`, na mesma transação da
+  mudança. Filtros de e-mail abrem os links antes da pessoa, então nada pode ser gasto num acesso
+  só de leitura.
+- O token vai no corpo das requisições (nunca em path/query, que aparecem nos logs de acesso), e no
+  link fica no fragmento (`#token=`), que o navegador não envia ao servidor.
+- Aceitar o convite e confirmar a redefinição já devolvem o `TokenResposta` do login: o frontend
+  não precisa repetir a senha em `/auth/login`.
+
+## E-mail
+
+`core/correio.py` expõe uma função sem domínio, `enviar_email(Email(para, assunto, texto, html))`,
+e o provedor é escolhido por `EMAIL_PROVEDOR` (GER-19): `mailgun` (API HTTP), `console` (padrão em dev,
+escreve o e-mail no log) e, nos testes, um falso em memória. Os textos de cada e-mail ficam no
+módulo dono (o convite em `usuarios`, a redefinição em `autenticacao`).
+
+Banco e provedor de e-mail não compartilham transação, então vale a mesma lógica da ordem
+Postgres/MinIO: **commit → envio**. Falha no envio não desfaz a gravação; vira `logger.warning` e,
+onde o spec pede, `email_enviado: false` na resposta, para o `superadmin` reenviar. O envio é
+síncrono, com timeout curto; fila/outbox só se o volume justificar.
+
+Configuração: `EMAIL_PROVEDOR`, `EMAIL_REMETENTE`, `URL_FRONTEND`, `MAILGUN_API_KEY`,
+`MAILGUN_DOMINIO`, `MAILGUN_URL_BASE`, `CONVITE_HORAS` (72) e `REDEFINICAO_SENHA_MINUTOS` (60). Elas
+entram no `config.py`, nos dois `.env.example` **e** no bloco `environment` do backend no
+`docker-compose.yml`, que lista as variáveis uma a uma (sem isso a chave não chega ao container). O
+Mailgun é chamado com o `urllib3`, que já vem com o cliente do MinIO: sem dependência nova.
 
 ### Payload do access token
 

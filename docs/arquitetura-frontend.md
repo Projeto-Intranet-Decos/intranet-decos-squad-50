@@ -100,6 +100,10 @@ Usada nas rotas de `/usuarios` e `/logs`, restritas a `superadmin`.
 ## Autenticação e token
 
 - Token guardado em **localStorage** (decisão consciente para o MVP).
+- Rotas públicas (fora de `RotaProtegida`): `/login`, `/esqueci-senha` e as páginas de magic link
+  `/ativar-conta` e `/redefinir-senha`. Essas duas leem o token do fragmento (`#token=`), tiram-no da
+  URL e, ao confirmar, apagam a sessão anterior antes de chamar `entrar()` com os tokens que a API
+  devolve (AUT-08). Moram em `lib/auth/`, junto da `PaginaLogin`.
 - **Trade-off registrado como dívida técnica**: localStorage é acessível via JS, então é vulnerável a XSS. Se o módulo de documentos vier a renderizar conteúdo não sanitizado no futuro, isso deve ser revisto (migrar para cookie httpOnly) antes de ir para produção definitiva com a equipe de TI do hospital.
 
 ## HTTP (axios)
