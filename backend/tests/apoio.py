@@ -3,6 +3,7 @@
 Só é importado depois do conftest.py, que prepara o ambiente antes de qualquer `import app`.
 """
 
+import re
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -10,9 +11,10 @@ from datetime import date
 from functools import cache
 from typing import BinaryIO
 
+import pytest
 from sqlalchemy.orm import Session
 
-from app.core import armazenamento
+from app.core import armazenamento, correio
 from app.core.security import criar_access_token, gerar_hash_senha
 from app.modules.setores.models import Setor
 from app.modules.usuarios.models import Papel, Usuario
@@ -112,3 +114,26 @@ class ArmazenamentoFalso:
 
     def armazenamento_disponivel(self) -> bool:
         return not self.indisponivel
+
+
+class CorreioFalso:
+    """Substitui a entrega de app/core/correio.py: guarda os e-mails em vez de enviar."""
+
+    def __init__(self) -> None:
+        self.enviados: list[correio.Email] = []
+        # True simula o provedor fora do ar: a entrega levanta ErroEmail.
+        self.indisponivel = False
+
+    def entregar(self, email: correio.Email) -> None:
+        if self.indisponivel:
+            raise correio.ErroEmail("Provedor de e-mail falso indisponível")
+        self.enviados.append(email)
+
+    def ultimo_token(self) -> str:
+        """Token do magic link do último e-mail enviado."""
+        if not self.enviados:
+            pytest.fail("Nenhum e-mail foi enviado")
+        achado = re.search(r"#token=([\w-]+)", self.enviados[-1].texto)
+        if not achado:
+            pytest.fail("O último e-mail não tem magic link")
+        return achado.group(1)

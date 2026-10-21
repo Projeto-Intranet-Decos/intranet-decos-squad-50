@@ -48,6 +48,14 @@ services:
       MINIO_USUARIO: ${MINIO_ROOT_USER:-intranet}
       MINIO_SENHA: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
       MINIO_BUCKET: ${MINIO_BUCKET:-intranet}
+      EMAIL_PROVEDOR: ${EMAIL_PROVEDOR:-console}
+      EMAIL_REMETENTE: ${EMAIL_REMETENTE:-Intranet <nao-responda@localhost>}
+      URL_FRONTEND: ${URL_FRONTEND:-http://localhost:8080}
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
+      MAILGUN_DOMINIO: ${MAILGUN_DOMINIO:-}
+      MAILGUN_URL_BASE: ${MAILGUN_URL_BASE:-https://api.mailgun.net}
+      CONVITE_HORAS: ${CONVITE_HORAS:-72}
+      REDEFINICAO_SENHA_MINUTOS: ${REDEFINICAO_SENHA_MINUTOS:-60}
     depends_on:
       banco:
         condition: service_healthy

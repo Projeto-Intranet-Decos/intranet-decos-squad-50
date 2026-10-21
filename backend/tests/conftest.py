@@ -8,6 +8,9 @@ sessão própria, configurada como a `SessaoLocal` do app, e fechada no fim, com
 
 Armazenamento: o MinIO é trocado por um dicionário em memória (`ArmazenamentoFalso`) em todos os
 testes; se algum código chegar ao cliente MinIO real, o teste quebra.
+
+E-mail: a entrega é trocada pelo `CorreioFalso`, que guarda as mensagens; se algum código chegar ao
+cliente HTTP do Mailgun, o teste quebra.
 """
 
 import os
@@ -64,11 +67,11 @@ from sqlalchemy.engine import Connection  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 import app.main  # noqa: E402
-from app.core import armazenamento  # noqa: E402
+from app.core import armazenamento, correio  # noqa: E402
 from app.core.database import SessaoLocal, engine, obter_sessao  # noqa: E402
 from app.modules.setores.models import Setor  # noqa: E402
 from app.modules.usuarios.models import Papel, Usuario  # noqa: E402
-from tests.apoio import ArmazenamentoFalso, Fabrica  # noqa: E402
+from tests.apoio import ArmazenamentoFalso, CorreioFalso, Fabrica  # noqa: E402
 
 
 # Banco
@@ -164,6 +167,22 @@ def armazenamento_falso(monkeypatch: pytest.MonkeyPatch) -> ArmazenamentoFalso:
         )
 
     monkeypatch.setattr(armazenamento, "obter_cliente", obter_cliente_proibido)
+    return falso
+
+
+# E-mail
+
+
+class _HttpProibido:
+    def request(self, *args: object, **kwargs: object) -> None:
+        raise RuntimeError("Teste tentou enviar e-mail de verdade. Use o fixture correio_falso.")
+
+
+@pytest.fixture(autouse=True)
+def correio_falso(monkeypatch: pytest.MonkeyPatch) -> CorreioFalso:
+    falso = CorreioFalso()
+    monkeypatch.setattr(correio, "_entregar", falso.entregar)
+    monkeypatch.setattr(correio, "_http", _HttpProibido())
     return falso
 
 
