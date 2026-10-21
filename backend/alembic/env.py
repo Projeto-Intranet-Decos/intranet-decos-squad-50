@@ -1,7 +1,7 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import create_engine, pool
 
 from app.core.config import configuracoes
 from app.core.database import Base
@@ -16,8 +16,9 @@ import app.modules.duvidas.models  # noqa: F401
 import app.modules.atalhos.models  # noqa: F401
 import app.modules.logs.models  # noqa: F401
 
+# A URL vem de app.core.config (variáveis POSTGRES_*), não do alembic.ini. Ela não passa pelo
+# config do Alembic porque o configparser trataria o `%` da senha escapada como interpolação.
 config = context.config
-config.set_main_option("sqlalchemy.url", configuracoes.database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -27,7 +28,7 @@ target_metadata = Base.metadata
 
 def rodar_migrations_offline() -> None:
     context.configure(
-        url=config.get_main_option("sqlalchemy.url"),
+        url=configuracoes.url_banco,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -37,11 +38,7 @@ def rodar_migrations_offline() -> None:
 
 
 def rodar_migrations_online() -> None:
-    conectavel = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    conectavel = create_engine(configuracoes.url_banco, poolclass=pool.NullPool)
     with conectavel.connect() as conexao:
         context.configure(connection=conexao, target_metadata=target_metadata)
         with context.begin_transaction():

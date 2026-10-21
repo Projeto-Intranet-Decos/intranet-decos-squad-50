@@ -166,10 +166,18 @@ O frontend esconde ações que o usuário não pode executar (`podeGerenciarCont
 mas a API é a fonte de verdade: qualquer chamada direta continua sujeita a GER-02/03/04.
 
 ### GER-13 — Infraestrutura
-Origem: [ESP] [COD] · Back ✅ · Front ✅ · Teste —
+Origem: [ESP] [COD] · Back ✅ · Front ✅ · Teste ✅
 
 Ambiente reproduzível via `docker-compose` (Postgres, MinIO, backend, frontend com nginx). O nginx
 remove o prefixo `/api` e repassa ao backend.
+
+- A API monta a conexão com o Postgres a partir de `POSTGRES_HOST`, `POSTGRES_PORT`,
+  `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD` — não existe `DATABASE_URL`. No compose, host
+  e porta são fixos (`banco:5432`, a rede interna); fora do Docker valem os do `.env` (padrão
+  `localhost:5432`, banco e usuário `intranet`; a senha é obrigatória).
+- Senha com caracteres especiais (`@ : / # %`) funciona: cada parte é escapada ao montar a URL.
+- O backend lê o `.env` da raiz (o mesmo do compose) e, por cima, o `backend/.env`, que é
+  opcional; variável de ambiente vence os dois.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
 

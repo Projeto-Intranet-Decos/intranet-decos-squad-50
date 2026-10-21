@@ -40,7 +40,13 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-intranet}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@banco:5432/${POSTGRES_DB:-intranet}
+      # A API monta a URL do banco a partir destas variáveis. Host e porta são os da rede interna
+      # do compose, e não os do .env (que servem para rodar o backend fora do Docker).
+      POSTGRES_HOST: banco
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-intranet}
+      POSTGRES_USER: ${POSTGRES_USER:-intranet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       ACCESS_TOKEN_MINUTOS: ${ACCESS_TOKEN_MINUTOS:-30}
       REFRESH_TOKEN_DIAS: ${REFRESH_TOKEN_DIAS:-7}

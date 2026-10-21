@@ -1,6 +1,6 @@
 """Infra de teste do backend. Convenções em docs/specs/README.md ("Testes: onde e como").
 
-Banco: Postgres de verdade, num banco separado (`<banco do DATABASE_URL>_teste`, ou o que vier em
+Banco: Postgres de verdade, num banco separado (`<POSTGRES_DB>_teste`, ou o que vier em
 `DATABASE_URL_TESTE`), recriado e migrado com o Alembic uma vez por execução. Cada teste roda numa
 transação desfeita no final: os `commit()` dos services viram savepoints e nada vaza entre testes.
 Por isso `now()` devolve o mesmo instante para tudo que um teste insere. Cada requisição ganha uma
@@ -14,47 +14,45 @@ cliente HTTP do Mailgun, o teste quebra.
 """
 
 import os
-from pathlib import Path
 
-from dotenv import dotenv_values
 from sqlalchemy.engine import make_url
 
-RAIZ_BACKEND = Path(__file__).resolve().parents[1]
 # "banco" é o Postgres do docker compose visto de dentro da rede do compose.
 HOSTS_LOCAIS = {"localhost", "127.0.0.1", "::1", "banco"}
 
-
-def _url_banco_teste() -> str:
-    explicita = os.environ.get("DATABASE_URL_TESTE")
-    if explicita:
-        return explicita
-    base = os.environ.get("DATABASE_URL") or dotenv_values(RAIZ_BACKEND / ".env").get("DATABASE_URL")
-    if not base:
-        raise RuntimeError("Defina DATABASE_URL_TESTE, ou DATABASE_URL no backend/.env")
-    url = make_url(base)
-    if not url.database:
-        raise RuntimeError("DATABASE_URL não tem nome de banco para derivar o banco de teste")
-    # O banco derivado é apagado a cada execução: só em host local. Outro host, só explícito.
-    if url.host not in HOSTS_LOCAIS:
-        raise RuntimeError(
-            f"DATABASE_URL aponta pra '{url.host}', que não parece local. "
-            "Se for mesmo onde os testes devem rodar, defina DATABASE_URL_TESTE explicitamente."
-        )
-    if not url.database.endswith("_teste"):
-        url = url.set(database=f"{url.database}_teste")
-    return url.render_as_string(hide_password=False)
-
-
-URL_BANCO_TESTE = _url_banco_teste()
-if not (make_url(URL_BANCO_TESTE).database or "").endswith("_teste"):
-    raise RuntimeError("O nome do banco de teste precisa terminar em _teste: ele é apagado a cada execução")
-
-# Tem que vir antes de importar `app`: core/config.py lê o ambiente na importação.
-os.environ["DATABASE_URL"] = URL_BANCO_TESTE
+# Têm que vir antes de importar a configuração, que exige as duas.
 # 32+ bytes: o PyJWT avisa quando a chave HMAC é curta.
 os.environ.setdefault("JWT_SECRET", "segredo-so-para-teste-com-32-bytes-ou-mais")
 os.environ.setdefault("MINIO_USUARIO", "teste")
 os.environ.setdefault("MINIO_SENHA", "teste")
+
+from app.core.config import RAIZ_BACKEND, configuracoes  # noqa: E402
+
+
+def _apontar_para_o_banco_de_teste() -> None:
+    """Troca o banco da configuração antes de o engine (app.core.database) ser criado."""
+    explicita = os.environ.get("DATABASE_URL_TESTE")
+    if explicita:
+        url = make_url(explicita)
+        configuracoes.postgres_host = url.host or "localhost"
+        configuracoes.postgres_port = url.port or 5432
+        configuracoes.postgres_db = url.database or ""
+        configuracoes.postgres_user = url.username or ""
+        configuracoes.postgres_password = url.password or ""
+    else:
+        # O banco derivado é apagado a cada execução: só em host local. Outro host, só explícito.
+        if configuracoes.postgres_host not in HOSTS_LOCAIS:
+            raise RuntimeError(
+                f"POSTGRES_HOST é '{configuracoes.postgres_host}', que não parece local. "
+                "Se for mesmo onde os testes devem rodar, defina DATABASE_URL_TESTE explicitamente."
+            )
+        if not configuracoes.postgres_db.endswith("_teste"):
+            configuracoes.postgres_db = f"{configuracoes.postgres_db}_teste"
+    if not configuracoes.postgres_db.endswith("_teste"):
+        raise RuntimeError("O nome do banco de teste precisa terminar em _teste: ele é apagado a cada execução")
+
+
+_apontar_para_o_banco_de_teste()
 
 from collections.abc import Iterator  # noqa: E402
 
@@ -85,7 +83,7 @@ def _recriar_banco(manutencao: Connection, nome_banco: str) -> None:
 
 @pytest.fixture(scope="session")
 def banco_migrado() -> Iterator[None]:
-    url = make_url(URL_BANCO_TESTE)
+    url = configuracoes.url_banco
     nome_banco = url.database or ""
     manutencao = create_engine(url.set(database="postgres"), isolation_level="AUTOCOMMIT")
     with manutencao.connect() as conexao:

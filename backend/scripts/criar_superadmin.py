@@ -22,7 +22,7 @@ if str(RAIZ_BACKEND) not in sys.path:
 from pydantic import ValidationError  # noqa: E402
 from pydantic_settings import BaseSettings, SettingsConfigDict  # noqa: E402
 
-from app.core.config import CAMINHO_ENV  # noqa: E402
+from app.core.config import ARQUIVOS_ENV  # noqa: E402
 from app.core.database import SessaoLocal  # noqa: E402
 from app.core.security import gerar_hash_senha  # noqa: E402
 # Usuario tem FK pra setores: sem este import o metadata fica incompleto.
@@ -38,7 +38,7 @@ class DadosSuperadmin(UsuarioCriar):
 
 
 class ConfiguracoesBootstrap(BaseSettings):
-  model_config = SettingsConfigDict(env_file=CAMINHO_ENV, extra="ignore")
+  model_config = SettingsConfigDict(env_file=ARQUIVOS_ENV, extra="ignore")
 
   superadmin_nome: str | None = None
   superadmin_email: str | None = None

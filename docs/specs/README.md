@@ -115,11 +115,11 @@ pytest -k mur03                             # um requisito
 pytest tests/murais                         # um módulo
 ```
 
-- **Banco:** Postgres real, num banco separado — o do `DATABASE_URL` com sufixo `_teste`
+- **Banco:** Postgres real, num banco separado — o `POSTGRES_DB` com sufixo `_teste`
   (ex: `intranet_teste`), ou o que vier em `DATABASE_URL_TESTE`. Ele é **apagado e recriado** a
   cada execução e migrado com `alembic upgrade head`, então as migrations também são testadas.
-  O conftest recusa rodar se o nome não terminar em `_teste`, e só deriva o banco de um
-  `DATABASE_URL` local (`localhost` ou `banco`); outro host só via `DATABASE_URL_TESTE`. Duas
+  O conftest recusa rodar se o nome não terminar em `_teste`, e só deriva o banco quando o
+  `POSTGRES_HOST` é local (`localhost` ou `banco`); outro host só via `DATABASE_URL_TESTE`. Duas
   execuções simultâneas no mesmo banco: a segunda para com erro em vez de derrubar a primeira.
 - **Isolamento:** cada teste roda numa transação desfeita no fim; os `commit()` dos services viram
   savepoints. Consequência: `now()` dá o mesmo instante para tudo que um teste insere. Cada

@@ -12,7 +12,7 @@ setor, pra testar isolamento entre setores), 1 aviso e 1 evento. É idempotente:
 o que já existir (setor por nome, usuário por e-mail, aviso/evento por título
 no setor) é mantido como está.
 
-Recusa rodar se DATABASE_URL não apontar pra localhost; use --forcar se o seu
+Recusa rodar se POSTGRES_HOST não for localhost; use --forcar se o seu
 banco local estiver em outro host.
 """
 
@@ -24,7 +24,7 @@ RAIZ_BACKEND = Path(__file__).resolve().parents[1]
 if str(RAIZ_BACKEND) not in sys.path:
   sys.path.insert(0, str(RAIZ_BACKEND))
 
-from sqlalchemy import make_url, select  # noqa: E402
+from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.core.config import configuracoes  # noqa: E402
@@ -52,10 +52,10 @@ USUARIOS = [
 
 
 def _garantir_banco_local() -> None:
-  host = make_url(configuracoes.database_url).host
+  host = configuracoes.postgres_host
   if host not in HOSTS_LOCAIS and "--forcar" not in sys.argv:
     raise SystemExit(
-      f"DATABASE_URL aponta pra '{host}', que não parece local. "
+      f"POSTGRES_HOST é '{host}', que não parece local. "
       "Se for mesmo o seu banco de desenvolvimento, rode de novo com --forcar."
     )
 

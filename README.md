@@ -16,11 +16,11 @@ O `.env` fica na **raiz** do repositório (é o que o `docker-compose.yml` lê) 
 
 | Variável | O que é |
 |---|---|
-| `POSTGRES_PASSWORD` | Senha do banco. Use só letras, números, `-` e `_`: caracteres como `@ : / # %` quebram a URL de conexão. **Não** cole uma URL aqui. |
+| `POSTGRES_PASSWORD` | Senha do banco. Vale só na criação do volume: depois de o banco existir, trocar aqui não muda a senha dele (use `ALTER USER` ou recrie o volume). **Não** cole uma URL aqui. |
 | `MINIO_ROOT_PASSWORD` | Senha do administrador do MinIO (mínimo 8 caracteres). |
 | `JWT_SECRET` | Segredo de assinatura dos tokens. Gere com `python -c "import secrets; print(secrets.token_urlsafe(64))"`. |
 
-As demais (`POSTGRES_DB`, `POSTGRES_USER`, `MINIO_ROOT_USER`, `MINIO_BUCKET`, `ACCESS_TOKEN_MINUTOS`, `REFRESH_TOKEN_DIAS`, `PORTA_*`) têm valor padrão. A `DATABASE_URL` do backend é montada pelo compose a partir das variáveis do Postgres; o mesmo vale para as credenciais do MinIO (`MINIO_*`). O `backend/.env` só vale para rodar o backend fora do Docker.
+As demais (`POSTGRES_DB`, `POSTGRES_USER`, `MINIO_ROOT_USER`, `MINIO_BUCKET`, `ACCESS_TOKEN_MINUTOS`, `REFRESH_TOKEN_DIAS`, `PORTA_*`) têm valor padrão. A API monta a URL do banco a partir de `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`; no compose, host e porta são sempre `banco:5432`, e os do `.env` (padrão `localhost:5432`) valem para rodar o backend fora do Docker. As credenciais do MinIO (`MINIO_*`) também são repassadas pelo compose. Fora do Docker, o backend lê este `.env` e, por cima dele, o `backend/.env`, que é opcional.
 
 ### 2. Subir os containers
 

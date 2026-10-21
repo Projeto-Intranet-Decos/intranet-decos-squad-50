@@ -3,14 +3,23 @@ from typing import Literal, Self
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import URL
 
-CAMINHO_ENV = Path(__file__).resolve().parents[2] / ".env"
+RAIZ_BACKEND = Path(__file__).resolve().parents[2]
+# O .env da raiz é o mesmo que o docker compose lê; o backend/.env, opcional, vale por cima dele.
+# Variável de ambiente (a que o compose passa ao container) vence os dois.
+ARQUIVOS_ENV = (RAIZ_BACKEND.parent / ".env", RAIZ_BACKEND / ".env")
 
 
 class Configuracoes(BaseSettings):
-    model_config = SettingsConfigDict(env_file=CAMINHO_ENV, extra="ignore")
+    model_config = SettingsConfigDict(env_file=ARQUIVOS_ENV, extra="ignore")
 
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/intranet"
+    # No compose, host e porta são fixos (banco:5432); estes padrões são para rodar fora do Docker.
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_db: str = "intranet"
+    postgres_user: str = "intranet"
+    postgres_password: str
 
     jwt_secret: str
     access_token_minutos: int = 30
@@ -53,6 +62,18 @@ class Configuracoes(BaseSettings):
             if faltando:
                 raise ValueError(f"EMAIL_PROVEDOR=mailgun exige {', '.join(faltando)}")
         return self
+
+    @property
+    def url_banco(self) -> URL:
+        """URL de conexão montada das partes: cada uma é escapada, então a senha pode ter `@:/#%`."""
+        return URL.create(
+            "postgresql+psycopg2",
+            username=self.postgres_user,
+            password=self.postgres_password,
+            host=self.postgres_host,
+            port=self.postgres_port,
+            database=self.postgres_db,
+        )
 
 
 configuracoes = Configuracoes()
