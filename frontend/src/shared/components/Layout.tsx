@@ -246,13 +246,14 @@ function Layout({ children }: PropriedadesLayout) {
           {!compacto && <span className="flex-1 text-left">Recolher menu</span>}
         </button>
 
-        <div className={`mt-2 flex flex-none items-center gap-2.5 border-t ${compacto ? 'justify-center' : ''} border-white/70 pt-4 liquido:border-slate-900/5`}>
-          <span title={usuario?.nome} className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9">
-            <IconeUsuario tamanho={18} />
-          </span>
-          {!compacto && (
-            <>
-              {/* O papel só aparece para o superadmin; os demais veem só o nome (AUT-03). */}
+        {/* Duas linhas: o nome ganha a largura toda, em vez de dividir a linha com os botões. */}
+        <div className="mt-2 flex flex-none flex-col gap-2 border-t border-white/70 pt-4 liquido:border-slate-900/5">
+          <div className={`flex items-center gap-2.5 ${compacto ? 'justify-center' : ''}`}>
+            <span title={usuario?.nome} className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9">
+              <IconeUsuario tamanho={18} />
+            </span>
+            {!compacto && (
+              /* O papel só aparece para o superadmin; os demais veem só o nome (AUT-03). */
               <div className="flex min-w-0 flex-1 flex-col leading-tight">
                 <span title={usuario?.nome} className="truncate text-[13px] font-medium text-slate-700 liquido:text-sm">
                   {usuario?.nome}
@@ -261,6 +262,10 @@ function Layout({ children }: PropriedadesLayout) {
                   <span className="truncate text-[11px] text-slate-500 liquido:text-xs">Superadministrador</span>
                 )}
               </div>
+            )}
+          </div>
+          {!compacto && (
+            <div className="flex items-center justify-end gap-1">
               <button
                 type="button"
                 title="Notificações"
@@ -287,7 +292,7 @@ function Layout({ children }: PropriedadesLayout) {
               >
                 <IconeSair tamanho={18} />
               </button>
-            </>
+            </div>
           )}
         </div>
       </motion.aside>
