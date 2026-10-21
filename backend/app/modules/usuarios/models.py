@@ -22,7 +22,8 @@ class Usuario(Base):
   )
   nome: Mapped[str] = mapped_column(String(200))
   email: Mapped[str] = mapped_column(String(200), unique=True)
-  senha_hash: Mapped[str] = mapped_column(String(255))
+  # Nulo enquanto o usuário convidado não ativa a conta (AUT-09).
+  senha_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
   role: Mapped[Papel] = mapped_column(String(20), default=Papel.comum)
   setor_id: Mapped[uuid.UUID | None] = mapped_column(
       Uuid, ForeignKey("setores.id"), nullable=True
@@ -35,3 +36,7 @@ class Usuario(Base):
 
   # Sem back_populates: evita alterar setores/models.py, que é de outro módulo.
   setor: Mapped[Setor | None] = relationship()
+
+  @property
+  def convite_pendente(self) -> bool:
+    return self.senha_hash is None

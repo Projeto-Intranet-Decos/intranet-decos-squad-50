@@ -17,6 +17,12 @@ def listar(sessao: Session) -> list[Usuario]:
   return sessao.query(Usuario).all()
 
 
+def adicionar(sessao: Session, usuario: Usuario) -> None:
+  """Sem commit: quem chama grava junto o que mais fizer parte da mesma transação."""
+  sessao.add(usuario)
+  sessao.flush()
+
+
 def criar(sessao: Session, usuario: Usuario) -> Usuario:
   sessao.add(usuario)
   sessao.commit()

@@ -29,7 +29,12 @@ from app.core.security import gerar_hash_senha  # noqa: E402
 import app.modules.setores.models  # noqa: E402,F401
 from app.modules.usuarios import repository  # noqa: E402
 from app.modules.usuarios.models import Papel, Usuario  # noqa: E402
-from app.modules.usuarios.schemas import UsuarioCriar  # noqa: E402
+from app.modules.usuarios.schemas import Senha, UsuarioCriar  # noqa: E402
+
+
+class DadosSuperadmin(UsuarioCriar):
+  # O primeiro superadmin não tem quem o convide: a senha vem do ambiente (USU-05).
+  senha: Senha
 
 
 class ConfiguracoesBootstrap(BaseSettings):
@@ -61,7 +66,7 @@ def main() -> None:
 
   # Mesma validação da API, pra não criar um usuário que POST /usuarios recusaria.
   try:
-    dados = UsuarioCriar(nome=nome, email=email, senha=senha, role=Papel.superadmin)
+    dados = DadosSuperadmin(nome=nome, email=email, senha=senha, role=Papel.superadmin)
   except ValidationError as erro:
     primeiro = erro.errors()[0]
     raise SystemExit(f"SUPERADMIN_{str(primeiro['loc'][0]).upper()}: {primeiro['msg']}") from erro

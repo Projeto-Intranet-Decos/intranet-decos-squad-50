@@ -47,6 +47,8 @@ def listar_aniversariantes(sessao: Session, mes: int) -> list[Usuario]:
     .options(selectinload(Usuario.setor))
     .where(
       Usuario.ativo.is_(True),
+      # Pendente (convite não aceito) ainda não é colaborador visível (MUR-13).
+      Usuario.senha_hash.is_not(None),
       Usuario.data_nascimento.is_not(None),
       extract("month", Usuario.data_nascimento) == mes,
     )

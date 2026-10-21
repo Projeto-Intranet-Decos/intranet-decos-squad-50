@@ -28,6 +28,17 @@ def test_mur13_lista_ativos_do_mes_ordenados_por_dia_e_nome(
     ]
 
 
+def test_mur13_ignora_usuarios_pendentes(
+    cliente: TestClient, fabrica: Fabrica, setor: Setor, comum: Usuario
+):
+    fabrica.usuario(Papel.comum, setor, nome="Ativa", data_nascimento=date(1990, 3, 12))
+    fabrica.usuario(Papel.comum, setor, nome="Pendente", data_nascimento=date(1990, 3, 13), pendente=True)
+
+    resposta = cliente.get("/murais/aniversariantes", params={"mes": 3}, headers=autenticar(comum))
+
+    assert [a["nome"] for a in resposta.json()] == ["Ativa"]
+
+
 def test_mur13_mes_fora_do_intervalo_retorna_422(cliente: TestClient, comum: Usuario):
     resposta = cliente.get("/murais/aniversariantes", params={"mes": 13}, headers=autenticar(comum))
 
