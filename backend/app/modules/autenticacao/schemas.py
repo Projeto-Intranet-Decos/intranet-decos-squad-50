@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, EmailStr, StringConstraints
 
 from app.modules.usuarios.schemas import Senha, UsuarioResposta
 
@@ -47,3 +47,26 @@ class ConviteAceitar(LinkEntrada):
   senha: Senha
   nome: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
   data_nascimento: date | None = None
+
+
+class MensagemResposta(BaseModel):
+  mensagem: str
+
+
+class PedidoRedefinicao(BaseModel):
+  email: EmailStr
+
+
+class RedefinicaoResposta(BaseModel):
+  model_config = ConfigDict(from_attributes=True)
+
+  email: str
+
+
+class RedefinicaoConfirmar(LinkEntrada):
+  senha: Senha
+
+
+class TrocaSenha(BaseModel):
+  senha_atual: str
+  senha_nova: Senha

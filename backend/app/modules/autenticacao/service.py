@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
+import uuid
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -11,12 +13,15 @@ from app.core.security import (
   hash_token,
   verificar_senha,
 )
-from app.modules.autenticacao import repository, schemas
+from app.core.correio import Email
+from app.modules.autenticacao import emails, repository, schemas
 from app.modules.autenticacao.models import FinalidadeToken, TokenAtualizacao, TokenUsoUnico
 from app.modules.usuarios import repository as usuarios_repository
 from app.modules.usuarios.models import Usuario
 
 LINK_INVALIDO = "Link inválido ou expirado"
+MENSAGEM_REDEFINICAO = "Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha."
+SENHA_ATUAL_INCORRETA = {"campo": "senha_atual", "mensagem": "Senha atual incorreta"}
 
 
 def autenticar(sessao: Session, email: str, senha: str) -> tuple[str, str, Usuario]:
@@ -129,4 +134,54 @@ def aceitar_convite(
   link.usado_em = datetime.now(timezone.utc)
   # O commit do refresh token grava tudo junto: senha, dados e link usado.
   access_token, refresh_token = _abrir_sessao(sessao, usuario)
+  return access_token, refresh_token, usuario
+
+
+# Troca e redefinição de senha (USU-07)
+
+
+def _definir_senha(sessao: Session, usuario: Usuario, senha: str) -> tuple[str, str]:
+  """Grava a senha, encerra as outras sessões e abre uma nova, tudo num commit só."""
+  usuario.senha_hash = gerar_hash_senha(senha)
+  repository.revogar_tokens_do_usuario(sessao, usuario.id)
+  return _abrir_sessao(sessao, usuario)
+
+
+def pedir_redefinicao(sessao: Session, email: str) -> Email | None:
+  """Devolve o e-mail a enviar, ou None. Quem chama responde igual nos dois casos."""
+  usuario = usuarios_repository.buscar_por_email(sessao, email)
+  # Pendente não redefine: precisa de um novo convite (USU-08).
+  if not usuario or not usuario.ativo or usuario.convite_pendente:
+    return None
+  token = emitir_link(sessao, usuario, FinalidadeToken.redefinicao_senha)
+  sessao.commit()
+  return emails.redefinicao_senha(usuario, token)
+
+
+def verificar_redefinicao(sessao: Session, token: str) -> Usuario:
+  _, usuario = _link_valido(sessao, token, FinalidadeToken.redefinicao_senha)
+  return usuario
+
+
+def confirmar_redefinicao(
+  sessao: Session, dados: schemas.RedefinicaoConfirmar
+) -> tuple[str, str, Usuario]:
+  link, usuario = _link_valido(
+    sessao, dados.token, FinalidadeToken.redefinicao_senha, travar=True
+  )
+  link.usado_em = datetime.now(timezone.utc)
+  access_token, refresh_token = _definir_senha(sessao, usuario, dados.senha)
+  return access_token, refresh_token, usuario
+
+
+def trocar_senha(
+  sessao: Session, usuario_id: uuid.UUID, dados: schemas.TrocaSenha
+) -> tuple[str, str, Usuario]:
+  usuario = usuarios_repository.buscar_por_id(sessao, usuario_id)
+  # O access token ainda vale até expirar; a troca, não (AUT-03).
+  if not usuario or not usuario.ativo or usuario.senha_hash is None:
+    raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Usuario nao encontrado ou inativo")
+  if not verificar_senha(dados.senha_atual, usuario.senha_hash):
+    raise HTTPException(status.HTTP_400_BAD_REQUEST, SENHA_ATUAL_INCORRETA)
+  access_token, refresh_token = _definir_senha(sessao, usuario, dados.senha_nova)
   return access_token, refresh_token, usuario

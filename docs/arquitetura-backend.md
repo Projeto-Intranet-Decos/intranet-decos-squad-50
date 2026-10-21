@@ -207,7 +207,9 @@ cada e-mail ficam no módulo dono (o convite em `usuarios`, a redefinição em `
 Banco e provedor de e-mail não compartilham transação, então vale a mesma lógica da ordem
 Postgres/MinIO: **commit → envio**. Falha no envio não desfaz a gravação; vira `logger.warning` e,
 onde o spec pede, `email_enviado: false` na resposta, para o `superadmin` reenviar. O envio é
-síncrono, com timeout curto; fila/outbox só se o volume justificar.
+síncrono, com timeout curto; fila/outbox só se o volume justificar. A exceção é o "esqueci minha
+senha" (USU-07): a resposta é sempre a mesma, então o e-mail vai numa `BackgroundTasks` do FastAPI,
+depois da resposta, para o tempo dela não revelar se a conta existe.
 
 SMTP em vez de API HTTP do provedor: o envio usa `smtplib` (biblioteca padrão, sem dependência) e
 trocar de provedor — ou passar a usar o servidor de e-mail do hospital — é só mudar o `.env`. TLS é

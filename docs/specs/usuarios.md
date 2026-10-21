@@ -11,7 +11,7 @@ Cadastro dos colaboradores com papel de acesso e setor. Área de Administração
 | USU-04 | Desativar usuário (soft delete) | ✅ | ✅ | ✅ |
 | USU-05 | Primeiro superadmin | ✅ | — | ⬜ |
 | USU-06 | Cargo do colaborador | ⬜ | ⬜ | ⬜ |
-| USU-07 | Troca e redefinição de senha | ⬜ | ⬜ | ⬜ |
+| USU-07 | Troca e redefinição de senha | ✅ | ⬜ | ✅ |
 | USU-08 | Reenviar convite | ✅ | ✅ | ✅ |
 
 ### USU-01 — Listar usuários
@@ -104,7 +104,7 @@ Origem: [ESP] (coluna `CARGO` da modelagem do cliente) · Back ⬜ · Front ⬜ 
 - ⬜ Usuário tem `cargo` opcional (até 100 caracteres), exibido no guia de contatos (SET-11).
 
 ### USU-07 — Troca e redefinição de senha
-Origem: [CTX] · Back ⬜ · Front ⬜ · Teste ⬜
+Origem: [CTX] · Back ✅ · Front ⬜ · Teste ✅
 
 Duas entradas: quem esqueceu a senha pede um magic link por e-mail (AUT-08, finalidade
 `redefinicao_senha`), e quem está logado troca a própria senha. O superadmin nunca vê nem define a
@@ -120,6 +120,10 @@ moram em `/auth` (módulo `autenticacao`).
 - **Dado** e-mail inexistente, de usuário desativado ou de usuário pendente, **então** nada é
   enviado (o pendente precisa de um novo convite, USU-08).
 - **Dado** que o envio falha, **então** a resposta é a mesma; a falha fica só no log técnico.
+- O e-mail sai depois da resposta (tarefa em segundo plano): o tempo de resposta não pode revelar se
+  a conta existe.
+- O e-mail traz o nome, o link para `/redefinir-senha` com a validade, e avisa que, se a pessoa não
+  pediu, pode ignorar — a senha atual continua valendo.
 - ❓ Limitar pedidos por e-mail/IP (ex: um a cada 5 minutos) — hoje a aplicação não tem rate limit.
 
 `POST /auth/redefinicao-senha/verificar` com `{token}`, sem login:
@@ -143,6 +147,8 @@ moram em `/auth` (módulo `autenticacao`).
 - **Dado** `senha_atual` errada, **então** `400 {"campo": "senha_atual", "mensagem": "Senha atual
   incorreta"}` e nada muda.
 - **Dado** `senha_nova` curta, **então** `422` com o campo.
+- **Dado** um usuário desativado depois do login (access token ainda válido), **então** `401` e nada
+  muda.
 
 Frontend:
 

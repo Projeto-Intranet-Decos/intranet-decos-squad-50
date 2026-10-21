@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from app.modules.autenticacao.models import FinalidadeToken, TokenAtualizacao, TokenUsoUnico
@@ -17,6 +17,15 @@ def buscar_por_hash(sessao: Session, token_hash: str) -> TokenAtualizacao | None
     sessao.query(TokenAtualizacao)
     .filter(TokenAtualizacao.token_hash == token_hash)
     .first()
+  )
+
+
+def revogar_tokens_do_usuario(sessao: Session, usuario_id: uuid.UUID) -> None:
+  """Encerra as sessões abertas (refresh tokens). Sem commit."""
+  sessao.execute(
+    update(TokenAtualizacao)
+    .where(TokenAtualizacao.usuario_id == usuario_id, TokenAtualizacao.revogado.is_(False))
+    .values(revogado=True)
   )
 
 
