@@ -1,35 +1,22 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { aceitarConvite, verificarConvite, type AceiteConvite, type DadosConvite, type ErroApi } from './api'
+import AvisoDoLink from './AvisoDoLink'
 import CampoAcesso from './CampoAcesso'
 import LayoutAcesso from './LayoutAcesso'
 import { limparTokens, useAuth } from './useAuth'
+import { ehLinkRecusado, useTokenDoLink } from './useTokenDoLink'
 
 const TITULO = 'Ative sua conta'
 
-function lerToken(hash: string) {
-  return new URLSearchParams(hash.replace(/^#/, '')).get('token') ?? ''
-}
-
-function ehLinkInvalido(erro: unknown) {
-  return isAxiosError(erro) && erro.response?.status === 400
-}
-
 /** Página do convite (AUT-09), aberta pelo magic link do e-mail (AUT-08). Pública. */
 function PaginaAtivarConta() {
-  const local = useLocation()
-  const navegar = useNavigate()
-  // Lido uma vez só: logo em seguida o token sai da barra de endereço.
-  const [token] = useState(() => lerToken(local.hash))
+  const token = useTokenDoLink()
   const [linkRecusado, setLinkRecusado] = useState(false)
-
-  useEffect(() => {
-    if (local.hash) navegar({ pathname: local.pathname, search: local.search }, { replace: true })
-  }, [local.hash, local.pathname, local.search, navegar])
 
   const convite = useQuery({
     queryKey: ['convite', token],
@@ -39,13 +26,12 @@ function PaginaAtivarConta() {
     staleTime: Infinity,
   })
 
-  if (!token || linkRecusado || ehLinkInvalido(convite.error)) {
+  if (!token || linkRecusado || ehLinkRecusado(convite.error)) {
     return (
       <LayoutAcesso titulo={TITULO}>
-        <div className="flex w-full flex-col gap-5 text-sm text-slate-600">
-          <p role="alert">Link inválido ou expirado. Peça um novo convite ao administrador.</p>
+        <AvisoDoLink mensagem="Link inválido ou expirado. Peça um novo convite ao administrador.">
           <Link to="/login" className="btn btn-primary min-h-12 w-full">Ir para o login</Link>
-        </div>
+        </AvisoDoLink>
       </LayoutAcesso>
     )
   }
@@ -53,12 +39,11 @@ function PaginaAtivarConta() {
   if (convite.isError) {
     return (
       <LayoutAcesso titulo={TITULO}>
-        <div className="flex w-full flex-col gap-5 text-sm text-slate-600">
-          <p role="alert">Não foi possível verificar o convite agora.</p>
+        <AvisoDoLink mensagem="Não foi possível verificar o convite agora.">
           <button type="button" onClick={() => void convite.refetch()} className="btn btn-primary min-h-12 w-full">
             Tentar novamente
           </button>
-        </div>
+        </AvisoDoLink>
       </LayoutAcesso>
     )
   }
@@ -105,7 +90,7 @@ function FormularioAtivacao({ token, convite, aoRecusarLink }: PropriedadesFormu
       navegar('/mural', { replace: true })
     },
     onError: (erro: unknown) => {
-      if (ehLinkInvalido(erro)) return aoRecusarLink()
+      if (ehLinkRecusado(erro)) return aoRecusarLink()
       const dados = isAxiosError<ErroApi>(erro) ? erro.response?.data : undefined
       const mensagem = typeof dados?.mensagem === 'string' ? dados.mensagem : 'Não foi possível ativar a conta. Tente novamente.'
       const campo = dados?.campo && CAMPOS_DA_API[dados.campo]
