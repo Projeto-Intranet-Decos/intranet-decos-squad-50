@@ -5,17 +5,17 @@ Cadastro dos colaboradores com papel de acesso e setor. Área de Administração
 
 | ID | Requisito | Back | Front | Teste |
 |---|---|---|---|---|
-| USU-01 | Listar usuários | ✅ | 🟡 | ✅ |
-| USU-02 | Cadastrar usuário por convite | ✅ | 🟡 | ✅ |
+| USU-01 | Listar usuários | ✅ | ✅ | ✅ |
+| USU-02 | Cadastrar usuário por convite | ✅ | ✅ | ✅ |
 | USU-03 | Editar usuário | ✅ | ✅ | ✅ |
 | USU-04 | Desativar usuário (soft delete) | ✅ | ✅ | ✅ |
 | USU-05 | Primeiro superadmin | ✅ | — | ⬜ |
 | USU-06 | Cargo do colaborador | ⬜ | ⬜ | ⬜ |
 | USU-07 | Troca e redefinição de senha | ⬜ | ⬜ | ⬜ |
-| USU-08 | Reenviar convite | ✅ | ⬜ | ✅ |
+| USU-08 | Reenviar convite | ✅ | ✅ | ✅ |
 
 ### USU-01 — Listar usuários
-Origem: [ENT H6] · Back ✅ · Front 🟡 · Teste ✅
+Origem: [ENT H6] · Back ✅ · Front ✅ · Teste ✅
 
 `GET /usuarios` — só `superadmin` (outros papéis → `403`). Devolve `id`, `nome`, `email`, `role`,
 `setor_id`, `data_nascimento`, `ativo`, `criado_em`; nunca a senha nem o hash. Inclui usuários
@@ -23,15 +23,15 @@ desativados e pendentes.
 
 - Devolve também `convite_pendente`: `true` enquanto o usuário não ativou a conta (AUT-09).
 - Frontend ✅: tabela `/usuarios`, busca por nome/e-mail, filtros de perfil/setor/status e paginação local de 10 registros.
-- Frontend ⬜: usuário pendente mostra o selo "Convite pendente" e o filtro de status ganha a opção
-  "Pendente".
+- Frontend ✅: usuário pendente mostra o selo "Convite pendente" e o filtro de status ganha a opção
+  "Pendentes". Desativado aparece como "Inativo" mesmo que nunca tenha ativado a conta.
 
 ### USU-02 — Cadastrar usuário por convite
-Origem: [ESP] [ENT H6] [CTX] · Back ✅ · Front 🟡 · Teste ✅
+Origem: [ESP] [ENT H6] [CTX] · Back ✅ · Front ✅ · Teste ✅
 
 `POST /usuarios` — só `superadmin`. O superadmin **não define a senha**: o usuário é criado
 **pendente** e recebe por e-mail um convite (magic link, AUT-08) para criar a própria senha e
-completar os dados (AUT-09). Falta o frontend (formulário ainda pede senha).
+completar os dados (AUT-09).
 
 | Campo | Regra |
 |---|---|
@@ -56,7 +56,7 @@ completar os dados (AUT-09). Falta o frontend (formulário ainda pede senha).
   encontrado"}`.
 - **Dado** e-mail inválido ou papel fora da lista, **então** `422` com o campo.
 - Frontend ✅: formulário com seleção de papel e setor; erro do backend no campo (GER-05).
-- Frontend ⬜: formulário sem campo de senha. Sucesso → toast "Convite enviado para {email}";
+- Frontend ✅: formulário sem campo de senha. Sucesso → toast "Convite enviado para {email}";
   `email_enviado: false` → toast de aviso com a ação "Reenviar convite".
 - O superadmin criado pelo script (USU-05) não passa por convite.
 - ❓ `admin_setor` sem setor é permitido hoje pelo backend, mas esse usuário não consegue criar
@@ -154,7 +154,7 @@ Frontend:
   confirmação. Sucesso → grava os tokens novos e mostra toast.
 
 ### USU-08 — Reenviar convite
-Origem: [CTX] · Back ✅ · Front ⬜ · Teste ✅
+Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅
 
 `POST /usuarios/{id}/convite` — só `superadmin`. Gera um novo convite (AUT-08, válido por 72h) e
 envia para o e-mail atual do usuário.

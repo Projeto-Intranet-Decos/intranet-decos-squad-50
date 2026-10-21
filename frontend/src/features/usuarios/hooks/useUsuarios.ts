@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
-import { criarUsuario, editarUsuario, excluirUsuario, listarUsuarios } from '../api'
-import type { ErroUsuario, OperacaoSalvarUsuario } from '../types'
+import { criarUsuario, editarUsuario, excluirUsuario, listarUsuarios, reenviarConvite } from '../api'
+import type { ErroUsuario, OperacaoSalvarUsuario, UsuarioCadastro } from '../types'
 
 export function mensagemErroUsuario(erro: unknown): string {
   return isAxiosError<ErroUsuario>(erro) && typeof erro.response?.data?.mensagem === 'string'
@@ -15,14 +15,29 @@ export function useUsuarios(usuarioId: string | undefined, permitido: boolean) {
 
 export function useSalvarUsuario() {
   const cliente = useQueryClient()
+  const reenviar = useReenviarConvite()
   return useMutation({
     mutationFn: (operacao: OperacaoSalvarUsuario) => operacao.tipo === 'criar'
       ? criarUsuario(operacao.dados) : editarUsuario(operacao.id, operacao.dados),
-    onSuccess: async (_usuario, operacao) => {
+    onSuccess: async (usuario, operacao) => {
       await cliente.invalidateQueries({ queryKey: ['usuarios'] })
       await cliente.invalidateQueries({ queryKey: ['murais', 'aniversariantes'] })
-      toast.success(operacao.tipo === 'criar' ? 'Usuário cadastrado.' : 'Usuário atualizado.')
+      if (operacao.tipo === 'editar') toast.success('Usuário atualizado.')
+      else if ('emailEnviado' in usuario && usuario.emailEnviado) toast.success(`Convite enviado para ${usuario.email}.`)
+      else toast.warning('Usuário cadastrado, mas o convite não foi enviado.', {
+        action: { label: 'Reenviar convite', onClick: () => reenviar.mutate(usuario) },
+      })
     },
+    onError: (erro: unknown) => toast.error(mensagemErroUsuario(erro)),
+  })
+}
+
+export function useReenviarConvite() {
+  return useMutation({
+    mutationFn: (usuario: Pick<UsuarioCadastro, 'id' | 'email'>) => reenviarConvite(usuario.id),
+    onSuccess: (enviado, usuario) => enviado
+      ? toast.success(`Convite reenviado para ${usuario.email}.`)
+      : toast.warning('O convite não foi enviado. Tente novamente em instantes.'),
     onError: (erro: unknown) => toast.error(mensagemErroUsuario(erro)),
   })
 }

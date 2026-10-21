@@ -33,6 +33,7 @@ import {
   Pin,
   Plus,
   Search,
+  Send,
   SlidersHorizontal,
   Trash,
   TriangleAlert,
@@ -101,6 +102,7 @@ export const IconeArquivoTexto = criarIcone(FileText)
 export const IconeImagem = criarIcone(Image)
 export const IconeEnviar = criarIcone(Upload)
 export const IconeNuvemEnviar = criarIcone(CloudUpload)
+export const IconeReenviar = criarIcone(Send)
 export const IconeBaixar = criarIcone(Download)
 export const IconeDownload = criarIcone(ArrowDownToLine)
 
