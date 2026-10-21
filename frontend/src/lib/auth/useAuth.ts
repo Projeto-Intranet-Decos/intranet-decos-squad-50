@@ -8,7 +8,8 @@ function decodificarUsuario(token: string): Usuario {
   const payload = token.split('.')[1]
   const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
   const carga = JSON.parse(json)
-  return { id: carga.sub, role: carga.role, setorId: carga.setor_id }
+  // Token emitido antes de o nome entrar no payload: fica sem nome até a próxima renovação.
+  return { id: carga.sub, nome: carga.nome ?? '', role: carga.role, setorId: carga.setor_id }
 }
 
 export function obterToken() {

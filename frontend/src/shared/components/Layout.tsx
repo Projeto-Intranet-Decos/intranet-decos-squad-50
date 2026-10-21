@@ -44,11 +44,6 @@ const NAV_ADMIN = [
   { rota: '/logs', label: 'Registro de Atividades', Icone: IconeHistorico },
 ]
 
-const ROTULO_PAPEL = {
-  comum: 'Colaborador',
-  admin_setor: 'Administrador de setor',
-  superadmin: 'Superadministrador',
-}
 
 // Abaixo de lg o menu lateral vira drawer, aberto pelo botão da barra superior.
 const CONSULTA_DESKTOP = '(min-width: 1024px)'
@@ -252,15 +247,19 @@ function Layout({ children }: PropriedadesLayout) {
         </button>
 
         <div className={`mt-2 flex flex-none items-center gap-2.5 border-t ${compacto ? 'justify-center' : ''} border-white/70 pt-4 liquido:border-slate-900/5`}>
-          <span className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9">
+          <span title={usuario?.nome} className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9">
             <IconeUsuario tamanho={18} />
           </span>
           {!compacto && (
             <>
+              {/* O papel só aparece para o superadmin; os demais veem só o nome (AUT-03). */}
               <div className="flex min-w-0 flex-1 flex-col leading-tight">
-                <span className="truncate text-xs text-slate-600 liquido:text-[13px] liquido:font-medium liquido:text-slate-700">
-                  {usuario ? ROTULO_PAPEL[usuario.role] : ''}
+                <span title={usuario?.nome} className="truncate text-[13px] font-medium text-slate-700 liquido:text-sm">
+                  {usuario?.nome}
                 </span>
+                {usuario?.role === 'superadmin' && (
+                  <span className="truncate text-[11px] text-slate-500 liquido:text-xs">Superadministrador</span>
+                )}
               </div>
               <button
                 type="button"

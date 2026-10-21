@@ -28,6 +28,8 @@ def criar_access_token(usuario: Usuario) -> str:
   )
   payload = {
     "sub": str(usuario.id),
+    # Para o indicador do usuário logado no frontend (AUT-03).
+    "nome": usuario.nome,
     "role": usuario.role,
     "setor_id": str(usuario.setor_id) if usuario.setor_id else None,
     "exp": expira_em,

@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { definirPreferencias, iniciarPreferencias } from '../../lib/preferencias/preferencias'
-import { simularConsultasDeMidia } from '../../testes/apoio'
+import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
 import estilos from '../../index.css?raw'
 import Layout from './Layout'
 
@@ -189,5 +189,28 @@ describe('USU-07 — botão de alterar senha', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Alterar senha' }))
 
     expect(await screen.findByRole('dialog', { name: 'Alterar senha' })).toBeTruthy()
+  })
+})
+
+describe('AUT-03 — indicador do usuário logado', () => {
+  function entrarComo(carga: object) {
+    localStorage.setItem('intranet:token', tokenDeAcessoFalso(carga))
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+    render(<Aplicacao />)
+  }
+
+  it('mostra o nome e não o papel de quem não é superadmin', () => {
+    entrarComo({ sub: '1', nome: 'Maria Silva', role: 'admin_setor', setor_id: 's1' })
+
+    expect(screen.getByText('Maria Silva')).toBeTruthy()
+    expect(screen.queryByText('Administrador de setor')).toBeNull()
+  })
+
+  it('mostra o papel abaixo do nome para o superadmin', () => {
+    entrarComo({ sub: '1', nome: 'Ana Souza', role: 'superadmin', setor_id: null })
+
+    expect(screen.getByText('Ana Souza')).toBeTruthy()
+    expect(screen.getByText('Superadministrador')).toBeTruthy()
   })
 })

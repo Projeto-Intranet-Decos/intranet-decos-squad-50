@@ -7,7 +7,7 @@ banco. Ativação de conta e redefinição de senha por magic link enviado por e
 |---|---|---|---|---|
 | AUT-01 | Login com e-mail e senha | ✅ | ✅ | 🟡 |
 | AUT-02 | Renovação do access token | ✅ | ✅ | ⬜ |
-| AUT-03 | Conteúdo e validade do access token | ✅ | ✅ | ⬜ |
+| AUT-03 | Conteúdo e validade do access token | ✅ | ✅ | 🟡 |
 | AUT-04 | Renovação automática no frontend | — | ✅ | ⬜ |
 | AUT-05 | Rotas protegidas no frontend | — | ✅ | ⬜ |
 | AUT-06 | Logout com revogação do refresh token | ⬜ | 🟡 | ⬜ |
@@ -41,14 +41,17 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   no fim do access token atual.
 
 ### AUT-03 — Conteúdo e validade do access token
-Origem: [COD] · Back ✅ · Front ✅ · Teste ⬜
+Origem: [COD] · Back ✅ · Front ✅ · Teste 🟡
 
-- Payload: `sub` (id do usuário), `role`, `setor_id` (ou `null`), `exp`. Assinatura HS256 com
-  `JWT_SECRET`.
+- Payload: `sub` (id do usuário), `nome`, `role`, `setor_id` (ou `null`), `exp`. Assinatura HS256
+  com `JWT_SECRET`. Testados até agora: o payload e o `nome` atualizado na renovação.
 - Validade: `ACCESS_TOKEN_MINUTOS` (padrão 30). Refresh: `REFRESH_TOKEN_DIAS` (padrão 7).
 - Mudança de papel/setor e desativação só valem para o usuário quando o access token atual expira
   (trade-off aceito, ver `docs/arquitetura-backend.md`).
 - O frontend lê `id`, `role` e `setorId` do payload para decidir a UX (GER-12).
+- O indicador do usuário logado, no rodapé do menu lateral, mostra o `nome` do payload. O papel
+  só aparece, abaixo do nome, para o `superadmin`. Mudança de nome segue a mesma regra de papel e
+  setor: aparece quando o access token é renovado.
 
 ### AUT-04 — Renovação automática no frontend
 Origem: [COD] · Back — · Front ✅ · Teste ⬜

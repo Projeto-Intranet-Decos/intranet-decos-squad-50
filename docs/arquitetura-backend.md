@@ -139,13 +139,14 @@ valor novo, não uma tabela nova.
 ```json
 {
   "sub": "user_id",
+  "nome": "Maria Silva",
   "role": "admin_setor",
   "setor_id": "uuid-do-setor",
   "exp": 1234567890
 }
 ```
 
-Decisão consciente: `role` e `setor_id` embutidos no token evitam consulta ao banco a cada request. Trade-off aceito: mudança de role/setor demora até o access token expirar (15-30min) para refletir — considerado aceitável dado o baixo volume de mudanças desse tipo no contexto do hospital.
+Decisão consciente: `role` e `setor_id` embutidos no token evitam consulta ao banco a cada request (e `nome`, o indicador do usuário logado no frontend). Trade-off aceito: mudança de role/setor demora até o access token expirar (15-30min) para refletir — considerado aceitável dado o baixo volume de mudanças desse tipo no contexto do hospital.
 
 ## RBAC (controle de acesso)
 
