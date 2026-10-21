@@ -12,8 +12,8 @@ banco. Ativação de conta e redefinição de senha por magic link enviado por e
 | AUT-05 | Rotas protegidas no frontend | — | ✅ | ⬜ |
 | AUT-06 | Logout com revogação do refresh token | ⬜ | 🟡 | ⬜ |
 | AUT-07 | Armazenamento seguro de credenciais | ✅ | — | ⬜ |
-| AUT-08 | Magic link (token de uso único por e-mail) | ✅ | ⬜ | ✅ |
-| AUT-09 | Ativação de conta pelo convite | ✅ | ⬜ | ✅ |
+| AUT-08 | Magic link (token de uso único por e-mail) | ✅ | ✅ | ✅ |
+| AUT-09 | Ativação de conta pelo convite | ✅ | ✅ | ✅ |
 
 ### AUT-01 — Login com e-mail e senha
 Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste 🟡
@@ -84,7 +84,7 @@ Origem: [ESP] [COD] · Back ✅ · Front — · Teste ⬜
 - Dívida técnica registrada: tokens no `localStorage` (vulnerável a XSS) — rever antes de produção.
 
 ### AUT-08 — Magic link (token de uso único por e-mail)
-Origem: [CTX] · Back ✅ · Front ⬜ · Teste ✅
+Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅
 
 Mecanismo único para os e-mails que trazem o usuário de volta à aplicação para concluir uma ação
 sem estar logado. Finalidades: `convite` (AUT-09) e `redefinicao_senha` (USU-07). Finalidade nova
@@ -115,7 +115,7 @@ entra aqui, sem tabela nova. O token não é sessão: só autoriza a ação da s
   no navegador antes de gravar a nova (computador compartilhado no posto).
 
 ### AUT-09 — Ativação de conta pelo convite
-Origem: [CTX] · Back ✅ · Front ⬜ · Teste ✅
+Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅
 
 O colaborador convidado (USU-02) abre o link do e-mail, cria a senha e completa os dados pessoais;
 ao terminar já está logado. E-mail, papel e setor vêm do convite e não mudam aqui.
@@ -142,7 +142,7 @@ ao terminar já está logado. E-mail, papel e setor vêm do convite e não mudam
 - **Dado** token inválido (AUT-08), **então** `400` e nada muda.
 - Frontend: rota `/ativar-conta`. Ao abrir, verifica o token:
   - inválido → "Link inválido ou expirado. Peça um novo convite ao administrador." e link para
-    `/login`;
+    `/login`; falha de rede → mensagem com "Tentar novamente";
   - válido → formulário com e-mail só leitura, nome já preenchido, data de nascimento, senha e
     confirmação de senha (a confirmação é checada só no front). Sucesso → `entrar()` e `/mural`.
 - Quando o cargo existir (USU-06), ele entra nesse formulário.

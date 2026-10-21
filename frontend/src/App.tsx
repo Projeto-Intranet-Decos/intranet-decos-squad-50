@@ -6,6 +6,7 @@ import PaginaLogs from './features/logs/components/PaginaLogs'
 import PaginaMural from './features/murais/components/PaginaMural'
 import PaginaSetores from './features/setores/components/PaginaSetores'
 import PaginaUsuarios from './features/usuarios/components/PaginaUsuarios'
+import PaginaAtivarConta from './lib/auth/PaginaAtivarConta'
 import PaginaLogin from './lib/auth/PaginaLogin'
 import PaginaNaoAutorizado from './lib/auth/PaginaNaoAutorizado'
 import RotaProtegida from './lib/auth/RotaProtegida'
@@ -18,6 +19,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/mural" replace />} />
       <Route path="/login" element={<PaginaLogin />} />
+      <Route path="/ativar-conta" element={<PaginaAtivarConta />} />
       <Route
         path="/nao-autorizado"
         element={
