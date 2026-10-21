@@ -178,6 +178,8 @@ remove o prefixo `/api` e repassa ao backend.
 - Senha com caracteres especiais (`@ : / # %`) funciona: cada parte é escapada ao montar a URL.
 - O backend lê o `.env` da raiz (o mesmo do compose) e, por cima, o `backend/.env`, que é
   opcional; variável de ambiente vence os dois.
+- Segredos (senhas do banco e do MinIO, `JWT_SECRET`, `SMTP_SENHA`) nunca aparecem na representação
+  da configuração, que vai parar em tracebacks e erros de validação.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
 
@@ -346,13 +348,15 @@ Origem: [CTX] · Back ✅ · Front — · Teste ✅
 Serviço único de e-mail em `core/`, usado por qualquer módulo (hoje: convite, USU-02/USU-08, e
 redefinição de senha, USU-07). O provedor é escolhido por `EMAIL_PROVEDOR`:
 
-- `mailgun` — API HTTP do Mailgun, com `MAILGUN_API_KEY` (uma *Domain Sending Key*, restrita ao
-  domínio de envio, e não a chave principal da conta), `MAILGUN_DOMINIO` e `MAILGUN_URL_BASE`
-  (`https://api.mailgun.net` ou `https://api.eu.mailgun.net`, conforme a região da conta).
+- `smtp` — envio por SMTP com TLS obrigatório. O provedor contratado é a **Brevo**
+  (`smtp-relay.brevo.com`, porta 587), mas qualquer servidor SMTP serve (ex: o do próprio hospital)
+  trocando só as variáveis `SMTP_HOST`, `SMTP_PORTA`, `SMTP_USUARIO` e `SMTP_SENHA`. Na Brevo, o
+  usuário é o *login SMTP* e a senha é uma *chave SMTP* (não a chave de API `xkeysib-...`).
 - `console` — padrão em desenvolvimento: escreve destinatário, assunto e texto (com o link) no log,
-  sem enviar nada. Ninguém do time precisa da chave do Mailgun para rodar o projeto.
+  sem enviar nada. Ninguém do time precisa de credencial de e-mail para rodar o projeto.
 - Nos testes, o envio é sempre substituído por um falso em memória (como o MinIO, GER-07); código
-  que chegar ao Mailgun real quebra o teste.
+  que chegar a um servidor SMTP real quebra o teste.
+- ~~`mailgun`~~ — removido: a API HTTP do Mailgun foi trocada pelo SMTP da Brevo.
 
 Critérios:
 
@@ -360,11 +364,13 @@ Critérios:
   partir de `URL_FRONTEND`.
 - **Dado** uma ação que grava no banco e envia e-mail, **então** o envio só acontece depois do
   commit.
-- **Dado** que o provedor falha (erro HTTP ou timeout de 10 s), **então** a gravação não é desfeita:
+- **Dado** `SMTP_PORTA=587`, **então** a conexão sobe para TLS com STARTTLS antes do login;
+  **dado** `SMTP_PORTA=465`, **então** a conexão já nasce em TLS. Nunca há login sem TLS.
+- **Dado** que o provedor falha (recusa do servidor, erro de rede ou timeout de 10 s), **então** a
+  gravação não é desfeita:
   a falha vira `logger.warning` e a resposta indica que o e-mail não saiu onde o requisito pedir
   (`email_enviado: false`).
-- **Dado** `EMAIL_PROVEDOR=mailgun` sem `MAILGUN_API_KEY` ou `MAILGUN_DOMINIO`, **então** a API não
-  sobe (erro de configuração no startup).
-- ❓ Domínio de envio (subdomínio do hospital com SPF e DKIM, para não cair em quarentena) — a
-  combinar com a TI do hospital. O domínio *sandbox* do Mailgun só entrega para destinatários
-  autorizados manualmente e serve só para teste.
+- **Dado** `EMAIL_PROVEDOR=smtp` sem `SMTP_HOST`, `SMTP_USUARIO` ou `SMTP_SENHA`, **então** a API
+  não sobe (erro de configuração no startup).
+- ❓ Remetente: a Brevo só envia de um remetente verificado ou de um domínio autenticado (SPF e
+  DKIM). Domínio do hospital × remetente avulso — a combinar com a TI do hospital.

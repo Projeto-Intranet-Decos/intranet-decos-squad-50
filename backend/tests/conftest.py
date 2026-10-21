@@ -9,8 +9,8 @@ sessão própria, configurada como a `SessaoLocal` do app, e fechada no fim, com
 Armazenamento: o MinIO é trocado por um dicionário em memória (`ArmazenamentoFalso`) em todos os
 testes; se algum código chegar ao cliente MinIO real, o teste quebra.
 
-E-mail: a entrega é trocada pelo `CorreioFalso`, que guarda as mensagens; se algum código chegar ao
-cliente HTTP do Mailgun, o teste quebra.
+E-mail: a entrega é trocada pelo `CorreioFalso`, que guarda as mensagens; se algum código chegar a um
+servidor SMTP real, o teste quebra.
 """
 
 import os
@@ -25,6 +25,8 @@ HOSTS_LOCAIS = {"localhost", "127.0.0.1", "::1", "banco"}
 os.environ.setdefault("JWT_SECRET", "segredo-so-para-teste-com-32-bytes-ou-mais")
 os.environ.setdefault("MINIO_USUARIO", "teste")
 os.environ.setdefault("MINIO_SENHA", "teste")
+# Os testes não dependem do provedor de e-mail configurado no .env de quem os roda.
+os.environ["EMAIL_PROVEDOR"] = "console"
 
 from app.core.config import RAIZ_BACKEND, configuracoes  # noqa: E402
 
@@ -171,16 +173,17 @@ def armazenamento_falso(monkeypatch: pytest.MonkeyPatch) -> ArmazenamentoFalso:
 # E-mail
 
 
-class _HttpProibido:
-    def request(self, *args: object, **kwargs: object) -> None:
-        raise RuntimeError("Teste tentou enviar e-mail de verdade. Use o fixture correio_falso.")
+def _smtp_proibido(*args: object, **kwargs: object) -> None:
+    raise RuntimeError("Teste tentou enviar e-mail de verdade. Use o fixture correio_falso.")
 
 
 @pytest.fixture(autouse=True)
 def correio_falso(monkeypatch: pytest.MonkeyPatch) -> CorreioFalso:
     falso = CorreioFalso()
     monkeypatch.setattr(correio, "_entregar", falso.entregar)
-    monkeypatch.setattr(correio, "_http", _HttpProibido())
+    # Rede de segurança: os testes do próprio SMTP trocam estas classes por falsas.
+    monkeypatch.setattr(correio.smtplib, "SMTP", _smtp_proibido)
+    monkeypatch.setattr(correio.smtplib, "SMTP_SSL", _smtp_proibido)
     return falso
 
 

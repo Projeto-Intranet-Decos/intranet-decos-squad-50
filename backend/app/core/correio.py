@@ -1,25 +1,26 @@
 """Envio de e-mail compartilhado entre os módulos (GER-19).
 
 Não sabe nada de domínio: quem chama monta o `Email` (os textos ficam no módulo dono). O provedor
-vem de `EMAIL_PROVEDOR`: `console` escreve o e-mail no log, `mailgun` envia pela API HTTP.
+vem de `EMAIL_PROVEDOR`: `console` escreve o e-mail no log, `smtp` envia por SMTP com TLS (Brevo,
+ou qualquer servidor configurado em `SMTP_*`).
 
 Banco e provedor não compartilham transação: chame `enviar_email` só depois do commit. A falha
 não desfaz nada, vira `logger.warning` e o retorno `False`, para quem chamou avisar o usuário.
 """
 
 import logging
+import smtplib
+import ssl
 from dataclasses import dataclass
-
-import urllib3
+from email.message import EmailMessage
 
 from app.core.config import configuracoes
 
 logger = logging.getLogger(__name__)
 
 TIMEOUT_SEGUNDOS = 10
-
-# Sem retry: um reenvio automático depois de timeout pode duplicar o e-mail.
-_http = urllib3.PoolManager(timeout=urllib3.Timeout(total=TIMEOUT_SEGUNDOS), retries=False)
+# Na 465 a conexão já nasce em TLS; nas outras (587) sobe para TLS com STARTTLS.
+PORTA_TLS_DIRETO = 465
 
 
 @dataclass(frozen=True)
@@ -45,8 +46,8 @@ def enviar_email(email: Email) -> bool:
 
 
 def _entregar(email: Email) -> None:
-  if configuracoes.email_provedor == "mailgun":
-    _entregar_pelo_mailgun(email)
+  if configuracoes.email_provedor == "smtp":
+    _entregar_por_smtp(email)
   else:
     _entregar_pelo_console(email)
 
@@ -61,25 +62,37 @@ def _entregar_pelo_console(email: Email) -> None:
   )
 
 
-def _entregar_pelo_mailgun(email: Email) -> None:
-  url = (
-    f"{configuracoes.mailgun_url_base.rstrip('/')}/v3/{configuracoes.mailgun_dominio}/messages"
-  )
+def _montar_mensagem(email: Email) -> EmailMessage:
+  mensagem = EmailMessage()
+  mensagem["From"] = configuracoes.email_remetente
+  mensagem["To"] = email.para
+  mensagem["Subject"] = email.assunto
+  # Texto puro primeiro: é o que aparece em cliente que não mostra HTML.
+  mensagem.set_content(email.texto)
+  mensagem.add_alternative(email.html, subtype="html")
+  return mensagem
+
+
+def _conectar_smtp() -> smtplib.SMTP:
+  """Abre a conexão já em TLS: nunca há login em texto aberto."""
+  contexto = ssl.create_default_context()
+  host, porta = configuracoes.smtp_host, configuracoes.smtp_porta
+  if porta == PORTA_TLS_DIRETO:
+    return smtplib.SMTP_SSL(host, porta, timeout=TIMEOUT_SEGUNDOS, context=contexto)
+  conexao = smtplib.SMTP(host, porta, timeout=TIMEOUT_SEGUNDOS)
   try:
-    resposta = _http.request(
-      "POST",
-      url,
-      fields={
-        "from": configuracoes.email_remetente,
-        "to": email.para,
-        "subject": email.assunto,
-        "text": email.texto,
-        "html": email.html,
-      },
-      encode_multipart=False,
-      headers=urllib3.make_headers(basic_auth=f"api:{configuracoes.mailgun_api_key}"),
-    )
-  except urllib3.exceptions.HTTPError as erro:
-    raise ErroEmail(f"Mailgun não respondeu: {erro}") from erro
-  if resposta.status >= 300:
-    raise ErroEmail(f"Mailgun respondeu {resposta.status}: {resposta.data[:200]!r}")
+    conexao.starttls(context=contexto)
+  except BaseException:
+    conexao.close()
+    raise
+  return conexao
+
+
+def _entregar_por_smtp(email: Email) -> None:
+  try:
+    with _conectar_smtp() as conexao:
+      conexao.login(configuracoes.smtp_usuario, configuracoes.smtp_senha)
+      conexao.send_message(_montar_mensagem(email))
+  # OSError cobre recusa de conexão, DNS e timeout; SMTPException, as recusas do servidor.
+  except (smtplib.SMTPException, OSError) as erro:
+    raise ErroEmail(f"SMTP {configuracoes.smtp_host}:{configuracoes.smtp_porta}: {erro}") from erro

@@ -1,9 +1,10 @@
 """GER-19 — envio de e-mail (core/correio.py)."""
 
 import logging
+import smtplib
+import ssl
 
 import pytest
-import urllib3
 from pydantic import ValidationError
 
 from app.core import correio
@@ -18,31 +19,59 @@ EMAIL = correio.Email(
 )
 
 
-class RespostaFalsa:
-    def __init__(self, status: int) -> None:
-        self.status = status
-        self.data = b"resposta do provedor"
+class SmtpFalso:
+    """Faz o papel de smtplib.SMTP / SMTP_SSL: registra o que a entrega fez com a conexão."""
 
+    def __init__(self, host: str, porta: int, timeout: float, context: ssl.SSLContext | None = None):
+        self.host, self.porta, self.timeout, self.contexto = host, porta, timeout, context
+        self.chamadas: list[str] = []
+        self.enviadas: list = []
+        self.falha: Exception | None = None
 
-class HttpFalso:
-    def __init__(self, status: int = 200, erro: Exception | None = None) -> None:
-        self.status = status
-        self.erro = erro
-        self.chamadas: list[dict] = []
+    def starttls(self, context: ssl.SSLContext) -> None:
+        self.chamadas.append("starttls")
+        self.contexto = context
 
-    def request(self, metodo: str, url: str, **kwargs: object) -> RespostaFalsa:
-        self.chamadas.append({"metodo": metodo, "url": url, **kwargs})
-        if self.erro:
-            raise self.erro
-        return RespostaFalsa(self.status)
+    def login(self, usuario: str, senha: str) -> None:
+        self.chamadas.append(f"login:{usuario}:{senha}")
+        if self.falha:
+            raise self.falha
+
+    def send_message(self, mensagem) -> None:
+        self.chamadas.append("send_message")
+        self.enviadas.append(mensagem)
+
+    def close(self) -> None:
+        self.chamadas.append("close")
+
+    def __enter__(self) -> "SmtpFalso":
+        return self
+
+    def __exit__(self, *erro: object) -> None:
+        self.close()
 
 
 @pytest.fixture
-def mailgun(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(configuracoes, "mailgun_api_key", "chave-de-envio")
-    monkeypatch.setattr(configuracoes, "mailgun_dominio", "mg.hospital.local")
-    monkeypatch.setattr(configuracoes, "mailgun_url_base", "https://api.eu.mailgun.net/")
-    monkeypatch.setattr(configuracoes, "email_remetente", "Intranet <nao-responda@mg.hospital.local>")
+def smtp(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(configuracoes, "smtp_host", "smtp-relay.brevo.com")
+    monkeypatch.setattr(configuracoes, "smtp_usuario", "login@smtp-brevo.com")
+    monkeypatch.setattr(configuracoes, "smtp_senha", "chave-smtp")
+    monkeypatch.setattr(configuracoes, "email_remetente", "Intranet <nao-responda@hospital.com.br>")
+
+
+@pytest.fixture
+def conexoes(monkeypatch: pytest.MonkeyPatch, smtp: None) -> list[SmtpFalso]:
+    """Troca as classes do smtplib e devolve as conexões abertas pela entrega."""
+    abertas: list[SmtpFalso] = []
+
+    def fabricar(*args, **kwargs) -> SmtpFalso:
+        conexao = SmtpFalso(*args, **kwargs)
+        abertas.append(conexao)
+        return conexao
+
+    monkeypatch.setattr(correio.smtplib, "SMTP", fabricar)
+    monkeypatch.setattr(correio.smtplib, "SMTP_SSL", fabricar)
+    return abertas
 
 
 def test_ger19_envio_bem_sucedido_retorna_true(correio_falso: CorreioFalso):
@@ -70,46 +99,86 @@ def test_ger19_console_escreve_o_email_no_log(caplog: pytest.LogCaptureFixture):
     assert EMAIL.texto in caplog.text
 
 
-def test_ger19_mailgun_envia_html_e_texto_com_chave_de_envio(
-    mailgun: None, monkeypatch: pytest.MonkeyPatch
+def test_ger19_smtp_na_587_sobe_para_tls_antes_do_login(
+    conexoes: list[SmtpFalso], monkeypatch: pytest.MonkeyPatch
 ):
-    http = HttpFalso()
-    monkeypatch.setattr(correio, "_http", http)
+    monkeypatch.setattr(configuracoes, "smtp_porta", 587)
 
-    correio._entregar_pelo_mailgun(EMAIL)
+    correio._entregar_por_smtp(EMAIL)
 
-    [chamada] = http.chamadas
-    assert chamada["metodo"] == "POST"
-    assert chamada["url"] == "https://api.eu.mailgun.net/v3/mg.hospital.local/messages"
-    assert chamada["headers"] == urllib3.make_headers(basic_auth="api:chave-de-envio")
-    assert chamada["encode_multipart"] is False
-    assert chamada["fields"] == {
-        "from": "Intranet <nao-responda@mg.hospital.local>",
-        "to": EMAIL.para,
-        "subject": EMAIL.assunto,
-        "text": EMAIL.texto,
-        "html": EMAIL.html,
-    }
+    [conexao] = conexoes
+    assert (conexao.host, conexao.porta, conexao.timeout) == ("smtp-relay.brevo.com", 587, 10)
+    assert conexao.chamadas == [
+        "starttls", "login:login@smtp-brevo.com:chave-smtp", "send_message", "close",
+    ]
+    assert isinstance(conexao.contexto, ssl.SSLContext)
+
+
+def test_ger19_smtp_na_465_ja_nasce_em_tls(
+    conexoes: list[SmtpFalso], monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(configuracoes, "smtp_porta", 465)
+
+    correio._entregar_por_smtp(EMAIL)
+
+    [conexao] = conexoes
+    assert conexao.porta == 465
+    assert isinstance(conexao.contexto, ssl.SSLContext)
+    assert "starttls" not in conexao.chamadas
+    assert conexao.chamadas[0] == "login:login@smtp-brevo.com:chave-smtp"
+
+
+def test_ger19_smtp_envia_texto_e_html_do_remetente_configurado(conexoes: list[SmtpFalso]):
+    correio._entregar_por_smtp(EMAIL)
+
+    [mensagem] = conexoes[0].enviadas
+    assert mensagem["From"] == "Intranet <nao-responda@hospital.com.br>"
+    assert mensagem["To"] == EMAIL.para
+    assert mensagem["Subject"] == EMAIL.assunto
+    assert mensagem.get_body(("plain",)).get_content().strip() == EMAIL.texto
+    assert mensagem.get_body(("html",)).get_content().strip() == EMAIL.html
 
 
 @pytest.mark.parametrize(
-    "http",
-    [HttpFalso(status=401), HttpFalso(erro=urllib3.exceptions.HTTPError("sem rede"))],
-    ids=["status-de-erro", "erro-de-rede"],
+    "falha",
+    [smtplib.SMTPAuthenticationError(535, b"auth failed"), TimeoutError("sem resposta")],
+    ids=["recusa-do-servidor", "erro-de-rede"],
 )
-def test_ger19_mailgun_falha_vira_erro_email(
-    mailgun: None, monkeypatch: pytest.MonkeyPatch, http: HttpFalso
-):
-    monkeypatch.setattr(correio, "_http", http)
+def test_ger19_smtp_falha_vira_erro_email(conexoes: list[SmtpFalso], falha: Exception, monkeypatch):
+    original = correio.smtplib.SMTP
+
+    def com_falha(*args, **kwargs) -> SmtpFalso:
+        conexao = original(*args, **kwargs)
+        conexao.falha = falha
+        return conexao
+
+    monkeypatch.setattr(correio.smtplib, "SMTP", com_falha)
 
     with pytest.raises(correio.ErroEmail):
-        correio._entregar_pelo_mailgun(EMAIL)
+        correio._entregar_por_smtp(EMAIL)
 
 
-@pytest.mark.parametrize("faltando", ["mailgun_api_key", "mailgun_dominio"])
-def test_ger19_mailgun_sem_configuracao_impede_a_api_de_subir(faltando: str):
-    valores = {"mailgun_api_key": "chave", "mailgun_dominio": "mg.hospital.local", faltando: ""}
+def test_ger19_smtp_sem_conseguir_conectar_vira_erro_email(smtp: None, monkeypatch: pytest.MonkeyPatch):
+    def recusar(*args, **kwargs):
+        raise ConnectionRefusedError("porta fechada")
+
+    monkeypatch.setattr(correio.smtplib, "SMTP", recusar)
+
+    with pytest.raises(correio.ErroEmail):
+        correio._entregar_por_smtp(EMAIL)
+
+
+@pytest.mark.parametrize("faltando", ["smtp_host", "smtp_usuario", "smtp_senha"])
+def test_ger19_smtp_sem_configuracao_impede_a_api_de_subir(faltando: str):
+    valores = {"smtp_host": "smtp-relay.brevo.com", "smtp_usuario": "login", "smtp_senha": "chave"}
+    valores[faltando] = ""
 
     with pytest.raises(ValidationError, match=faltando.upper()):
-        Configuracoes(_env_file=None, email_provedor="mailgun", **valores)
+        Configuracoes(_env_file=None, postgres_password="x", email_provedor="smtp", **valores)
 
+
+def test_ger19_padrao_aponta_para_a_brevo():
+    configuracoes_padrao = Configuracoes(_env_file=None, postgres_password="x")
+
+    assert (configuracoes_padrao.smtp_host, configuracoes_padrao.smtp_porta) == ("smtp-relay.brevo.com", 587)
+    assert configuracoes_padrao.email_provedor == "console"

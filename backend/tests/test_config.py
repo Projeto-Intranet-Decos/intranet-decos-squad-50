@@ -73,3 +73,17 @@ def test_ger13_arquivos_env_padrao_sao_raiz_e_depois_backend():
         raiz_do_repositorio / ".env",
         config.RAIZ_BACKEND / ".env",
     )
+
+
+def test_ger13_segredos_nao_aparecem_na_representacao():
+    configuracoes = Configuracoes(
+        _env_file=None,
+        postgres_password="senha-do-banco",
+        jwt_secret="segredo-jwt",
+        minio_senha="senha-do-minio",
+        smtp_senha="chave-smtp",
+    )
+
+    representacao = repr(configuracoes) + str(configuracoes)
+    for segredo in ("senha-do-banco", "segredo-jwt", "senha-do-minio", "chave-smtp"):
+        assert segredo not in representacao

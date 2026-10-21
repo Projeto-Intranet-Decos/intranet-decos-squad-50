@@ -37,7 +37,7 @@ backend/
     core/
       config.py           # env vars, settings
       armazenamento.py     # cliente MinIO compartilhado entre os módulos
-      correio.py           # envio de e-mail (Mailgun, console ou falso nos testes)
+      correio.py           # envio de e-mail (SMTP, console ou falso nos testes)
       security.py          # hash de senha, criação/validação de JWT
       permissions.py        # lógica de RBAC + escopo por setor
       database.py            # engine, sessão do SQLAlchemy
@@ -134,24 +134,6 @@ valor novo, não uma tabela nova.
 - Aceitar o convite e confirmar a redefinição já devolvem o `TokenResposta` do login: o frontend
   não precisa repetir a senha em `/auth/login`.
 
-## E-mail
-
-`core/correio.py` expõe uma função sem domínio, `enviar_email(Email(para, assunto, texto, html))`,
-e o provedor é escolhido por `EMAIL_PROVEDOR` (GER-19): `mailgun` (API HTTP), `console` (padrão em dev,
-escreve o e-mail no log) e, nos testes, um falso em memória. Os textos de cada e-mail ficam no
-módulo dono (o convite em `usuarios`, a redefinição em `autenticacao`).
-
-Banco e provedor de e-mail não compartilham transação, então vale a mesma lógica da ordem
-Postgres/MinIO: **commit → envio**. Falha no envio não desfaz a gravação; vira `logger.warning` e,
-onde o spec pede, `email_enviado: false` na resposta, para o `superadmin` reenviar. O envio é
-síncrono, com timeout curto; fila/outbox só se o volume justificar.
-
-Configuração: `EMAIL_PROVEDOR`, `EMAIL_REMETENTE`, `URL_FRONTEND`, `MAILGUN_API_KEY`,
-`MAILGUN_DOMINIO`, `MAILGUN_URL_BASE`, `CONVITE_HORAS` (72) e `REDEFINICAO_SENHA_MINUTOS` (60). Elas
-entram no `config.py`, nos dois `.env.example` **e** no bloco `environment` do backend no
-`docker-compose.yml`, que lista as variáveis uma a uma (sem isso a chave não chega ao container). O
-Mailgun é chamado com o `urllib3`, que já vem com o cliente do MinIO: sem dependência nova.
-
 ### Payload do access token
 
 ```json
@@ -214,6 +196,27 @@ renovar nem entrar de novo — o acesso dele morre no fim do token que já tinha
 
 Se algum módulo precisar de revogação imediata (ex: uma ação crítica), a checagem extra vai
 no service daquele módulo, não numa segunda implementação de `usuario_atual`.
+
+## E-mail
+
+`core/correio.py` expõe uma função sem domínio, `enviar_email(Email(para, assunto, texto, html))`,
+e o provedor é escolhido por `EMAIL_PROVEDOR` (GER-19): `smtp` (Brevo, ou qualquer servidor SMTP),
+`console` (padrão em dev, escreve o e-mail no log) e, nos testes, um falso em memória. Os textos de
+cada e-mail ficam no módulo dono (o convite em `usuarios`, a redefinição em `autenticacao`).
+
+Banco e provedor de e-mail não compartilham transação, então vale a mesma lógica da ordem
+Postgres/MinIO: **commit → envio**. Falha no envio não desfaz a gravação; vira `logger.warning` e,
+onde o spec pede, `email_enviado: false` na resposta, para o `superadmin` reenviar. O envio é
+síncrono, com timeout curto; fila/outbox só se o volume justificar.
+
+SMTP em vez de API HTTP do provedor: o envio usa `smtplib` (biblioteca padrão, sem dependência) e
+trocar de provedor — ou passar a usar o servidor de e-mail do hospital — é só mudar o `.env`. TLS é
+obrigatório: STARTTLS na 587, TLS direto na 465.
+
+Configuração: `EMAIL_PROVEDOR`, `EMAIL_REMETENTE`, `URL_FRONTEND`, `SMTP_HOST`, `SMTP_PORTA`,
+`SMTP_USUARIO`, `SMTP_SENHA`, `CONVITE_HORAS` (72) e `REDEFINICAO_SENHA_MINUTOS` (60). Elas entram no
+`config.py`, nos dois `.env.example` **e** no bloco `environment` do backend no `docker-compose.yml`,
+que lista as variáveis uma a uma (sem isso a credencial não chega ao container).
 
 ## Logs
 

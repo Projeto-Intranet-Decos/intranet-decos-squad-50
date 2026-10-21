@@ -1,4 +1,8 @@
-# Plano: cadastro por convite com magic link (Mailgun)
+# Plano: cadastro por convite com magic link
+
+> **Atualização:** o provedor `mailgun` (API HTTP) foi trocado por `smtp`, configurado para a
+> Brevo — ver GER-19 e `docs/arquitetura-backend.md` (seção E-mail). O texto abaixo é o plano
+> original.
 
 ## Contexto
 

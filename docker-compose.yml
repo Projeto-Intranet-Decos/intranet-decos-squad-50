@@ -57,9 +57,10 @@ services:
       EMAIL_PROVEDOR: ${EMAIL_PROVEDOR:-console}
       EMAIL_REMETENTE: ${EMAIL_REMETENTE:-Intranet <nao-responda@localhost>}
       URL_FRONTEND: ${URL_FRONTEND:-http://localhost:8080}
-      MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
-      MAILGUN_DOMINIO: ${MAILGUN_DOMINIO:-}
-      MAILGUN_URL_BASE: ${MAILGUN_URL_BASE:-https://api.mailgun.net}
+      SMTP_HOST: ${SMTP_HOST:-smtp-relay.brevo.com}
+      SMTP_PORTA: ${SMTP_PORTA:-587}
+      SMTP_USUARIO: ${SMTP_USUARIO:-}
+      SMTP_SENHA: ${SMTP_SENHA:-}
       CONVITE_HORAS: ${CONVITE_HORAS:-72}
       REDEFINICAO_SENHA_MINUTOS: ${REDEFINICAO_SENHA_MINUTOS:-60}
     depends_on:

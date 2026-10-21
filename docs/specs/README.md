@@ -129,7 +129,7 @@ pytest tests/murais                         # um módulo
   `armazenamento_falso.objetos` mostra o que foi gravado (`conteudo` e `tipo_conteudo`) e
   `armazenamento_falso.indisponivel = True` simula o MinIO fora do ar (503).
 - **E-mail:** sempre substituído por `CorreioFalso` (fixture `correio_falso`); código que chegar
-  ao Mailgun real quebra o teste. `correio_falso.enviados` lista os e-mails,
+  a um servidor SMTP real quebra o teste. `correio_falso.enviados` lista os e-mails,
   `correio_falso.ultimo_token()` lê o token do magic link do último e
   `correio_falso.indisponivel = True` simula o provedor fora do ar (GER-19).
 - **Cenário pronto:** fixtures `cliente`, `sessao`, `setor` ("Enfermagem"), `comum` e
