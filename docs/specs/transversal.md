@@ -362,6 +362,10 @@ Critérios:
 
 - Todo e-mail tem versão HTML e texto puro, remetente `EMAIL_REMETENTE`, e os links são montados a
   partir de `URL_FRONTEND`.
+- Todo e-mail sai com os cabeçalhos `Date` e `Message-ID` (este no domínio do remetente), que a
+  RFC 5322 exige: sem eles, servidores como Gmail e Outlook descartam ou rejeitam a mensagem
+  depois de o provedor já ter aceitado o envio. 🐞 corrigido: a primeira versão do SMTP saía sem os
+  dois.
 - **Dado** uma ação que grava no banco e envia e-mail, **então** o envio só acontece depois do
   commit.
 - **Dado** `SMTP_PORTA=587`, **então** a conexão sobe para TLS com STARTTLS antes do login;

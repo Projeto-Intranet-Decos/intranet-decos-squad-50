@@ -13,6 +13,7 @@ import smtplib
 import ssl
 from dataclasses import dataclass
 from email.message import EmailMessage
+from email.utils import formatdate, make_msgid, parseaddr
 
 from app.core.config import configuracoes
 
@@ -67,6 +68,10 @@ def _montar_mensagem(email: Email) -> EmailMessage:
   mensagem["From"] = configuracoes.email_remetente
   mensagem["To"] = email.para
   mensagem["Subject"] = email.assunto
+  # Exigidos pela RFC 5322: sem eles, Gmail e Outlook descartam a mensagem que o provedor aceitou.
+  mensagem["Date"] = formatdate(usegmt=True)
+  dominio = parseaddr(configuracoes.email_remetente)[1].rpartition("@")[2] or None
+  mensagem["Message-ID"] = make_msgid(domain=dominio)
   # Texto puro primeiro: é o que aparece em cliente que não mostra HTML.
   mensagem.set_content(email.texto)
   mensagem.add_alternative(email.html, subtype="html")

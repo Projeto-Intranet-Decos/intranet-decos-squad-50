@@ -3,6 +3,7 @@
 import logging
 import smtplib
 import ssl
+from email.utils import parsedate_to_datetime
 
 import pytest
 from pydantic import ValidationError
@@ -137,6 +138,15 @@ def test_ger19_smtp_envia_texto_e_html_do_remetente_configurado(conexoes: list[S
     assert mensagem["Subject"] == EMAIL.assunto
     assert mensagem.get_body(("plain",)).get_content().strip() == EMAIL.texto
     assert mensagem.get_body(("html",)).get_content().strip() == EMAIL.html
+
+
+def test_ger19_smtp_envia_date_e_message_id_do_dominio_do_remetente(conexoes: list[SmtpFalso]):
+    correio._entregar_por_smtp(EMAIL)
+
+    [mensagem] = conexoes[0].enviadas
+    assert parsedate_to_datetime(mensagem["Date"]).tzinfo is not None
+    assert mensagem["Message-ID"].startswith("<")
+    assert mensagem["Message-ID"].endswith("@hospital.com.br>")
 
 
 @pytest.mark.parametrize(
