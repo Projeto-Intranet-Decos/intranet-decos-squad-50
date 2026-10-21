@@ -26,3 +26,13 @@ export function simularNavegador(marcas: string[] | null) {
     configurable: true,
   })
 }
+
+// Access token com o formato que o useAuth decodifica (só o payload importa; a assinatura não é checada).
+export function tokenDeAcessoFalso(carga: object) {
+  return `cabecalho.${btoa(JSON.stringify(carga))}.assinatura`
+}
+
+// Erro como o axios entrega quando a API responde com status de erro (GER-05).
+export function erroDaApi(status: number, data: object) {
+  return Object.assign(new Error('Erro da API'), { isAxiosError: true, response: { status, data } })
+}

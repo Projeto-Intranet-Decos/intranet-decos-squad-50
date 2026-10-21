@@ -11,7 +11,7 @@ Cadastro dos colaboradores com papel de acesso e setor. Área de Administração
 | USU-04 | Desativar usuário (soft delete) | ✅ | ✅ | ✅ |
 | USU-05 | Primeiro superadmin | ✅ | — | ⬜ |
 | USU-06 | Cargo do colaborador | ⬜ | ⬜ | ⬜ |
-| USU-07 | Troca e redefinição de senha | ✅ | ⬜ | ✅ |
+| USU-07 | Troca e redefinição de senha | ✅ | ✅ | ✅ |
 | USU-08 | Reenviar convite | ✅ | ✅ | ✅ |
 
 ### USU-01 — Listar usuários
@@ -104,7 +104,7 @@ Origem: [ESP] (coluna `CARGO` da modelagem do cliente) · Back ⬜ · Front ⬜ 
 - ⬜ Usuário tem `cargo` opcional (até 100 caracteres), exibido no guia de contatos (SET-11).
 
 ### USU-07 — Troca e redefinição de senha
-Origem: [CTX] · Back ✅ · Front ⬜ · Teste ✅
+Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅
 
 Duas entradas: quem esqueceu a senha pede um magic link por e-mail (AUT-08, finalidade
 `redefinicao_senha`), e quem está logado troca a própria senha. O superadmin nunca vê nem define a
@@ -157,7 +157,8 @@ Frontend:
 - `/redefinir-senha` (link do e-mail): verifica o token; inválido → "Link inválido ou expirado" com
   link para `/esqueci-senha`; válido → nova senha + confirmação. Sucesso → `entrar()` e `/mural`.
 - Botão "Alterar senha" ao lado de "Sair", abrindo um modal com senha atual, nova senha e
-  confirmação. Sucesso → grava os tokens novos e mostra toast.
+  confirmação. Sucesso → grava os tokens novos e mostra toast. Senha atual errada vai para o campo
+  e o modal continua aberto.
 
 ### USU-08 — Reenviar convite
 Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅

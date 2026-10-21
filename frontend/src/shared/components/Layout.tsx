@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
+import ModalAlterarSenha from '../../lib/auth/ModalAlterarSenha'
 import { useAuth } from '../../lib/auth/useAuth'
 import { canAcessarAdministracao } from '../../lib/permissions'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
@@ -16,6 +17,7 @@ import {
   IconeAjustes,
   IconeArquivos,
   IconeCalendario,
+  IconeChave,
   IconeDuvida,
   IconeHistorico,
   IconeMegafone,
@@ -101,6 +103,7 @@ interface PropriedadesLayout {
 function Layout({ children }: PropriedadesLayout) {
   const [recolhido, setRecolhido] = useState(false)
   const [menuAberto, setMenuAberto] = useState(false)
+  const [alterandoSenha, setAlterandoSenha] = useState(false)
   const desktop = useConsultaDeMidia(CONSULTA_DESKTOP)
   const { usuario, sair } = useAuth()
   const navegar = useNavigate()
@@ -269,6 +272,15 @@ function Layout({ children }: PropriedadesLayout) {
               </button>
               <button
                 type="button"
+                onClick={() => setAlterandoSenha(true)}
+                title="Alterar senha"
+                aria-label="Alterar senha"
+                className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 lg:size-8 liquido:btn-icon"
+              >
+                <IconeChave tamanho={18} />
+              </button>
+              <button
+                type="button"
                 onClick={aoSair}
                 title="Sair"
                 aria-label="Sair"
@@ -280,6 +292,8 @@ function Layout({ children }: PropriedadesLayout) {
           )}
         </div>
       </motion.aside>
+
+      {alterandoSenha && <ModalAlterarSenha aoFechar={() => setAlterandoSenha(false)} />}
 
       <main className="min-w-0 flex-1 self-stretch lg:min-h-dvh">
         <div ref={conteudoRef} className="px-4 pt-5 pb-8 sm:px-7 lg:py-6">

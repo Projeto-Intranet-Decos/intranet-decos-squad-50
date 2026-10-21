@@ -19,6 +19,7 @@ import {
   FileText,
   Funnel,
   History,
+  KeyRound,
   Image,
   Info,
   LogOut,
@@ -73,6 +74,7 @@ export const IconeSidebarRecolher = criarIcone(PanelLeftClose)
 export const IconeSidebarExpandir = criarIcone(PanelLeftOpen)
 export const IconeSino = criarIcone(Bell)
 export const IconeSair = criarIcone(LogOut)
+export const IconeChave = criarIcone(KeyRound)
 export const IconeSetaExterna = criarIcone(ArrowUpRight)
 
 export const IconeCaretUp = criarIcone(ChevronUp)

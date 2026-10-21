@@ -1,12 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { aceitarConvite, verificarConvite, type AceiteConvite, type DadosConvite, type ErroApi } from './api'
+import { aceitarConvite, verificarConvite, type AceiteConvite, type DadosConvite } from './api'
 import AvisoDoLink from './AvisoDoLink'
 import CampoAcesso from './CampoAcesso'
+import { lerErroDaApi } from './erros'
 import LayoutAcesso from './LayoutAcesso'
 import { limparTokens, useAuth } from './useAuth'
 import { ehLinkRecusado, useTokenDoLink } from './useTokenDoLink'
@@ -91,9 +91,8 @@ function FormularioAtivacao({ token, convite, aoRecusarLink }: PropriedadesFormu
     },
     onError: (erro: unknown) => {
       if (ehLinkRecusado(erro)) return aoRecusarLink()
-      const dados = isAxiosError<ErroApi>(erro) ? erro.response?.data : undefined
-      const mensagem = typeof dados?.mensagem === 'string' ? dados.mensagem : 'Não foi possível ativar a conta. Tente novamente.'
-      const campo = dados?.campo && CAMPOS_DA_API[dados.campo]
+      const { campo: campoDaApi, mensagem } = lerErroDaApi(erro, 'Não foi possível ativar a conta. Tente novamente.')
+      const campo = campoDaApi && CAMPOS_DA_API[campoDaApi]
       if (campo) setError(campo, { message: mensagem })
       toast.error(mensagem)
     },

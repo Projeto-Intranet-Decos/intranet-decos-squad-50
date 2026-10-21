@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { api } from '../api'
 import CampoAcesso from './CampoAcesso'
@@ -54,6 +54,10 @@ function PaginaLogin() {
         >
           {isPending ? 'Entrando...' : 'Entrar'}
         </button>
+
+        <Link to="/esqueci-senha" className="self-center text-sm font-medium text-brand-700 hover:underline">
+          Esqueci minha senha
+        </Link>
       </form>
     </LayoutAcesso>
   )

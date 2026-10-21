@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
+import { erroDaApi, tokenDeAcessoFalso as tokenDeAcesso } from '../../testes/apoio'
 import * as authApi from './api'
 import PaginaAtivarConta from './PaginaAtivarConta'
 
@@ -12,17 +13,9 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const CONVITE: authApi.DadosConvite = { email: 'maria@example.com', nome: 'Maria', dataNascimento: '1990-05-17' }
 
-function tokenDeAcesso(carga: object) {
-  return `cabecalho.${btoa(JSON.stringify(carga))}.assinatura`
-}
-
 const SESSAO: authApi.SessaoNova = {
   accessToken: tokenDeAcesso({ sub: 'maria', role: 'comum', setor_id: null }),
   refreshToken: 'refresh-novo',
-}
-
-function erroDaApi(status: number, data: object) {
-  return Object.assign(new Error('Erro da API'), { isAxiosError: true, response: { status, data } })
 }
 
 function Endereco() {

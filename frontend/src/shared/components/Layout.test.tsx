@@ -174,3 +174,20 @@ describe('GER-18 — vidro do menu e da barra superior', () => {
     expect(fundoDoUtilitario('glass')).toBe(fundoDoUtilitario('glass-modal'))
   })
 })
+
+describe('USU-07 — botão de alterar senha', () => {
+  beforeEach(() => {
+    const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
+    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+  })
+
+  it('fica ao lado de Sair e abre o modal', async () => {
+    render(<Aplicacao />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alterar senha' }))
+
+    expect(await screen.findByRole('dialog', { name: 'Alterar senha' })).toBeTruthy()
+  })
+})
