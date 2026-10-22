@@ -8,6 +8,7 @@ import PaginaSetores from './features/setores/components/PaginaSetores'
 import PaginaUsuarios from './features/usuarios/components/PaginaUsuarios'
 import PaginaLogin from './lib/auth/PaginaLogin'
 import RotaProtegida from './lib/auth/RotaProtegida'
+import { PAPEIS_ADMINISTRACAO } from './lib/permissions'
 import PaginaConfiguracoes from './lib/preferencias/PaginaConfiguracoes'
 import Layout from './shared/components/Layout'
 
@@ -80,7 +81,7 @@ function App() {
       <Route
         path="/usuarios"
         element={
-          <RotaProtegida papeisPermitidos={['superadmin']}>
+          <RotaProtegida papeisPermitidos={PAPEIS_ADMINISTRACAO}>
             <Layout>
               <PaginaUsuarios />
             </Layout>
@@ -90,7 +91,7 @@ function App() {
       <Route
         path="/logs"
         element={
-          <RotaProtegida papeisPermitidos={['superadmin']}>
+          <RotaProtegida papeisPermitidos={PAPEIS_ADMINISTRACAO}>
             <Layout>
               <PaginaLogs />
             </Layout>

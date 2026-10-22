@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { podeEditar, podeGerenciarConteudo } from '../../../lib/permissions'
+import { canEditar, canGerenciarConteudo } from '../../../lib/permissions'
 import Skeleton from '../../../shared/components/Skeleton'
 import { useAniversariantes } from '../hooks/useAniversariantes'
 import { useAvisos } from '../hooks/useAvisos'
@@ -94,7 +94,7 @@ function PaginaMural() {
   const [avisoEditando, setAvisoEditando] = useState<Aviso | null>(null)
   const [detalhe, setDetalhe] = useState<Aviso | null>(null)
 
-  const podeCriar = podeGerenciarConteudo(usuario)
+  const podeCriar = canGerenciarConteudo(usuario)
 
   // Força a lista a remontar a cada mudança de filtro, pra reanimar a entrada
   // dos cards (motion.div com `initial` só anima na primeira montagem).
@@ -123,7 +123,7 @@ function PaginaMural() {
   const fixados = useMemo(() => avisos.filter((a) => a.fixado), [avisos])
 
   function podeGerenciarEsteAviso(aviso: Aviso) {
-    return usuario ? podeEditar(usuario, aviso) : false
+    return canEditar(usuario, aviso)
   }
 
   function abrirNovoAviso() {

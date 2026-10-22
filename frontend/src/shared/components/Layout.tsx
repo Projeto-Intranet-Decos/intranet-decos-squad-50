@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
 import { useAuth } from '../../lib/auth/useAuth'
+import { canAcessarAdministracao } from '../../lib/permissions'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
 import { useConsultaDeMidia } from '../hooks/useConsultaDeMidia'
 import { useReduzirAnimacoes } from '../hooks/useReduzirAnimacoes'
@@ -212,7 +213,7 @@ function Layout({ children }: PropriedadesLayout) {
             ))}
           </SecaoMenu>
 
-          {usuario?.role === 'superadmin' && (
+          {canAcessarAdministracao(usuario) && (
             <SecaoMenu
               titulo="Administração"
               compacto={compacto}

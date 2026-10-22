@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { podeEditar } from '../../../lib/permissions'
+import { canAdministrarSetores, canGerenciarSetor } from '../../../lib/permissions'
 import { useOrdenacaoClique } from '../../../shared/hooks/useOrdenacaoClique'
 import { useExcluirSetor } from '../hooks/useExcluirSetor'
 import { useSetores } from '../hooks/useSetores'
@@ -27,7 +27,7 @@ function PaginaSetores() {
   const [modalAberto, setModalAberto] = useState(false)
   const [setorEditando, setSetorEditando] = useState<SetorComRamais | null>(null)
 
-  const superadmin = usuario?.role === 'superadmin'
+  const canAdministrar = canAdministrarSetores(usuario)
 
   const setoresVisiveis = useMemo(() => {
     const termo = busca.trim().toLowerCase()
@@ -44,7 +44,7 @@ function PaginaSetores() {
   }, [setores, busca, ordem, direcao])
 
   function podeEditarSetor(setor: SetorComRamais) {
-    return usuario ? podeEditar(usuario, { setorId: setor.id }) : false
+    return canGerenciarSetor(usuario, setor.id)
   }
 
   function abrirNovoSetor() {
@@ -82,7 +82,7 @@ function PaginaSetores() {
       <BarraFiltrosSetores
         busca={busca}
         aoMudarBusca={setBusca}
-        podeCriar={superadmin}
+        podeCriar={canAdministrar}
         aoNovoSetor={abrirNovoSetor}
       />
 
@@ -93,7 +93,7 @@ function PaginaSetores() {
         direcao={direcao}
         aoClicarColuna={aoClicarColuna}
         podeEditarSetor={podeEditarSetor}
-        podeExcluir={superadmin}
+        podeExcluir={canAdministrar}
         aoEditar={abrirEdicao}
         aoExcluir={aoExcluir}
       />
@@ -103,7 +103,7 @@ function PaginaSetores() {
           key={setorEditando?.id ?? 'novo'}
           aoFechar={fecharModal}
           setorEditando={setorEditando}
-          podeRenomear={superadmin}
+          podeRenomear={canAdministrar}
         />
       )}
     </div>

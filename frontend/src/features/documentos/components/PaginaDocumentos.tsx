@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { podeEditar, podeGerenciarConteudo } from '../../../lib/permissions'
+import { canEditar, canEscolherSetor, canGerenciarConteudo, setoresParaPublicar } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import CabecalhoOrdenavel from '../../../shared/components/CabecalhoOrdenavel'
 import Dropdown from '../../../shared/components/Dropdown'
@@ -73,10 +73,9 @@ function PaginaDocumentos() {
   const [documentoExcluindo, setDocumentoExcluindo] = useState<Documento | null>(null)
   const [documentoPrevia, setDocumentoPrevia] = useState<Documento | null>(null)
 
-  const podeCriar = podeGerenciarConteudo(usuario)
+  const podeCriar = canGerenciarConteudo(usuario)
   // admin_setor só publica no próprio setor; superadmin em qualquer um.
-  const setoresPermitidos =
-    usuario?.role === 'admin_setor' ? setores.filter((s) => s.id === usuario.setorId) : setores
+  const setoresPermitidos = setoresParaPublicar(usuario, setores)
 
   const opcoesCategoria = [
     { valor: '', rotulo: 'Todas as categorias' },
@@ -103,7 +102,7 @@ function PaginaDocumentos() {
   }, [documentos, busca, ordenarPor, direcao])
 
   function podeGerenciarEste(documento: Documento) {
-    return usuario ? podeEditar(usuario, { setorId: documento.setorId }) : false
+    return canEditar(usuario, { setorId: documento.setorId })
   }
 
   function abrirNovo() {
@@ -210,7 +209,7 @@ function PaginaDocumentos() {
           aoFechar={fecharModal}
           documentoEditando={documentoEditando}
           setores={setoresPermitidos}
-          escolheSetor={usuario?.role === 'superadmin'}
+          escolheSetor={canEscolherSetor(usuario)}
         />
       )}
 

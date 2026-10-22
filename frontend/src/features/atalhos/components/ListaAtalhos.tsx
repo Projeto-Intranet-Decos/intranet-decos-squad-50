@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { podeGerenciarAtalhos } from '../../../lib/permissions'
+import { canGerenciarAtalhos } from '../../../lib/permissions'
 import { IconeMais } from '../../../shared/components/icones'
 import SecaoMenu from '../../../shared/components/SecaoMenu'
 import { useAtalhos } from '../hooks/useAtalhos'
@@ -18,7 +18,7 @@ function ListaAtalhos({ compacto, semAnimacao, aoNavegar }: PropriedadesListaAta
   const { usuario } = useAuth()
   const { data: atalhos = [], isError } = useAtalhos()
   const [criando, setCriando] = useState(false)
-  const gerenciavel = podeGerenciarAtalhos(usuario)
+  const gerenciavel = canGerenciarAtalhos(usuario)
 
   if (!gerenciavel && atalhos.length === 0) return null
 

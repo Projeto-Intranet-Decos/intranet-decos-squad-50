@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { podeEditar, podeGerenciarConteudo } from '../../../lib/permissions'
+import { canEditar, canGerenciarConteudo } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import { IconeMais } from '../../../shared/components/icones'
 import { useExcluirFaq } from '../hooks/useExcluirFaq'
@@ -21,7 +21,7 @@ function PaginaDuvidas() {
   const [modalAberto, setModalAberto] = useState(false)
   const [faqEditando, setFaqEditando] = useState<Faq | null>(null)
 
-  const podeCriar = podeGerenciarConteudo(usuario)
+  const podeCriar = canGerenciarConteudo(usuario)
 
   const faqFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase()
@@ -30,7 +30,7 @@ function PaginaDuvidas() {
   }, [faq, busca])
 
   function podeGerenciarEstaFaq(item: Faq) {
-    return usuario ? podeEditar(usuario, { setorId: item.setorId }) : false
+    return canEditar(usuario, { setorId: item.setorId })
   }
 
   function alternarExpandido(id: string) {
