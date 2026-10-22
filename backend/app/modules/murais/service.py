@@ -11,6 +11,8 @@ from app.core import armazenamento
 from app.core.arquivos import TIPOS_DOCUMENTO, TIPOS_IMAGEM, erro_arquivo, validar_arquivo
 from app.core.config import configuracoes
 from app.core.permissions import UsuarioAutenticado, garantir_escopo, resolver_setor
+from app.modules.logs.models import AcaoLog, ModuloLog
+from app.modules.logs.service import registrar
 from app.modules.murais import repository
 from app.modules.murais.models import AnexoAviso, Aviso, CategoriaAviso
 from app.modules.murais.schemas import AniversarianteResposta, AvisoAtualizar, AvisoCriar
@@ -107,6 +109,10 @@ def _enviar_anexos(
   return novos
 
 
+def _registrar(sessao: Session, usuario: UsuarioAutenticado, acao: AcaoLog, aviso: Aviso) -> None:
+  registrar(sessao, usuario, acao, ModuloLog.MURAIS, "aviso", aviso.id, aviso.titulo)
+
+
 def _salvar_ou_desfazer(sessao: Session, enviados: list[str]) -> None:
   """Commit; se o banco falhar, remove o que acabou de subir — nunca fica linha sem arquivo."""
   try:
@@ -189,6 +195,7 @@ def criar_aviso(sessao: Session, dados: AvisoCriar, usuario: UsuarioAutenticado)
     anexos=novos_anexos,
   )
   try:
+    _registrar(sessao, usuario, AcaoLog.CRIAR, aviso)
     repository.adicionar(sessao, aviso)
   except SQLAlchemyError as erro:
     sessao.rollback()
@@ -221,6 +228,7 @@ def atualizar_aviso(
   for campo, valor in campos.items():
     setattr(aviso, campo, valor)
   aviso.atualizado_em = datetime.now(UTC)
+  _registrar(sessao, usuario, AcaoLog.EDITAR, aviso)
   repository.salvar(sessao)
   return buscar_aviso(sessao, aviso.id)
 
@@ -236,6 +244,7 @@ def substituir_imagem(
   chave_antiga = aviso.chave_imagem
   aviso.chave_imagem = _enviar_capa(aviso.id, imagem, enviados)
   aviso.atualizado_em = datetime.now(UTC)
+  _registrar(sessao, usuario, AcaoLog.EDITAR, aviso)
   _salvar_ou_desfazer(sessao, enviados)
   if chave_antiga is not None:
     armazenamento.remover_arquivo(chave_antiga)
@@ -250,6 +259,7 @@ def remover_imagem(sessao: Session, aviso_id: uuid.UUID, usuario: UsuarioAutenti
     return
   aviso.chave_imagem = None
   aviso.atualizado_em = datetime.now(UTC)
+  _registrar(sessao, usuario, AcaoLog.EDITAR, aviso)
   repository.salvar(sessao)
   armazenamento.remover_arquivo(chave)
 
@@ -269,6 +279,7 @@ def adicionar_anexos(
     _remover_objetos(enviados)
     raise
   aviso.atualizado_em = datetime.now(UTC)
+  _registrar(sessao, usuario, AcaoLog.EDITAR, aviso)
   _salvar_ou_desfazer(sessao, enviados)
   return buscar_aviso(sessao, aviso_id)
 
@@ -283,6 +294,7 @@ def remover_anexo(
   # delete-orphan: tirar da lista apaga a linha.
   aviso.anexos.remove(anexo)
   aviso.atualizado_em = datetime.now(UTC)
+  _registrar(sessao, usuario, AcaoLog.EDITAR, aviso)
   repository.salvar(sessao)
   armazenamento.remover_arquivo(chave)
 
@@ -293,6 +305,7 @@ def deletar_aviso(sessao: Session, aviso_id: uuid.UUID, usuario: UsuarioAutentic
   chaves = [anexo.chave_armazenamento for anexo in aviso.anexos]
   if aviso.chave_imagem is not None:
     chaves.append(aviso.chave_imagem)
+  _registrar(sessao, usuario, AcaoLog.EXCLUIR, aviso)
   repository.remover(sessao, aviso)
   _remover_objetos(chaves)
 

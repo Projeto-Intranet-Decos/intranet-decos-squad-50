@@ -9,6 +9,8 @@ from app.core.permissions import UsuarioAutenticado, garantir_escopo, resolver_s
 from app.modules.duvidas import repository
 from app.modules.duvidas.models import Faq
 from app.modules.duvidas.schemas import FaqAtualizar, FaqCriar
+from app.modules.logs.models import AcaoLog, ModuloLog
+from app.modules.logs.service import registrar
 from app.modules.setores.service import buscar_setor
 
 
@@ -33,6 +35,9 @@ def criar_faq(sessao: Session, dados: FaqCriar, usuario: UsuarioAutenticado) -> 
         setor_id=setor_id,
     )
     try:
+        sessao.add(faq)
+        sessao.flush()
+        _registrar(sessao, usuario, AcaoLog.CRIAR, faq)
         repository.adicionar(sessao, faq)
     except IntegrityError:
         sessao.rollback()
@@ -51,6 +56,7 @@ def atualizar_faq(
     for campo, valor in campos.items():
         setattr(faq, campo, valor)
     faq.atualizado_em = datetime.now(UTC)
+    _registrar(sessao, usuario, AcaoLog.EDITAR, faq)
     repository.salvar(sessao)
     return buscar_faq(sessao, faq.id)
 
@@ -58,4 +64,9 @@ def atualizar_faq(
 def deletar_faq(sessao: Session, faq_id: uuid.UUID, usuario: UsuarioAutenticado) -> None:
     faq = buscar_faq(sessao, faq_id)
     garantir_escopo(usuario, faq.setor_id)
+    _registrar(sessao, usuario, AcaoLog.EXCLUIR, faq)
     repository.remover(sessao, faq)
+
+
+def _registrar(sessao: Session, usuario: UsuarioAutenticado, acao: AcaoLog, faq: Faq) -> None:
+    registrar(sessao, usuario, acao, ModuloLog.DUVIDAS, "faq", faq.id, faq.pergunta)
