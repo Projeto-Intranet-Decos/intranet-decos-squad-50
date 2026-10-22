@@ -33,34 +33,32 @@ def buscar_setor(setor_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
     return service.buscar_setor(sessao, setor_id)
 
 
-@router.post(
-    "/setores",
-    response_model=SetorResposta,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(requer_superadmin)],
-)
-def criar_setor(dados: SetorCriar, sessao: Session = Depends(obter_sessao)):
-    return service.criar_setor(sessao, dados)
-
-
-@router.put(
-    "/setores/{setor_id}",
-    response_model=SetorResposta,
-    dependencies=[Depends(requer_superadmin)],
-)
-def atualizar_setor(
-    setor_id: uuid.UUID, dados: SetorAtualizar, sessao: Session = Depends(obter_sessao)
+@router.post("/setores", response_model=SetorResposta, status_code=status.HTTP_201_CREATED)
+def criar_setor(
+    dados: SetorCriar,
+    usuario: UsuarioAutenticado = Depends(requer_superadmin),
+    sessao: Session = Depends(obter_sessao),
 ):
-    return service.atualizar_setor(sessao, setor_id, dados)
+    return service.criar_setor(sessao, dados, usuario)
 
 
-@router.delete(
-    "/setores/{setor_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(requer_superadmin)],
-)
-def deletar_setor(setor_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
-    service.deletar_setor(sessao, setor_id)
+@router.put("/setores/{setor_id}", response_model=SetorResposta)
+def atualizar_setor(
+    setor_id: uuid.UUID,
+    dados: SetorAtualizar,
+    usuario: UsuarioAutenticado = Depends(requer_superadmin),
+    sessao: Session = Depends(obter_sessao),
+):
+    return service.atualizar_setor(sessao, setor_id, dados, usuario)
+
+
+@router.delete("/setores/{setor_id}", status_code=status.HTTP_204_NO_CONTENT)
+def deletar_setor(
+    setor_id: uuid.UUID,
+    usuario: UsuarioAutenticado = Depends(requer_superadmin),
+    sessao: Session = Depends(obter_sessao),
+):
+    service.deletar_setor(sessao, setor_id, usuario)
 
 
 # Ramais: leitura para qualquer usuário autenticado, escrita para admin_setor (do próprio

@@ -22,13 +22,14 @@ Tabela `logs` (com migration) guardando, por ação:
 - usuário responsável (id; nome resolvido na resposta, GER-08);
 - setor do usuário no momento da ação;
 - ação: `criar`, `editar` ou `excluir`;
-- módulo afetado (`murais`, `documentos`, `duvidas`, `setores`, `usuarios`; eventos e
-  aniversariantes contam como `murais`);
+- módulo afetado (`murais`, `documentos`, `duvidas`, `setores`, `usuarios`, `atalhos`; eventos e
+  aniversariantes contam como `murais`, ramais como `setores`);
 - tipo e id da entidade afetada, e um resumo legível (ex: título do aviso, e-mail do usuário);
 - `criado_em`.
 
-- ❓ O registro sobrevive à exclusão do usuário/entidade? (Usuário só é desativado, USU-04; a
-  entidade excluída precisa do resumo guardado no próprio log.)
+- O registro **sobrevive** à exclusão da entidade e do usuário: `usuario_id` e `entidade_id` são
+  valores simples, **sem FK**, e o log guarda o nome do usuário e o resumo da entidade no momento
+  da ação. Nada no log muda depois de gravado.
 
 ### LOG-02 — Gravação automática em toda escrita
 Origem: [ENT H7] · Back ⬜ · Front — · Teste ⬜
@@ -38,16 +39,19 @@ Origem: [ENT H7] · Back ⬜ · Front — · Teste ⬜
 - **Dado** uma ação de leitura (listar, buscar, baixar), **então** nenhum registro é criado.
 - **Dado** uma escrita que falha (`4xx`/`5xx`), **então** nenhum registro é criado — o log é
   gravado na mesma transação da ação.
-- ❓ Login e refresh entram na auditoria? (Não são ação administrativa pela definição atual.)
+- Login e refresh **não** entram na auditoria (não são ação administrativa).
+- O log é gravado por `registrar()` (`modules/logs/service.py`), chamado explicitamente pelo
+  service de cada módulo, antes do `commit` da escrita.
 
 ### LOG-03 — Consultar registro de atividades
 Origem: [ENT H7] · Back ⬜ · Front 🟡 · Teste ⬜
 
-`GET /logs?usuario_id=&setor_id=&de=&ate=` — só `superadmin` (`admin_setor` e `comum` → `403`).
+`GET /logs?usuario_id=&setor_id=&de=&ate=&limite=&deslocamento=` — só `superadmin` (`admin_setor` e `comum` → `403`).
 Mais recentes primeiro.
 
 - **Dado** filtros, **então** a lista fica restrita a eles (período inclusivo).
-- ❓ Paginação — volume cresce sem limite; definir antes de implementar.
+- Paginação por `limite` (padrão 50, máx. 200) e `deslocamento` (padrão 0). A resposta é
+  `{ itens, total }`.
 
 ### LOG-04 — Tela de registro de atividades
 Origem: [ENT H7] · Back — · Front 🟡 · Teste ⬜

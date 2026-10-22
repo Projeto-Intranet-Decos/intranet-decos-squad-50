@@ -14,6 +14,8 @@ from app.modules.documentos import repository
 from app.modules.documentos.models import Documento
 from app.modules.documentos.schemas import DocumentoAtualizar, DocumentoCriar, FiltroDocumentos
 from app.modules.documentos.storage import montar_chave
+from app.modules.logs.models import AcaoLog, ModuloLog
+from app.modules.logs.service import registrar
 from app.modules.setores.service import buscar_setor
 
 def _validar_arquivo(arquivo: UploadFile) -> tuple[str, str, int]:
@@ -58,6 +60,7 @@ def criar_documento(
     setor_id=setor_id,
   )
   try:
+    _registrar(sessao, usuario, AcaoLog.CRIAR, documento)
     repository.adicionar(sessao, documento)
   except SQLAlchemyError as erro:
     sessao.rollback()
@@ -95,6 +98,7 @@ def atualizar_documento(
   documento.chave_armazenamento = chave_nova
   documento.atualizado_em = datetime.now(UTC)
   try:
+    _registrar(sessao, usuario, AcaoLog.EDITAR, documento)
     repository.salvar(sessao)
   except SQLAlchemyError:
     sessao.rollback()
@@ -121,6 +125,7 @@ def substituir_arquivo(
   documento.chave_armazenamento = chave_nova
   documento.atualizado_em = datetime.now(UTC)
   try:
+    _registrar(sessao, usuario, AcaoLog.EDITAR, documento)
     repository.salvar(sessao)
   except SQLAlchemyError:
     sessao.rollback()
@@ -146,5 +151,12 @@ def deletar_documento(
   documento = buscar_documento(sessao, documento_id)
   garantir_escopo(usuario, documento.setor_id)
   chave = documento.chave_armazenamento
+  _registrar(sessao, usuario, AcaoLog.EXCLUIR, documento)
   repository.remover(sessao, documento)
   armazenamento.remover_arquivo(chave)
+
+
+def _registrar(
+  sessao: Session, usuario: UsuarioAutenticado, acao: AcaoLog, documento: Documento
+) -> None:
+  registrar(sessao, usuario, acao, ModuloLog.DOCUMENTOS, "documento", documento.id, documento.titulo)
