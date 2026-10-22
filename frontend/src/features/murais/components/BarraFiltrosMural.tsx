@@ -10,6 +10,10 @@ interface PropriedadesBarraFiltros {
   setorId: string
   aoMudarSetor: (valor: string) => void
   setores: Setor[]
+  de: string
+  aoMudarDe: (valor: string) => void
+  ate: string
+  aoMudarAte: (valor: string) => void
   podeCriar: boolean
   aoNovoAviso: () => void
 }
@@ -30,6 +34,10 @@ function BarraFiltrosMural({
   setorId,
   aoMudarSetor,
   setores,
+  de,
+  aoMudarDe,
+  ate,
+  aoMudarAte,
   podeCriar,
   aoNovoAviso,
 }: PropriedadesBarraFiltros) {
@@ -69,6 +77,28 @@ function BarraFiltrosMural({
         valor={setorId}
         aoMudar={aoMudarSetor}
       />
+
+      <div className="flex items-stretch gap-1.5">
+        <input
+          type="date"
+          value={de}
+          onChange={(e) => aoMudarDe(e.target.value)}
+          max={ate || undefined}
+          aria-label="Publicado a partir de"
+          title="Publicado a partir de"
+          className="field h-full px-3 text-[13.5px] liquido:capsule-field liquido:text-sm"
+        />
+        <span className="flex items-center text-[13px] text-slate-400 liquido:text-sm">até</span>
+        <input
+          type="date"
+          value={ate}
+          onChange={(e) => aoMudarAte(e.target.value)}
+          min={de || undefined}
+          aria-label="Publicado até"
+          title="Publicado até"
+          className="field h-full px-3 text-[13.5px] liquido:capsule-field liquido:text-sm"
+        />
+      </div>
 
       {podeCriar && (
         <button

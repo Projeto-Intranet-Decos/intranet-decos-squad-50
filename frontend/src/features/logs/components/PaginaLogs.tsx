@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import Dropdown from '../../../shared/components/Dropdown'
 import { IconeFunil, IconeLupa } from '../../../shared/components/icones'
+import { useOrdenacaoClique } from '../../../shared/hooks/useOrdenacaoClique'
 import { useAtividades } from '../hooks/useAtividades'
-import { ROTULO_AREA, type AreaAtividade } from '../types'
+import { ROTULO_AREA, type AreaAtividade, type Atividade, type ColunaAtividade } from '../types'
 import TabelaAtividades from './TabelaAtividades'
 
 const OPCOES_AREA = [
@@ -10,21 +11,39 @@ const OPCOES_AREA = [
   ...(Object.entries(ROTULO_AREA) as [AreaAtividade, string][]).map(([valor, rotulo]) => ({ valor, rotulo })),
 ]
 
+function compararAtividades(a: Atividade, b: Atividade, coluna: ColunaAtividade): number {
+  switch (coluna) {
+    case 'usuario':
+      return a.usuarioNome.localeCompare(b.usuarioNome, 'pt-BR')
+    case 'acao':
+      return a.acao.localeCompare(b.acao, 'pt-BR')
+    case 'area':
+      return ROTULO_AREA[a.area].localeCompare(ROTULO_AREA[b.area], 'pt-BR')
+    default:
+      return new Date(a.criadoEm).getTime() - new Date(b.criadoEm).getTime()
+  }
+}
+
 function PaginaLogs() {
   const { data: atividades = [], isLoading, isError } = useAtividades()
 
   const [busca, setBusca] = useState('')
   const [area, setArea] = useState<AreaAtividade | ''>('')
+  const { coluna: ordenarPor, direcao, aoClicarColuna } = useOrdenacaoClique<ColunaAtividade>('data', 'desc')
 
   const atividadesFiltradas = useMemo(() => {
     const termo = busca.trim().toLowerCase()
-    return atividades.filter((atividade) => {
+    const filtradas = atividades.filter((atividade) => {
       if (area && atividade.area !== area) return false
       if (!termo) return true
       const texto = `${atividade.usuarioNome} ${atividade.acao} ${atividade.detalhe} ${ROTULO_AREA[atividade.area]}`
       return texto.toLowerCase().includes(termo)
     })
-  }, [atividades, busca, area])
+    return [...filtradas].sort((a, b) => {
+      const resultado = compararAtividades(a, b, ordenarPor)
+      return direcao === 'desc' ? -resultado : resultado
+    })
+  }, [atividades, busca, area, ordenarPor, direcao])
 
   return (
     <div>
@@ -54,12 +73,10 @@ function PaginaLogs() {
         />
       </div>
 
-      {isLoading ? (
-        <p className="text-sm text-slate-600">Carregando registro de atividades…</p>
-      ) : isError ? (
+      {isError ? (
         <p className="text-sm text-critical">Não foi possível carregar o registro de atividades. Tente novamente.</p>
       ) : (
-        <TabelaAtividades atividades={atividadesFiltradas} />
+        <TabelaAtividades atividades={atividadesFiltradas} isLoading={isLoading} ordenarPor={ordenarPor} direcao={direcao} aoClicarColuna={aoClicarColuna} />
       )}
     </div>
   )

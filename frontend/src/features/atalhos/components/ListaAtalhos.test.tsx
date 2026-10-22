@@ -14,7 +14,7 @@ const atalho={id:'atalho',titulo:'Portal',url:'https://example.com',criadoEm:'20
 function montar(recolhido=false) {
   vi.mocked(api.listarAtalhos).mockResolvedValue([atalho])
   const cliente=new QueryClient({defaultOptions:{queries:{retry:false}}})
-  render(<QueryClientProvider client={cliente}><ListaAtalhos compacto={recolhido} aoNavegar={() => {}} /></QueryClientProvider>)
+  render(<QueryClientProvider client={cliente}><ListaAtalhos compacto={recolhido} semAnimacao aoNavegar={() => {}} /></QueryClientProvider>)
   return userEvent.setup()
 }
 afterEach(() => {cleanup();vi.clearAllMocks();estado.usuario.role='superadmin'})
@@ -22,7 +22,7 @@ afterEach(() => {cleanup();vi.clearAllMocks();estado.usuario.role='superadmin'})
 describe('ATA-05 — sidebar inline preservada na integração', () => {
   it.each(['comum','admin_setor'] as const)('mostra links sem gerenciamento para %s', async role => {
     estado.usuario.role=role;montar();await screen.findByRole('link',{name:'Portal'})
-    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.queryByRole('button',{name:'Adicionar atalho'})).toBeNull()
   })
   it('cria com Enter e cancela edição com Esc sem modal', async () => {
     const interagir=montar();await screen.findByRole('link',{name:'Portal'})

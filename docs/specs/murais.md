@@ -27,7 +27,7 @@ Aniversariante **não é registro próprio**: é derivado de `usuarios.data_nasc
 | MUR-08 | Adicionar, remover e baixar anexos | ✅ | ✅ | ⬜ |
 | MUR-09 | Capa pública com cache | ✅ | ✅ | ⬜ |
 | MUR-10 | Excluir aviso | ✅ | ✅ | ⬜ |
-| MUR-11 | Tela do mural | — | ✅ | ⬜ |
+| MUR-11 | Tela do mural | — | ✅ | 🟡 |
 | MUR-12 | Listar eventos por período | ✅ | ✅ | ✅ |
 | MUR-13 | Aniversariantes do mês | ✅ | ✅ | ✅ |
 | MUR-14 | Filtrar aniversariantes por setor e data | ⬜ | ⬜ | ⬜ |
@@ -161,9 +161,17 @@ Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
 depois do commit, todos os objetos do aviso no bucket. Vale igual para eventos.
 
 ### MUR-11 — Tela do mural
-Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste ⬜
+Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste 🟡
 
-- Busca local por título, autor ou conteúdo; filtros por categoria (inclusive `evento`) e setor.
+- Busca local por título, autor ou conteúdo; filtros por categoria (inclusive `evento`), setor e
+  data de publicação (de/até, inclusive os dois extremos; qualquer um dos dois pode ficar em
+  branco). Filtra por `criado_em`, não pela data do evento.
+- A lista de avisos anima a entrada dos cards (opacidade + leve subida, escalonado por item).
+  Mudar busca, categoria ou setor reinicia essa animação nos cards que continuam visíveis — a
+  lista remonta a cada mudança de filtro em vez de só atualizar os cards que já estavam na tela.
+  🐞 corrigido: antes, um card que permanecia visível entre dois filtros não reanimava, porque o
+  React reaproveitava o mesmo nó (mesma `key`) e o `initial` do Framer Motion só roda na primeira
+  montagem.
 - No Vidro líquido (GER-01), a partir de 1024px, a barra de busca e filtros fica presa ao topo da tela
   num vidro em cápsula, e a lista rola por baixo dela. Abaixo de 1024px e no Vidro clínico ela rola
   junto com a página.

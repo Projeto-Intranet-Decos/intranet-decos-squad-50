@@ -73,6 +73,26 @@ describe('USU-01 a USU-04 — gestão exclusiva de superadmin', () => {
   })
 })
 
+describe('GER-20 — ordenar a tabela de usuários pelo cabeçalho', () => {
+  it('clicar em "Usuário" inverte pra Z–A e clicar de novo volta pra A–Z', async () => {
+    const lista = [
+      { ...pessoa, id: 'p1', nome: 'Beatriz' },
+      { ...pessoa, id: 'p2', nome: 'Ana' },
+    ]
+    const interagir = montar(lista)
+    await screen.findByText('Ana')
+
+    const nomes = () => screen.getAllByText(/^(Ana|Beatriz)$/).map((el) => el.textContent)
+    expect(nomes()).toEqual(['Ana', 'Beatriz'])
+
+    await interagir.click(screen.getByRole('button', { name: /^Usuário/ }))
+    expect(nomes()).toEqual(['Beatriz', 'Ana'])
+
+    await interagir.click(screen.getByRole('button', { name: /^Usuário/ }))
+    expect(nomes()).toEqual(['Ana', 'Beatriz'])
+  })
+})
+
 describe('USU-01/USU-02 — paginação e falhas de validação', () => {
   it('pagina os resultados sem perder o filtro atual', async () => {
     const lista=Array.from({length:11},(_,indice)=>({...pessoa,id:`p${indice}`,nome:`Pessoa ${indice}`}))

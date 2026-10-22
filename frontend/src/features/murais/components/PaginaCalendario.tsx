@@ -3,6 +3,7 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { podeEditar } from '../../../lib/permissions'
 import { IconeAlerta } from '../../../shared/components/icones'
+import Skeleton from '../../../shared/components/Skeleton'
 import {
   agruparEventosPorDia,
   dataDeChave,
@@ -122,7 +123,7 @@ function PaginaCalendario() {
         <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900 liquido:font-display liquido:text-3xl liquido:font-bold">Calendário</h1>
       </div>
 
-      {isLoading && <p className="mb-4 text-sm text-slate-600">Carregando eventos…</p>}
+      {isLoading && <Skeleton className="mb-4 h-5 w-40" />}
 
       {/* Sem o backend rodando, as chamadas à API falham e este aviso aparece;
           as visões continuam renderizando (vazias) para permitir ver o layout. */}

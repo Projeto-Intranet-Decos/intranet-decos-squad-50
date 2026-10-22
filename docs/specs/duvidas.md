@@ -13,7 +13,7 @@ nem fluxo de ticket `[CTX]`.
 | DUV-03 | Cadastrar pergunta e resposta | ✅ | 🟡 | ⬜ |
 | DUV-04 | Editar pergunta e resposta | ✅ | 🟡 | ⬜ |
 | DUV-05 | Excluir pergunta | ✅ | 🟡 | ⬜ |
-| DUV-06 | Tela da central de dúvidas | — | 🟡 | ⬜ |
+| DUV-06 | Tela da central de dúvidas | — | 🟡 | 🟡 |
 
 > 🟡 no frontend: a tela existe mas usa dados mockados em `features/duvidas/api.ts`, criados quando
 > o modelo de FAQ ainda não estava decidido. Falta trocar o mock pela API real.
@@ -53,10 +53,12 @@ Origem: [ENT H4] · Back ✅ · Front 🟡 · Teste ⬜
 `DELETE /duvidas/faq/{id}` → `204`; escopo por setor (`admin_setor` de outro setor → `403`).
 
 ### DUV-06 — Tela da central de dúvidas
-Origem: [ENT H4] · Back — · Front 🟡 · Teste ⬜
+Origem: [ENT H4] · Back — · Front 🟡 · Teste 🟡 (só a animação de abrir/fechar, em `ItemFaq.test.tsx`)
 
 - ⬜ Integração com a API real no lugar do mock (setores vindos de `GET /setores`).
 - Busca local em pergunta e resposta.
 - Setor de origem visível em cada pergunta.
+- Abrir uma pergunta anima a resposta (altura + opacidade); fechar anima de volta. Sem animação
+  com "Reduzir animações" (GER-14) ou `prefers-reduced-motion`.
 - `comum` lê mas não vê botões de criar/editar/remover; admin só vê editar/remover nas perguntas do
   próprio setor (`superadmin` em todas) — GER-12.

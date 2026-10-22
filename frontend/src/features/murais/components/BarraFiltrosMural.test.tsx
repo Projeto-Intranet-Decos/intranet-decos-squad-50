@@ -14,6 +14,10 @@ describe('MUR-11 — barra de busca e filtros do mural', () => {
         setorId=""
         aoMudarSetor={() => {}}
         setores={[]}
+        de=""
+        aoMudarDe={() => {}}
+        ate=""
+        aoMudarAte={() => {}}
         podeCriar={false}
         aoNovoAviso={() => {}}
       />,

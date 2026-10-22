@@ -58,10 +58,6 @@ function PaginaDuvidas() {
     }
   }
 
-  if (isLoading) {
-    return <p className="text-sm text-slate-600">Carregando central de dúvidas…</p>
-  }
-
   if (isError) {
     return <p className="text-sm text-critical">Não foi possível carregar a FAQ. Tente novamente.</p>
   }
@@ -82,6 +78,7 @@ function PaginaDuvidas() {
         busca={busca}
         aoMudarBusca={setBusca}
         itens={faqFiltrada}
+        isLoading={isLoading}
         expandidoId={expandidoId}
         aoAlternar={alternarExpandido}
         podeGerenciar={podeGerenciarEstaFaq}

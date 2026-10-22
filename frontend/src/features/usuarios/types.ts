@@ -39,3 +39,5 @@ export interface ErroUsuario {
 export const ROTULOS_PAPEL: Record<Papel, string> = {
   comum: 'Colaborador', admin_setor: 'Administrador de setor', superadmin: 'Superadmin',
 }
+
+export type ColunaUsuario = 'nome' | 'perfil' | 'setor' | 'status'
