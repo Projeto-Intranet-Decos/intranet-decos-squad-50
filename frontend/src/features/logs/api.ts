@@ -1,77 +1,57 @@
-import type { Atividade } from './types'
+import { api } from '../../lib/api'
+import type { AreaAtividade, Atividade } from './types'
 
-// TODO integração: dados mockados localmente. backend/app/modules/logs ainda
-// não expõe endpoint — quando existir, trocar o corpo de `listarAtividades`
-// por uma chamada a `api` (lib/api.ts).
+type AcaoApi = 'criar' | 'editar' | 'excluir'
 
-const ATRASO_MS = 350
-
-function atraso<T>(valor: T): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(valor), ATRASO_MS))
+interface LogApi {
+  id: string
+  usuario_nome: string
+  acao: AcaoApi
+  modulo: AreaAtividade
+  entidade_tipo: string
+  resumo: string
+  criado_em: string
 }
 
-const atividadesMock: Atividade[] = [
-  {
-    id: '1',
-    criadoEm: '2026-09-03T08:12:00-03:00',
-    usuarioNome: 'Marina Alencar',
-    acao: 'Publicou aviso',
-    detalhe: 'Nova escala de plantão administrativo',
-    area: 'mural',
-  },
-  {
-    id: '2',
-    criadoEm: '2026-09-03T07:48:00-03:00',
-    usuarioNome: 'Diego Matos',
-    acao: 'Criou usuário',
-    detalhe: 'helena.prado@decos.com.br',
-    area: 'usuarios',
-  },
-  {
-    id: '3',
-    criadoEm: '2026-09-02T17:05:00-03:00',
-    usuarioNome: 'Camila Nunes',
-    acao: 'Enviou documento',
-    detalhe: 'Punção venosa periférica',
-    area: 'documentos',
-  },
-  {
-    id: '4',
-    criadoEm: '2026-09-02T15:31:00-03:00',
-    usuarioNome: 'Marina Alencar',
-    acao: 'Editou setor',
-    detalhe: 'Centro cirúrgico · ramal 2450',
-    area: 'setores',
-  },
-  {
-    id: '5',
-    criadoEm: '2026-09-02T11:20:00-03:00',
-    usuarioNome: 'Rafael Lima',
-    acao: 'Respondeu dúvida',
-    detalhe: 'Como solicitar medicação de urgência?',
-    area: 'duvidas',
-  },
-  {
-    id: '6',
-    criadoEm: '2026-09-01T19:44:00-03:00',
-    usuarioNome: 'Diego Matos',
-    acao: 'Removeu documento',
-    detalhe: 'Acesso remoto (versão 2024)',
-    area: 'documentos',
-  },
-  {
-    id: '7',
-    criadoEm: '2026-09-01T09:02:00-03:00',
-    usuarioNome: 'Marina Alencar',
-    acao: 'Fixou aviso',
-    detalhe: 'Novo Código de Conduta',
-    area: 'mural',
-  },
-]
+interface ListaLogsApi {
+  itens: LogApi[]
+  total: number
+}
+
+// Máximo aceito pelo backend (LOG-03). A tela filtra e ordena só entre esses registros.
+const LIMITE = 200
+
+const VERBO: Record<AcaoApi, string> = { criar: 'Criou', editar: 'Editou', excluir: 'Excluiu' }
+
+const ENTIDADE: Record<string, string> = {
+  aviso: 'aviso',
+  documento: 'documento',
+  faq: 'pergunta',
+  setor: 'setor',
+  ramal: 'ramal',
+  usuario: 'usuário',
+  atalho: 'atalho',
+}
+
+function descreverAcao(bruto: LogApi): string {
+  // Usuário não é apagado, só desativado (USU-04).
+  const verbo =
+    bruto.modulo === 'usuarios' && bruto.acao === 'excluir' ? 'Desativou' : VERBO[bruto.acao]
+  return `${verbo} ${ENTIDADE[bruto.entidade_tipo] ?? bruto.entidade_tipo}`
+}
+
+function paraAtividade(bruto: LogApi): Atividade {
+  return {
+    id: bruto.id,
+    criadoEm: bruto.criado_em,
+    usuarioNome: bruto.usuario_nome,
+    acao: descreverAcao(bruto),
+    detalhe: bruto.resumo,
+    area: bruto.modulo,
+  }
+}
 
 export async function listarAtividades(): Promise<Atividade[]> {
-  const ordenadas = [...atividadesMock].sort(
-    (a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime(),
-  )
-  return atraso(ordenadas)
+  const { data } = await api.get<ListaLogsApi>('/logs', { params: { limite: LIMITE } })
+  return data.itens.map(paraAtividade)
 }

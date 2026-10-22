@@ -21,6 +21,7 @@ from app.modules.atalhos.router import router as roteador_atalhos
 from app.modules.autenticacao.router import router as roteador_autenticacao
 from app.modules.documentos.router import router as roteador_documentos
 from app.modules.duvidas.router import router as roteador_duvidas
+from app.modules.logs.router import router as roteador_logs
 from app.modules.murais.router import router as roteador_murais
 from app.modules.setores.router import router as roteador_setores
 from app.modules.usuarios.router import router as roteador_usuarios
@@ -58,6 +59,7 @@ app.include_router(roteador_murais)
 app.include_router(roteador_documentos)
 app.include_router(roteador_duvidas)
 app.include_router(roteador_atalhos)
+app.include_router(roteador_logs)
 
 
 @app.get("/saude", tags=["saude"])

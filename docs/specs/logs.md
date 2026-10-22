@@ -4,18 +4,19 @@ Histórico de ações administrativas para o `superadmin` auditar mudanças `[EN
 auditoria** do `CONTEXT.md` — persistido no Postgres, só ações de escrita. O **log técnico**
 (exceptions, 500) vai para o console e não entra aqui.
 
-Status geral: backend não implementado (pasta `backend/app/modules/logs/` com arquivos vazios e
-router não registrado em `main.py`); frontend com tela pronta sobre dados mockados.
+Status geral: backend implementado (`backend/app/modules/logs/`, router em `main.py`, `registrar()`
+ligado em todos os módulos) mas **os testes de backend ainda não foram executados** (banco de
+testes indisponível na máquina de desenvolvimento) — por isso Back 🟡. Frontend integrado à API.
 
 | ID | Requisito | Back | Front | Teste |
 |---|---|---|---|---|
-| LOG-01 | Registro de auditoria | ⬜ | — | ⬜ |
-| LOG-02 | Gravação automática em toda escrita | ⬜ | — | ⬜ |
-| LOG-03 | Consultar registro de atividades | ⬜ | 🟡 | ⬜ |
-| LOG-04 | Tela de registro de atividades | — | 🟡 | ⬜ |
+| LOG-01 | Registro de auditoria | 🟡 | — | 🟡 |
+| LOG-02 | Gravação automática em toda escrita | 🟡 | — | ⬜ |
+| LOG-03 | Consultar registro de atividades | 🟡 | ✅ | 🟡 |
+| LOG-04 | Tela de registro de atividades | — | 🟡 | ✅ |
 
 ### LOG-01 — Registro de auditoria
-Origem: [ENT H7] [CTX] · Back ⬜ · Front — · Teste ⬜
+Origem: [ENT H7] [CTX] · Back 🟡 · Front — · Teste 🟡
 
 Tabela `logs` (com migration) guardando, por ação:
 
@@ -32,7 +33,7 @@ Tabela `logs` (com migration) guardando, por ação:
   da ação. Nada no log muda depois de gravado.
 
 ### LOG-02 — Gravação automática em toda escrita
-Origem: [ENT H7] · Back ⬜ · Front — · Teste ⬜
+Origem: [ENT H7] · Back 🟡 · Front — · Teste ⬜
 
 - **Dado** qualquer criar/editar/excluir bem-sucedido em qualquer módulo (incluindo capa, anexos,
   ramais e arquivo de documento), **então** existe exatamente um registro correspondente.
@@ -44,7 +45,7 @@ Origem: [ENT H7] · Back ⬜ · Front — · Teste ⬜
   service de cada módulo, antes do `commit` da escrita.
 
 ### LOG-03 — Consultar registro de atividades
-Origem: [ENT H7] · Back ⬜ · Front 🟡 · Teste ⬜
+Origem: [ENT H7] · Back 🟡 · Front ✅ · Teste 🟡
 
 `GET /logs?usuario_id=&setor_id=&de=&ate=&limite=&deslocamento=` — só `superadmin` (`admin_setor` e `comum` → `403`).
 Mais recentes primeiro.
@@ -54,11 +55,13 @@ Mais recentes primeiro.
   `{ itens, total }`.
 
 ### LOG-04 — Tela de registro de atividades
-Origem: [ENT H7] · Back — · Front 🟡 · Teste ⬜
+Origem: [ENT H7] · Back — · Front 🟡 · Teste ✅
 
 Rota `/logs`, só `superadmin` (AUT-05).
 
 - Tabela com data/hora, usuário, ação, detalhe e área (módulo).
 - Busca por usuário, ação ou área; filtro por área.
-- ⬜ Trocar o mock de `features/logs/api.ts` pela API (LOG-03), com filtros de usuário, setor e
-  período.
+- ✅ `features/logs/api.ts` usa `GET /logs` (LOG-03), sem mock.
+- ⬜ A tela busca só os 200 registros mais recentes (limite máximo) e filtra/ordena/busca no
+  navegador; falta paginar de verdade e mandar `usuario_id`, `setor_id`, `de`/`ate` para a API.
+- ⬜ Falta a gravação (LOG-02) ter teste por módulo; sem isso a tela só mostra o que já foi gravado.
