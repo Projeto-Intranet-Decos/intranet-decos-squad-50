@@ -1,17 +1,16 @@
 /**
- * Modelo mockado — backend/app/modules/logs ainda está vazio, então não há
- * contrato de API definido. Segue o conceito de "Log de auditoria" do
- * CONTEXT.md: ações administrativas (criar, editar, deletar) em qualquer
- * módulo, sem ações de leitura.
+ * Ações administrativas (criar, editar, excluir) em qualquer módulo — o "Log de auditoria" do
+ * CONTEXT.md. A área é o módulo do backend (LOG-01).
  */
-export type AreaAtividade = 'mural' | 'documentos' | 'duvidas' | 'setores' | 'usuarios'
+export type AreaAtividade = 'murais' | 'documentos' | 'duvidas' | 'setores' | 'usuarios' | 'atalhos'
 
 export const ROTULO_AREA: Record<AreaAtividade, string> = {
-  mural: 'Mural',
+  murais: 'Mural',
   documentos: 'POPs',
   duvidas: 'FAQ',
   setores: 'Setores',
   usuarios: 'Usuários',
+  atalhos: 'Acesso rápido',
 }
 
 export interface Atividade {

@@ -3,7 +3,9 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.core.permissions import UsuarioAutenticado
+from app.modules.logs import repository
 from app.modules.logs.models import AcaoLog, Log, ModuloLog
+from app.modules.logs.schemas import FiltroLogs, ListaLogs, LogResposta
 from app.modules.usuarios.models import Usuario
 
 TAMANHO_RESUMO = 500
@@ -36,3 +38,8 @@ def registrar(
             resumo=resumo[:TAMANHO_RESUMO],
         )
     )
+
+
+def listar_logs(sessao: Session, filtro: FiltroLogs) -> ListaLogs:
+    itens, total = repository.listar(sessao, filtro)
+    return ListaLogs(itens=[LogResposta.model_validate(i) for i in itens], total=total)
