@@ -37,7 +37,7 @@ backend/
     core/
       config.py           # env vars, settings
       armazenamento.py     # cliente MinIO compartilhado entre os módulos
-      correio.py           # envio de e-mail (SMTP, console ou falso nos testes)
+      correio.py           # envio de e-mail (Resend, console ou falso nos testes)
       security.py          # hash de senha, criação/validação de JWT
       permissions.py        # lógica de RBAC + escopo por setor
       database.py            # engine, sessão do SQLAlchemy
@@ -85,7 +85,7 @@ A capa é o único arquivo servido **sem autenticação** (`GET /murais/avisos/{
 conteúdo institucional que todo colaborador já vê, o id do aviso é um UUID que não dá para
 adivinhar, e a tag `<img>` não envia o header `Authorization`. Os anexos seguem a regra dos
 documentos: download autenticado, via stream. Capa aceita png/jpg/webp até 5 MB; anexos usam
-a mesma lista de tipos e o mesmo `TAMANHO_MAXIMO_UPLOAD_MB` dos documentos, até 10 por aviso.
+a mesma lista de tipos e o mesmo `MAX_UPLOAD_SIZE_MB` dos documentos, até 10 por aviso.
 Ao excluir o aviso, a FK com `ON DELETE CASCADE` apaga os anexos no banco e depois todos os
 objetos do aviso são removidos do bucket.
 
@@ -191,7 +191,7 @@ Esta é a validação **real** de autorização — a checagem equivalente no fr
 claims do access token, **sem consultar o banco** — nenhuma query extra por requisição.
 
 A contrapartida é que desativar um usuário ou mudar o papel dele só passa a valer quando o
-access token atual expira (`ACCESS_TOKEN_MINUTOS`). O que contém a janela é o refresh:
+access token atual expira (`ACCESS_TOKEN_MINUTES`). O que contém a janela é o refresh:
 `/auth/refresh` e `/auth/login` consultam o banco, então um usuário desativado não consegue
 renovar nem entrar de novo — o acesso dele morre no fim do token que já tinha em mãos.
 
@@ -201,7 +201,7 @@ no service daquele módulo, não numa segunda implementação de `usuario_atual`
 ## E-mail
 
 `core/correio.py` expõe uma função sem domínio, `enviar_email(Email(para, assunto, texto, html))`,
-e o provedor é escolhido por `EMAIL_PROVEDOR` (GER-19): `smtp` (Brevo, ou qualquer servidor SMTP),
+e o provedor é escolhido por `EMAIL_PROVIDER` (GER-19): `resend` (API HTTP do Resend),
 `console` (padrão em dev, escreve o e-mail no log) e, nos testes, um falso em memória. Os textos de
 cada e-mail ficam no módulo dono (o convite em `usuarios`, a redefinição em `autenticacao`).
 
@@ -212,12 +212,12 @@ síncrono, com timeout curto; fila/outbox só se o volume justificar. A exceçã
 senha" (USU-07): a resposta é sempre a mesma, então o e-mail vai numa `BackgroundTasks` do FastAPI,
 depois da resposta, para o tempo dela não revelar se a conta existe.
 
-SMTP em vez de API HTTP do provedor: o envio usa `smtplib` (biblioteca padrão, sem dependência) e
-trocar de provedor — ou passar a usar o servidor de e-mail do hospital — é só mudar o `.env`. TLS é
-obrigatório: STARTTLS na 587, TLS direto na 465.
+A chamada à API do Resend usa `urllib` (biblioteca padrão), sem o SDK: é um único `POST` JSON
+autenticado pela chave de API, e assim não entra dependência nova. Trocar de provedor é escrever
+outra função `_entregar_*` e uma opção nova em `EMAIL_PROVIDER`.
 
-Configuração: `EMAIL_PROVEDOR`, `EMAIL_REMETENTE`, `URL_FRONTEND`, `SMTP_HOST`, `SMTP_PORTA`,
-`SMTP_USUARIO`, `SMTP_SENHA`, `CONVITE_HORAS` (72) e `REDEFINICAO_SENHA_MINUTOS` (60). Elas entram no
+Configuração: `EMAIL_PROVIDER`, `EMAIL_FROM`, `FRONTEND_URL`, `RESEND_API_KEY`,
+`INVITE_HOURS` (72) e `PASSWORD_RESET_MINUTES` (60). Elas entram no
 `config.py`, nos dois `.env.example` **e** no bloco `environment` do backend no `docker-compose.yml`,
 que lista as variáveis uma a uma (sem isso a credencial não chega ao container).
 

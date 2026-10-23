@@ -45,7 +45,7 @@ Origem: [COD] · Back ✅ · Front ✅ · Teste 🟡
 
 - Payload: `sub` (id do usuário), `nome`, `role`, `setor_id` (ou `null`), `exp`. Assinatura HS256
   com `JWT_SECRET`. Testados até agora: o payload e o `nome` atualizado na renovação.
-- Validade: `ACCESS_TOKEN_MINUTOS` (padrão 30). Refresh: `REFRESH_TOKEN_DIAS` (padrão 7).
+- Validade: `ACCESS_TOKEN_MINUTES` (padrão 30). Refresh: `REFRESH_TOKEN_DAYS` (padrão 7).
 - Mudança de papel/setor e desativação só valem para o usuário quando o access token atual expira
   (trade-off aceito, ver `docs/arquitetura-backend.md`).
 - O frontend lê `id`, `role` e `setorId` do payload para decidir a UX (GER-12).
@@ -101,9 +101,9 @@ entra aqui, sem tabela nova. O token não é sessão: só autoriza a ação da s
 - Token aleatório (`secrets.token_urlsafe(32)`) guardado só como hash SHA-256, como o refresh token
   (AUT-07), na tabela `tokens_uso_unico` (`usuario_id`, `finalidade`, `expira_em`, `usado_em`,
   `criado_em`). O valor em claro existe só no e-mail.
-- Validade por finalidade: convite `CONVITE_HORAS` (padrão 72); redefinição de senha
-  `REDEFINICAO_SENHA_MINUTOS` (padrão 60).
-- Link: `{URL_FRONTEND}/ativar-conta#token=...` ou `{URL_FRONTEND}/redefinir-senha#token=...`. O
+- Validade por finalidade: convite `INVITE_HOURS` (padrão 72); redefinição de senha
+  `PASSWORD_RESET_MINUTES` (padrão 60).
+- Link: `{FRONTEND_URL}/ativar-conta#token=...` ou `{FRONTEND_URL}/redefinir-senha#token=...`. O
   token vai no fragmento, que o navegador não envia ao servidor (fica fora dos logs do nginx e do
   `Referer`).
 - O token trafega no **corpo** das requisições à API, nunca no path nem na query.

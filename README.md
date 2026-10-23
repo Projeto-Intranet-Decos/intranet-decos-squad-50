@@ -20,7 +20,9 @@ O `.env` fica na **raiz** do repositório (é o que o `docker-compose.yml` lê) 
 | `MINIO_ROOT_PASSWORD` | Senha do administrador do MinIO (mínimo 8 caracteres). |
 | `JWT_SECRET` | Segredo de assinatura dos tokens. Gere com `python -c "import secrets; print(secrets.token_urlsafe(64))"`. |
 
-As demais (`POSTGRES_DB`, `POSTGRES_USER`, `MINIO_ROOT_USER`, `MINIO_BUCKET`, `ACCESS_TOKEN_MINUTOS`, `REFRESH_TOKEN_DIAS`, `PORTA_*`) têm valor padrão. A API monta a URL do banco a partir de `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`; no compose, host e porta são sempre `banco:5432`, e os do `.env` (padrão `localhost:5432`) valem para rodar o backend fora do Docker. As credenciais do MinIO (`MINIO_*`) também são repassadas pelo compose. Fora do Docker, o backend lê este `.env` e, por cima dele, o `backend/.env`, que é opcional.
+As demais (`POSTGRES_DB`, `POSTGRES_USER`, `MINIO_ROOT_USER`, `MINIO_BUCKET`, `ACCESS_TOKEN_MINUTES`, `REFRESH_TOKEN_DAYS`, `*_PORT`) têm valor padrão. A API monta a URL do banco a partir de `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`; no compose, host e porta são sempre `banco:5432`, e os do `.env` (padrão `localhost:5432`) valem para rodar o backend fora do Docker. `POSTGRES_PORT` também é a porta em que o compose publica o banco no host. As credenciais do MinIO (`MINIO_*`) também são repassadas pelo compose. Fora do Docker, o backend lê este `.env` e, por cima dele, o `backend/.env`, que é opcional; `MINIO_USER` e `MINIO_PASSWORD` só servem para esse caso.
+
+**Em produção, use apenas este `.env` da raiz.** O backend roda no container e recebe as credenciais em tempo de execução, pelo bloco `environment` do `docker-compose.yml`. Nenhum `.env` entra na imagem (`backend/.dockerignore`), e o `backend/.env` é só para desenvolvimento local.
 
 ### 2. Subir os containers
 
@@ -38,7 +40,7 @@ docker compose ps        # os serviços devem ficar "healthy"
 | Postgres | `localhost:5432` |
 | MinIO (API / console) | http://localhost:9000 / http://localhost:9001 |
 
-Se alguma porta já estiver em uso na sua máquina, ajuste `PORTA_*` no `.env`.
+Se alguma porta já estiver em uso na sua máquina, ajuste no `.env`: `FRONTEND_PORT`, `API_PORT`, `POSTGRES_PORT`, `MINIO_PORT` e `MINIO_CONSOLE_PORT`. Mudando `FRONTEND_PORT`, ajuste também `FRONTEND_URL`, que é a base dos links dos e-mails.
 
 ### 3. Criar o primeiro superadmin
 

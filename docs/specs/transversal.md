@@ -108,7 +108,7 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   - Imagens (capa): png, jpg, jpeg, webp.
 - Extensão fora da lista → `415`; acima do limite → `413`; sem nome ou vazio → `422`. Todos com
   `campo` apontando o campo do formulário.
-- Limite geral `TAMANHO_MAXIMO_UPLOAD_MB` (padrão 50 MB), igual ao `client_max_body_size` do
+- Limite geral `MAX_UPLOAD_SIZE_MB` (padrão 50 MB), igual ao `client_max_body_size` do
   nginx. O frontend valida tipo e tamanho antes de enviar (só UX).
 - Download passa pelo backend em stream (MinIO não é exposto ao navegador), com
   `Content-Disposition` preservando o nome original com acentos (RFC 5987), `Content-Length` e
@@ -178,7 +178,13 @@ remove o prefixo `/api` e repassa ao backend.
 - Senha com caracteres especiais (`@ : / # %`) funciona: cada parte é escapada ao montar a URL.
 - O backend lê o `.env` da raiz (o mesmo do compose) e, por cima, o `backend/.env`, que é
   opcional; variável de ambiente vence os dois.
-- Segredos (senhas do banco e do MinIO, `JWT_SECRET`, `SMTP_SENHA`) nunca aparecem na representação
+- Em produção só existe o `.env` da raiz: o container do backend recebe as credenciais em tempo de
+  execução pelo `environment` do compose, e nenhum `.env` entra na imagem. O `backend/.env` é só
+  para desenvolvimento.
+- As variáveis de ambiente têm nome em inglês (`MINIO_PASSWORD`, `EMAIL_PROVIDER`, `INVITE_HOURS`…),
+  no `.env`, no compose e no código. Os campos da configuração no Python continuam em português e
+  leem a variável pelo nome em inglês.
+- Segredos (senhas do banco e do MinIO, `JWT_SECRET`, `RESEND_API_KEY`) nunca aparecem na representação
   da configuração, que vai parar em tracebacks e erros de validação.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
@@ -346,35 +352,31 @@ persiste em `localStorage` nem recarregando).
 Origem: [CTX] · Back ✅ · Front — · Teste ✅
 
 Serviço único de e-mail em `core/`, usado por qualquer módulo (hoje: convite, USU-02/USU-08, e
-redefinição de senha, USU-07). O provedor é escolhido por `EMAIL_PROVEDOR`:
+redefinição de senha, USU-07). O provedor é escolhido por `EMAIL_PROVIDER`:
 
-- `smtp` — envio por SMTP com TLS obrigatório. O provedor contratado é a **Brevo**
-  (`smtp-relay.brevo.com`, porta 587), mas qualquer servidor SMTP serve (ex: o do próprio hospital)
-  trocando só as variáveis `SMTP_HOST`, `SMTP_PORTA`, `SMTP_USUARIO` e `SMTP_SENHA`. Na Brevo, o
-  usuário é o *login SMTP* e a senha é uma *chave SMTP* (não a chave de API `xkeysib-...`).
+- `resend` — envio pela API HTTP do **Resend** (`POST https://api.resend.com/emails`, HTTPS), autenticado
+  pela chave de API em `RESEND_API_KEY`.
 - `console` — padrão em desenvolvimento: escreve destinatário, assunto e texto (com o link) no log,
   sem enviar nada. Ninguém do time precisa de credencial de e-mail para rodar o projeto.
 - Nos testes, o envio é sempre substituído por um falso em memória (como o MinIO, GER-07); código
-  que chegar a um servidor SMTP real quebra o teste.
-- ~~`mailgun`~~ — removido: a API HTTP do Mailgun foi trocada pelo SMTP da Brevo.
+  que chegar à API real quebra o teste.
+- ~~`mailgun`~~, ~~`smtp`~~ — removidos: a API do Mailgun foi trocada pelo SMTP da Brevo, e este
+  pela API do Resend.
 
 Critérios:
 
-- Todo e-mail tem versão HTML e texto puro, remetente `EMAIL_REMETENTE`, e os links são montados a
-  partir de `URL_FRONTEND`.
-- Todo e-mail sai com os cabeçalhos `Date` e `Message-ID` (este no domínio do remetente), que a
-  RFC 5322 exige: sem eles, servidores como Gmail e Outlook descartam ou rejeitam a mensagem
-  depois de o provedor já ter aceitado o envio. 🐞 corrigido: a primeira versão do SMTP saía sem os
-  dois.
+- Todo e-mail tem versão HTML e texto puro, remetente `EMAIL_FROM`, e os links são montados a
+  partir de `FRONTEND_URL`.
 - **Dado** uma ação que grava no banco e envia e-mail, **então** o envio só acontece depois do
   commit.
-- **Dado** `SMTP_PORTA=587`, **então** a conexão sobe para TLS com STARTTLS antes do login;
-  **dado** `SMTP_PORTA=465`, **então** a conexão já nasce em TLS. Nunca há login sem TLS.
-- **Dado** que o provedor falha (recusa do servidor, erro de rede ou timeout de 10 s), **então** a
-  gravação não é desfeita:
+- **Dado** `EMAIL_PROVIDER=resend`, **então** o e-mail sai num `POST` JSON para a API do Resend,
+  com `Authorization: Bearer <RESEND_API_KEY>`, e o provedor monta os cabeçalhos da mensagem
+  (`Date`, `Message-ID`).
+- **Dado** que o provedor falha (resposta de erro da API, erro de rede ou timeout de 10 s),
+  **então** a gravação não é desfeita:
   a falha vira `logger.warning` e a resposta indica que o e-mail não saiu onde o requisito pedir
   (`email_enviado: false`).
-- **Dado** `EMAIL_PROVEDOR=smtp` sem `SMTP_HOST`, `SMTP_USUARIO` ou `SMTP_SENHA`, **então** a API
-  não sobe (erro de configuração no startup).
-- ❓ Remetente: a Brevo só envia de um remetente verificado ou de um domínio autenticado (SPF e
-  DKIM). Domínio do hospital × remetente avulso — a combinar com a TI do hospital.
+- **Dado** `EMAIL_PROVIDER=resend` sem `RESEND_API_KEY`, **então** a API não sobe (erro de
+  configuração no startup).
+- ❓ Remetente: o Resend só envia de um domínio verificado (SPF e DKIM). Domínio do hospital ×
+  domínio próprio do projeto — a combinar com a TI do hospital.

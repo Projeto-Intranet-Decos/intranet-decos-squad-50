@@ -95,7 +95,7 @@ atualizado; o registro e tudo que ele criou (avisos, documentos, eventos, FAQ) c
 Origem: [COD] · Back ✅ · Front — · Teste ⬜
 
 Como `POST /usuarios` exige superadmin, o primeiro é criado pelo script
-`python -m scripts.criar_superadmin` (lê `SUPERADMIN_NOME/EMAIL/SENHA` do ambiente ou pergunta).
+`python -m scripts.criar_superadmin` (lê `SUPERADMIN_NAME/EMAIL/PASSWORD` do ambiente ou pergunta).
 É idempotente: e-mail já existente não é alterado.
 
 ### USU-06 — Cargo do colaborador

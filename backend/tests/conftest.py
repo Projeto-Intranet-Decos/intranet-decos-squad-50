@@ -1,7 +1,7 @@
 """Infra de teste do backend. Convenções em docs/specs/README.md ("Testes: onde e como").
 
 Banco: Postgres de verdade, num banco separado (`<POSTGRES_DB>_teste`, ou o que vier em
-`DATABASE_URL_TESTE`), recriado e migrado com o Alembic uma vez por execução. Cada teste roda numa
+`TEST_DATABASE_URL`), recriado e migrado com o Alembic uma vez por execução. Cada teste roda numa
 transação desfeita no final: os `commit()` dos services viram savepoints e nada vaza entre testes.
 Por isso `now()` devolve o mesmo instante para tudo que um teste insere. Cada requisição ganha uma
 sessão própria, configurada como a `SessaoLocal` do app, e fechada no fim, como em produção.
@@ -9,8 +9,8 @@ sessão própria, configurada como a `SessaoLocal` do app, e fechada no fim, com
 Armazenamento: o MinIO é trocado por um dicionário em memória (`ArmazenamentoFalso`) em todos os
 testes; se algum código chegar ao cliente MinIO real, o teste quebra.
 
-E-mail: a entrega é trocada pelo `CorreioFalso`, que guarda as mensagens; se algum código chegar a um
-servidor SMTP real, o teste quebra.
+E-mail: a entrega é trocada pelo `CorreioFalso`, que guarda as mensagens; se algum código chegar à
+API real do provedor, o teste quebra.
 """
 
 import os
@@ -23,17 +23,17 @@ HOSTS_LOCAIS = {"localhost", "127.0.0.1", "::1", "banco"}
 # Têm que vir antes de importar a configuração, que exige as duas.
 # 32+ bytes: o PyJWT avisa quando a chave HMAC é curta.
 os.environ.setdefault("JWT_SECRET", "segredo-so-para-teste-com-32-bytes-ou-mais")
-os.environ.setdefault("MINIO_USUARIO", "teste")
-os.environ.setdefault("MINIO_SENHA", "teste")
+os.environ.setdefault("MINIO_USER", "teste")
+os.environ.setdefault("MINIO_PASSWORD", "teste")
 # Os testes não dependem do provedor de e-mail configurado no .env de quem os roda.
-os.environ["EMAIL_PROVEDOR"] = "console"
+os.environ["EMAIL_PROVIDER"] = "console"
 
 from app.core.config import RAIZ_BACKEND, configuracoes  # noqa: E402
 
 
 def _apontar_para_o_banco_de_teste() -> None:
     """Troca o banco da configuração antes de o engine (app.core.database) ser criado."""
-    explicita = os.environ.get("DATABASE_URL_TESTE")
+    explicita = os.environ.get("TEST_DATABASE_URL")
     if explicita:
         url = make_url(explicita)
         configuracoes.postgres_host = url.host or "localhost"
@@ -46,7 +46,7 @@ def _apontar_para_o_banco_de_teste() -> None:
         if configuracoes.postgres_host not in HOSTS_LOCAIS:
             raise RuntimeError(
                 f"POSTGRES_HOST é '{configuracoes.postgres_host}', que não parece local. "
-                "Se for mesmo onde os testes devem rodar, defina DATABASE_URL_TESTE explicitamente."
+                "Se for mesmo onde os testes devem rodar, defina TEST_DATABASE_URL explicitamente."
             )
         if not configuracoes.postgres_db.endswith("_teste"):
             configuracoes.postgres_db = f"{configuracoes.postgres_db}_teste"
@@ -94,7 +94,7 @@ def banco_migrado() -> Iterator[None]:
         if not conexao.scalar(text("SELECT pg_try_advisory_lock(hashtext(:nome))"), {"nome": nome_banco}):
             raise RuntimeError(
                 f"Outra execução do pytest está usando o banco {nome_banco}. "
-                "Espere ela terminar ou use outro banco em DATABASE_URL_TESTE."
+                "Espere ela terminar ou use outro banco em TEST_DATABASE_URL."
             )
         _recriar_banco(conexao, nome_banco)
         # Config sem arquivo: o env.py pula o fileConfig e não mexe no logging do pytest.
@@ -173,7 +173,7 @@ def armazenamento_falso(monkeypatch: pytest.MonkeyPatch) -> ArmazenamentoFalso:
 # E-mail
 
 
-def _smtp_proibido(*args: object, **kwargs: object) -> None:
+def _envio_proibido(*args: object, **kwargs: object) -> None:
     raise RuntimeError("Teste tentou enviar e-mail de verdade. Use o fixture correio_falso.")
 
 
@@ -181,9 +181,8 @@ def _smtp_proibido(*args: object, **kwargs: object) -> None:
 def correio_falso(monkeypatch: pytest.MonkeyPatch) -> CorreioFalso:
     falso = CorreioFalso()
     monkeypatch.setattr(correio, "_entregar", falso.entregar)
-    # Rede de segurança: os testes do próprio SMTP trocam estas classes por falsas.
-    monkeypatch.setattr(correio.smtplib, "SMTP", _smtp_proibido)
-    monkeypatch.setattr(correio.smtplib, "SMTP_SSL", _smtp_proibido)
+    # Rede de segurança: os testes do próprio envio trocam o urlopen por um falso.
+    monkeypatch.setattr(correio, "urlopen", _envio_proibido)
     return falso
 
 

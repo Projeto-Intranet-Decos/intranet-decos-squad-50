@@ -13,7 +13,10 @@ ARQUIVOS_ENV = (RAIZ_BACKEND.parent / ".env", RAIZ_BACKEND / ".env")
 
 class Configuracoes(BaseSettings):
     # Segredos levam repr=False: a configuração aparece em tracebacks e erros de validação.
-    model_config = SettingsConfigDict(env_file=ARQUIVOS_ENV, extra="ignore")
+    # O alias é o nome da variável de ambiente (em inglês); validate_by_name aceita o do campo.
+    model_config = SettingsConfigDict(
+        env_file=ARQUIVOS_ENV, extra="ignore", validate_by_name=True, validate_by_alias=True
+    )
 
     # No compose, host e porta são fixos (banco:5432); estes padrões são para rodar fora do Docker.
     postgres_host: str = "localhost"
@@ -23,46 +26,39 @@ class Configuracoes(BaseSettings):
     postgres_password: str = Field(repr=False)
 
     jwt_secret: str = Field(repr=False)
-    access_token_minutos: int = 30
-    refresh_token_dias: int = 7
+    access_token_minutos: int = Field(default=30, validation_alias="ACCESS_TOKEN_MINUTES")
+    refresh_token_dias: int = Field(default=7, validation_alias="REFRESH_TOKEN_DAYS")
 
     # Só necessário em dev, quando frontend e backend rodam em portas diferentes.
-    origens_cors: list[str] = []
+    origens_cors: list[str] = Field(default=[], validation_alias="CORS_ORIGINS")
 
     minio_endpoint: str = "localhost:9000"
-    minio_usuario: str
-    minio_senha: str = Field(repr=False)
+    minio_usuario: str = Field(validation_alias="MINIO_USER")
+    minio_senha: str = Field(repr=False, validation_alias="MINIO_PASSWORD")
     minio_bucket: str = "intranet"
-    minio_seguro: bool = False
+    minio_seguro: bool = Field(default=False, validation_alias="MINIO_SECURE")
 
     # Tem que bater com o client_max_body_size do frontend/nginx.conf.
-    tamanho_maximo_upload_mb: int = 50
+    tamanho_maximo_upload_mb: int = Field(default=50, validation_alias="MAX_UPLOAD_SIZE_MB")
 
-    # E-mail (GER-19). "console" só escreve o e-mail no log; "smtp" envia de verdade.
-    email_provedor: Literal["console", "smtp"] = "console"
-    email_remetente: str = "Intranet <nao-responda@localhost>"
+    # E-mail (GER-19). "console" só escreve o e-mail no log; "resend" envia de verdade.
+    email_provedor: Literal["console", "resend"] = Field(
+        default="console", validation_alias="EMAIL_PROVIDER"
+    )
+    email_remetente: str = Field(
+        default="Intranet <nao-responda@localhost>", validation_alias="EMAIL_FROM"
+    )
     # Base dos links dos e-mails (magic link, AUT-08).
-    url_frontend: str = "http://localhost:5173"
-    # Brevo por padrão; qualquer servidor SMTP serve. 587 usa STARTTLS, 465 já nasce em TLS.
-    smtp_host: str = "smtp-relay.brevo.com"
-    smtp_porta: int = 587
-    # Na Brevo: o login SMTP e uma chave SMTP (não a chave de API xkeysib-...).
-    smtp_usuario: str = ""
-    smtp_senha: str = Field(default="", repr=False)
+    url_frontend: str = Field(default="http://localhost:5173", validation_alias="FRONTEND_URL")
+    resend_chave_api: str = Field(default="", repr=False, validation_alias="RESEND_API_KEY")
 
-    convite_horas: int = 72
-    redefinicao_senha_minutos: int = 60
+    convite_horas: int = Field(default=72, validation_alias="INVITE_HOURS")
+    redefinicao_senha_minutos: int = Field(default=60, validation_alias="PASSWORD_RESET_MINUTES")
 
     @model_validator(mode="after")
-    def exigir_smtp_configurado(self) -> Self:
-        if self.email_provedor == "smtp":
-            faltando = [
-                nome.upper()
-                for nome in ("smtp_host", "smtp_usuario", "smtp_senha")
-                if not getattr(self, nome)
-            ]
-            if faltando:
-                raise ValueError(f"EMAIL_PROVEDOR=smtp exige {', '.join(faltando)}")
+    def exigir_provedor_de_email_configurado(self) -> Self:
+        if self.email_provedor == "resend" and not self.resend_chave_api:
+            raise ValueError("EMAIL_PROVIDER=resend exige RESEND_API_KEY")
         return self
 
     @property

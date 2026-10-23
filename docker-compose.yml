@@ -11,7 +11,7 @@ services:
     volumes:
       - dados_banco:/var/lib/postgresql/data
     ports:
-      - "${PORTA_BANCO:-5432}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -28,8 +28,8 @@ services:
     volumes:
       - dados_armazenamento:/data
     ports:
-      - "${PORTA_MINIO:-9000}:9000"
-      - "${PORTA_MINIO_CONSOLE:-9001}:9001"
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -48,28 +48,25 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-intranet}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
-      ACCESS_TOKEN_MINUTOS: ${ACCESS_TOKEN_MINUTOS:-30}
-      REFRESH_TOKEN_DIAS: ${REFRESH_TOKEN_DIAS:-7}
+      ACCESS_TOKEN_MINUTES: ${ACCESS_TOKEN_MINUTES:-30}
+      REFRESH_TOKEN_DAYS: ${REFRESH_TOKEN_DAYS:-7}
       MINIO_ENDPOINT: armazenamento:9000
-      MINIO_USUARIO: ${MINIO_ROOT_USER:-intranet}
-      MINIO_SENHA: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
+      MINIO_USER: ${MINIO_ROOT_USER:-intranet}
+      MINIO_PASSWORD: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
       MINIO_BUCKET: ${MINIO_BUCKET:-intranet}
-      EMAIL_PROVEDOR: ${EMAIL_PROVEDOR:-console}
-      EMAIL_REMETENTE: ${EMAIL_REMETENTE:-Intranet <nao-responda@localhost>}
-      URL_FRONTEND: ${URL_FRONTEND:-http://localhost:8080}
-      SMTP_HOST: ${SMTP_HOST:-smtp-relay.brevo.com}
-      SMTP_PORTA: ${SMTP_PORTA:-587}
-      SMTP_USUARIO: ${SMTP_USUARIO:-}
-      SMTP_SENHA: ${SMTP_SENHA:-}
-      CONVITE_HORAS: ${CONVITE_HORAS:-72}
-      REDEFINICAO_SENHA_MINUTOS: ${REDEFINICAO_SENHA_MINUTOS:-60}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+      EMAIL_FROM: ${EMAIL_FROM:-Intranet <nao-responda@localhost>}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      INVITE_HOURS: ${INVITE_HOURS:-72}
+      PASSWORD_RESET_MINUTES: ${PASSWORD_RESET_MINUTES:-60}
     depends_on:
       banco:
         condition: service_healthy
       armazenamento:
         condition: service_healthy
     ports:
-      - "${PORTA_BACKEND:-8000}:8000"
+      - "${API_PORT:-8000}:8000"
 
   frontend:
     build: ./frontend
@@ -78,7 +75,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "${PORTA_FRONTEND:-8080}:80"
+      - "${FRONTEND_PORT:-8080}:80"
 
 volumes:
   dados_banco:

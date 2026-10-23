@@ -37,3 +37,5 @@ Rodar os testes do frontend: em `frontend/`, `npm test` (ou `npx vitest -t GER-1
 Nomes de arquivos, componentes, funções, variáveis, classes e rotas em **português**, sem acento (ex: `PaginaMural`, `aniversariantes`, `clienteDeConsultas`, `requer_admin`). Isso vale pro código como um todo, frontend e backend.
 
 Exceção: identificadores fixos de bibliotecas/frameworks continuam em inglês, porque não são nossos — imports, hooks (`useState`, `useQuery`), tipos e classes de lib (`QueryClient`, `Route`), nomes de arquivo de convenção da ferramenta (`main.tsx`, `vite.config.ts`). A regra é sobre o que a gente nomeia, não sobre a API externa que a gente consome.
+
+Outra exceção: variáveis de ambiente têm nome em **inglês** (`MINIO_PASSWORD`, `EMAIL_PROVIDER`, `INVITE_HOURS`). Os campos de `core/config.py` continuam em português e leem a variável por `validation_alias`.

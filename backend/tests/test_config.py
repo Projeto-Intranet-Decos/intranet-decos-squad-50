@@ -81,9 +81,43 @@ def test_ger13_segredos_nao_aparecem_na_representacao():
         postgres_password="senha-do-banco",
         jwt_secret="segredo-jwt",
         minio_senha="senha-do-minio",
-        smtp_senha="chave-smtp",
+        resend_chave_api="re_chave-resend",
     )
 
     representacao = repr(configuracoes) + str(configuracoes)
-    for segredo in ("senha-do-banco", "segredo-jwt", "senha-do-minio", "chave-smtp"):
+    for segredo in ("senha-do-banco", "segredo-jwt", "senha-do-minio", "re_chave-resend"):
         assert segredo not in representacao
+
+
+@pytest.mark.parametrize(
+    ("variavel", "valor", "campo", "esperado"),
+    [
+        ("ACCESS_TOKEN_MINUTES", "15", "access_token_minutos", 15),
+        ("REFRESH_TOKEN_DAYS", "3", "refresh_token_dias", 3),
+        ("CORS_ORIGINS", '["http://localhost:5173"]', "origens_cors", ["http://localhost:5173"]),
+        ("MINIO_ENDPOINT", "minio:9000", "minio_endpoint", "minio:9000"),
+        ("MINIO_USER", "usuario", "minio_usuario", "usuario"),
+        ("MINIO_PASSWORD", "senha", "minio_senha", "senha"),
+        ("MINIO_BUCKET", "balde", "minio_bucket", "balde"),
+        ("MINIO_SECURE", "true", "minio_seguro", True),
+        ("MAX_UPLOAD_SIZE_MB", "20", "tamanho_maximo_upload_mb", 20),
+        ("EMAIL_FROM", "Intranet <a@b.com>", "email_remetente", "Intranet <a@b.com>"),
+        ("FRONTEND_URL", "http://intranet", "url_frontend", "http://intranet"),
+        ("RESEND_API_KEY", "re_chave", "resend_chave_api", "re_chave"),
+        ("INVITE_HOURS", "24", "convite_horas", 24),
+        ("PASSWORD_RESET_MINUTES", "30", "redefinicao_senha_minutos", 30),
+    ],
+)
+def test_ger13_variaveis_de_ambiente_em_ingles(
+    monkeypatch: pytest.MonkeyPatch, variavel: str, valor: str, campo: str, esperado: object
+):
+    monkeypatch.setenv(variavel, valor)
+
+    assert getattr(Configuracoes(_env_file=None, postgres_password="x"), campo) == esperado
+
+
+def test_ger13_provedor_de_email_vem_de_email_provider(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("EMAIL_PROVIDER", "resend")
+    monkeypatch.setenv("RESEND_API_KEY", "re_chave")
+
+    assert Configuracoes(_env_file=None, postgres_password="x").email_provedor == "resend"
