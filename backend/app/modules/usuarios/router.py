@@ -18,13 +18,30 @@ def listar_usuarios(sessao: Session = Depends(obter_sessao)):
   return service.listar_usuarios(sessao)
 
 
-@router.post("", response_model=schemas.UsuarioResposta, status_code=status.HTTP_201_CREATED)
+@router.post(
+  "", response_model=schemas.UsuarioCriadoResposta, status_code=status.HTTP_201_CREATED
+)
 def criar_usuario(
   dados: schemas.UsuarioCriar,
   ator: UsuarioAutenticado = Depends(requer_superadmin),
   sessao: Session = Depends(obter_sessao),
 ):
-  return service.criar_usuario(sessao, dados, ator)
+  usuario, email_enviado = service.criar_usuario(sessao, dados, ator)
+  return schemas.UsuarioCriadoResposta(
+    **schemas.UsuarioResposta.model_validate(usuario).model_dump(),
+    email_enviado=email_enviado,
+  )
+
+
+@router.post("/{usuario_id}/convite", response_model=schemas.ConviteEnviadoResposta)
+def reenviar_convite(
+  usuario_id: uuid.UUID,
+  ator: UsuarioAutenticado = Depends(requer_superadmin),
+  sessao: Session = Depends(obter_sessao),
+):
+  return schemas.ConviteEnviadoResposta(
+    email_enviado=service.reenviar_convite(sessao, usuario_id, ator)
+  )
 
 
 @router.put("/{usuario_id}", response_model=schemas.UsuarioResposta)

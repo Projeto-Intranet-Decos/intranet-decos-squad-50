@@ -2,7 +2,8 @@ import uuid
 from datetime import date, datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Uuid, text
+from sqlalchemy import Boolean, ColumnElement, Date, DateTime, ForeignKey, String, Uuid, text
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -22,7 +23,8 @@ class Usuario(Base):
   )
   nome: Mapped[str] = mapped_column(String(200))
   email: Mapped[str] = mapped_column(String(200), unique=True)
-  senha_hash: Mapped[str] = mapped_column(String(255))
+  # Nulo enquanto o usuário convidado não ativa a conta (AUT-09).
+  senha_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
   role: Mapped[Papel] = mapped_column(String(20), default=Papel.comum)
   setor_id: Mapped[uuid.UUID | None] = mapped_column(
       Uuid, ForeignKey("setores.id"), nullable=True
@@ -35,3 +37,13 @@ class Usuario(Base):
 
   # Sem back_populates: evita alterar setores/models.py, que é de outro módulo.
   setor: Mapped[Setor | None] = relationship()
+
+  # Híbrida: a mesma regra vale no objeto e nas consultas (ex: `~Usuario.convite_pendente`).
+  @hybrid_property
+  def convite_pendente(self) -> bool:
+    return self.senha_hash is None
+
+  @convite_pendente.inplace.expression
+  @classmethod
+  def _convite_pendente_sql(cls) -> ColumnElement[bool]:
+    return cls.senha_hash.is_(None)

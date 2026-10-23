@@ -15,6 +15,7 @@ from app.core.armazenamento import (
     garantir_bucket,
 )
 from app.core.config import configuracoes
+from app.core.correio import avisar_se_nao_envia
 from app.core.database import obter_sessao
 from app.core.erros import registrar_tratadores_de_erro
 from app.modules.atalhos.router import router as roteador_atalhos
@@ -36,6 +37,7 @@ async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:
         garantir_bucket()
     except ErroArmazenamento:
         logger.warning("Não foi possível garantir o bucket do MinIO", exc_info=True)
+    avisar_se_nao_envia()
     yield
 
 

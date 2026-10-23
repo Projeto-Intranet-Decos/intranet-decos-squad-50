@@ -1,57 +1,64 @@
 """Infra de teste do backend. Convenções em docs/specs/README.md ("Testes: onde e como").
 
-Banco: Postgres de verdade, num banco separado (`<banco do DATABASE_URL>_teste`, ou o que vier em
-`DATABASE_URL_TESTE`), recriado e migrado com o Alembic uma vez por execução. Cada teste roda numa
+Banco: Postgres de verdade, num banco separado (`<POSTGRES_DB>_teste`, ou o que vier em
+`TEST_DATABASE_URL`), recriado e migrado com o Alembic uma vez por execução. Cada teste roda numa
 transação desfeita no final: os `commit()` dos services viram savepoints e nada vaza entre testes.
 Por isso `now()` devolve o mesmo instante para tudo que um teste insere. Cada requisição ganha uma
 sessão própria, configurada como a `SessaoLocal` do app, e fechada no fim, como em produção.
 
 Armazenamento: o MinIO é trocado por um dicionário em memória (`ArmazenamentoFalso`) em todos os
 testes; se algum código chegar ao cliente MinIO real, o teste quebra.
+
+E-mail: a entrega é trocada pelo `CorreioFalso`, que guarda as mensagens; se algum código chegar à
+API real do provedor, o teste quebra.
 """
 
 import os
-from pathlib import Path
 
-from dotenv import dotenv_values
 from sqlalchemy.engine import make_url
 
-RAIZ_BACKEND = Path(__file__).resolve().parents[1]
 # "banco" é o Postgres do docker compose visto de dentro da rede do compose.
 HOSTS_LOCAIS = {"localhost", "127.0.0.1", "::1", "banco"}
 
-
-def _url_banco_teste() -> str:
-    explicita = os.environ.get("DATABASE_URL_TESTE")
-    if explicita:
-        return explicita
-    base = os.environ.get("DATABASE_URL") or dotenv_values(RAIZ_BACKEND / ".env").get("DATABASE_URL")
-    if not base:
-        raise RuntimeError("Defina DATABASE_URL_TESTE, ou DATABASE_URL no backend/.env")
-    url = make_url(base)
-    if not url.database:
-        raise RuntimeError("DATABASE_URL não tem nome de banco para derivar o banco de teste")
-    # O banco derivado é apagado a cada execução: só em host local. Outro host, só explícito.
-    if url.host not in HOSTS_LOCAIS:
-        raise RuntimeError(
-            f"DATABASE_URL aponta pra '{url.host}', que não parece local. "
-            "Se for mesmo onde os testes devem rodar, defina DATABASE_URL_TESTE explicitamente."
-        )
-    if not url.database.endswith("_teste"):
-        url = url.set(database=f"{url.database}_teste")
-    return url.render_as_string(hide_password=False)
-
-
-URL_BANCO_TESTE = _url_banco_teste()
-if not (make_url(URL_BANCO_TESTE).database or "").endswith("_teste"):
-    raise RuntimeError("O nome do banco de teste precisa terminar em _teste: ele é apagado a cada execução")
-
-# Tem que vir antes de importar `app`: core/config.py lê o ambiente na importação.
-os.environ["DATABASE_URL"] = URL_BANCO_TESTE
+# Têm que vir antes de importar a configuração, que exige todas.
 # 32+ bytes: o PyJWT avisa quando a chave HMAC é curta.
 os.environ.setdefault("JWT_SECRET", "segredo-so-para-teste-com-32-bytes-ou-mais")
-os.environ.setdefault("MINIO_USUARIO", "teste")
-os.environ.setdefault("MINIO_SENHA", "teste")
+os.environ.setdefault("MINIO_USER", "teste")
+os.environ.setdefault("MINIO_PASSWORD", "teste")
+# Com TEST_DATABASE_URL a senha vem da URL, e a configuração não pode exigir POSTGRES_PASSWORD de
+# quem roda sem .env. Só nesse caso: a variável de ambiente venceria a senha do .env.
+if os.environ.get("TEST_DATABASE_URL"):
+    os.environ.setdefault("POSTGRES_PASSWORD", "vem-da-TEST_DATABASE_URL")
+# Os testes não dependem do provedor de e-mail configurado no .env de quem os roda.
+os.environ["EMAIL_PROVIDER"] = "console"
+
+from app.core.config import RAIZ_BACKEND, configuracoes  # noqa: E402
+
+
+def _apontar_para_o_banco_de_teste() -> None:
+    """Troca o banco da configuração antes de o engine (app.core.database) ser criado."""
+    explicita = os.environ.get("TEST_DATABASE_URL")
+    if explicita:
+        url = make_url(explicita)
+        configuracoes.postgres_host = url.host or "localhost"
+        configuracoes.postgres_port = url.port or 5432
+        configuracoes.postgres_db = url.database or ""
+        configuracoes.postgres_user = url.username or ""
+        configuracoes.postgres_password = url.password or ""
+    else:
+        # O banco derivado é apagado a cada execução: só em host local. Outro host, só explícito.
+        if configuracoes.postgres_host not in HOSTS_LOCAIS:
+            raise RuntimeError(
+                f"POSTGRES_HOST é '{configuracoes.postgres_host}', que não parece local. "
+                "Se for mesmo onde os testes devem rodar, defina TEST_DATABASE_URL explicitamente."
+            )
+        if not configuracoes.postgres_db.endswith("_teste"):
+            configuracoes.postgres_db = f"{configuracoes.postgres_db}_teste"
+    if not configuracoes.postgres_db.endswith("_teste"):
+        raise RuntimeError("O nome do banco de teste precisa terminar em _teste: ele é apagado a cada execução")
+
+
+_apontar_para_o_banco_de_teste()
 
 from collections.abc import Iterator  # noqa: E402
 
@@ -64,11 +71,11 @@ from sqlalchemy.engine import Connection  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 import app.main  # noqa: E402
-from app.core import armazenamento  # noqa: E402
-from app.core.database import SessaoLocal, engine, obter_sessao  # noqa: E402
+from app.core import armazenamento, correio  # noqa: E402
+from app.core.database import SessaoLocal, engine, obter_fabrica_de_sessoes, obter_sessao  # noqa: E402
 from app.modules.setores.models import Setor  # noqa: E402
 from app.modules.usuarios.models import Papel, Usuario  # noqa: E402
-from tests.apoio import ArmazenamentoFalso, Fabrica  # noqa: E402
+from tests.apoio import ArmazenamentoFalso, CorreioFalso, Fabrica  # noqa: E402
 
 
 # Banco
@@ -82,7 +89,7 @@ def _recriar_banco(manutencao: Connection, nome_banco: str) -> None:
 
 @pytest.fixture(scope="session")
 def banco_migrado() -> Iterator[None]:
-    url = make_url(URL_BANCO_TESTE)
+    url = configuracoes.url_banco
     nome_banco = url.database or ""
     manutencao = create_engine(url.set(database="postgres"), isolation_level="AUTOCOMMIT")
     with manutencao.connect() as conexao:
@@ -91,7 +98,7 @@ def banco_migrado() -> Iterator[None]:
         if not conexao.scalar(text("SELECT pg_try_advisory_lock(hashtext(:nome))"), {"nome": nome_banco}):
             raise RuntimeError(
                 f"Outra execução do pytest está usando o banco {nome_banco}. "
-                "Espere ela terminar ou use outro banco em DATABASE_URL_TESTE."
+                "Espere ela terminar ou use outro banco em TEST_DATABASE_URL."
             )
         _recriar_banco(conexao, nome_banco)
         # Config sem arquivo: o env.py pula o fileConfig e não mexe no logging do pytest.
@@ -138,6 +145,8 @@ def cliente(conexao: Connection) -> Iterator[TestClient]:
             sessao.close()
 
     app.main.app.dependency_overrides[obter_sessao] = obter_sessao_de_teste
+    # Tarefas em segundo plano abrem a própria sessão; nos testes, também presa à transação.
+    app.main.app.dependency_overrides[obter_fabrica_de_sessoes] = lambda: lambda: _nova_sessao(conexao)
     try:
         # Sem `with`: não roda o lifespan, que tentaria criar o bucket no MinIO real.
         yield TestClient(app.main.app)
@@ -164,6 +173,22 @@ def armazenamento_falso(monkeypatch: pytest.MonkeyPatch) -> ArmazenamentoFalso:
         )
 
     monkeypatch.setattr(armazenamento, "obter_cliente", obter_cliente_proibido)
+    return falso
+
+
+# E-mail
+
+
+def _envio_proibido(*args: object, **kwargs: object) -> None:
+    raise RuntimeError("Teste tentou enviar e-mail de verdade. Use o fixture correio_falso.")
+
+
+@pytest.fixture(autouse=True)
+def correio_falso(monkeypatch: pytest.MonkeyPatch) -> CorreioFalso:
+    falso = CorreioFalso()
+    monkeypatch.setattr(correio, "_entregar", falso.entregar)
+    # Rede de segurança: os testes do próprio envio trocam o urlopen por um falso.
+    monkeypatch.setattr(correio, "urlopen", _envio_proibido)
     return falso
 
 

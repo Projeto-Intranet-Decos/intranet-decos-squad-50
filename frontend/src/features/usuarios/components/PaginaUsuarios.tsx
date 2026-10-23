@@ -9,8 +9,8 @@ import Dropdown from '../../../shared/components/Dropdown'
 import Modal from '../../../shared/components/Modal'
 import { useOrdenacaoClique } from '../../../shared/hooks/useOrdenacaoClique'
 import { listarSetores } from '../../setores/api'
-import { mensagemErroUsuario, useExcluirUsuario, useUsuarios } from '../hooks/useUsuarios'
-import { ROTULOS_PAPEL, type ColunaUsuario, type UsuarioCadastro } from '../types'
+import { mensagemErroUsuario, useExcluirUsuario, useReenviarConvite, useUsuarios } from '../hooks/useUsuarios'
+import { ROTULOS_PAPEL, ROTULOS_SITUACAO, situacaoDoUsuario, type ColunaUsuario, type UsuarioCadastro } from '../types'
 import ModalUsuario from './ModalUsuario'
 import TabelaUsuarios from './TabelaUsuarios'
 
@@ -26,7 +26,7 @@ function compararUsuarios(a: UsuarioCadastro, b: UsuarioCadastro, coluna: Coluna
       return nomeA.localeCompare(nomeB, 'pt-BR')
     }
     case 'status':
-      return Number(a.ativo) - Number(b.ativo)
+      return ROTULOS_SITUACAO[situacaoDoUsuario(a)].localeCompare(ROTULOS_SITUACAO[situacaoDoUsuario(b)], 'pt-BR')
     default:
       return a.nome.localeCompare(b.nome, 'pt-BR', { numeric: true })
   }
@@ -38,6 +38,7 @@ export default function PaginaUsuarios() {
   const consulta = useUsuarios(usuario?.id, permitido)
   const setores = useQuery({ queryKey: ['setores-usuarios'], queryFn: listarSetores, enabled: permitido })
   const excluir = useExcluirUsuario()
+  const reenviar = useReenviarConvite()
   const [busca, setBusca] = useState('')
   const [papel, setPapel] = useState('')
   const [setorId, setSetorId] = useState('')
@@ -56,7 +57,7 @@ export default function PaginaUsuarios() {
     `${item.nome} ${item.email}`.toLocaleLowerCase('pt-BR').includes(termo)
     && (!papel || item.role === papel)
     && (!setorId || item.setorId === setorId)
-    && (!status || item.ativo === (status === 'ativo')),
+    && (!status || situacaoDoUsuario(item) === status),
   ).sort((a, b) => {
     const resultado = compararUsuarios(a, b, ordenarPor, mapaSetores)
     return direcao === 'desc' ? -resultado : resultado
@@ -108,7 +109,7 @@ export default function PaginaUsuarios() {
         <Dropdown
           rotuloPadrao="Status"
           icone={<IconeFunil tamanho={15} />}
-          opcoes={[{ valor: '', rotulo: 'Todos' }, { valor: 'ativo', rotulo: 'Ativos' }, { valor: 'inativo', rotulo: 'Inativos' }]}
+          opcoes={[{ valor: '', rotulo: 'Todos' }, { valor: 'ativo', rotulo: 'Ativos' }, { valor: 'pendente', rotulo: 'Pendentes' }, { valor: 'inativo', rotulo: 'Inativos' }]}
           valor={status}
           aoMudar={valor => { setStatus(valor); setPagina(1) }}
         />
@@ -127,7 +128,7 @@ export default function PaginaUsuarios() {
       {setores.isError && <div role="alert" className="mb-4 text-sm text-critical">Não foi possível carregar os setores. <button type="button" onClick={() => void setores.refetch()} className="underline">Tentar novamente</button></div>}
       {consulta.isError && <div role="alert" className="text-sm text-critical">{mensagemErroUsuario(consulta.error)} <button type="button" className="underline" onClick={() => void consulta.refetch()}>Tentar novamente</button></div>}
       {!consulta.isError && <>
-        <TabelaUsuarios usuarios={filtrados.slice(inicio, inicio + TAMANHO_PAGINA)} isLoading={consulta.isPending} setores={mapaSetores} ordenarPor={ordenarPor} direcao={direcao} aoClicarColuna={aoClicarColuna} edicaoDisponivel={setores.isSuccess} aoEditar={item => { if (setores.isSuccess) setEdicao(item) }} aoExcluir={item => { excluir.reset(); setExclusao(item) }} />
+        <TabelaUsuarios usuarios={filtrados.slice(inicio, inicio + TAMANHO_PAGINA)} isLoading={consulta.isPending} setores={mapaSetores} ordenarPor={ordenarPor} direcao={direcao} aoClicarColuna={aoClicarColuna} edicaoDisponivel={setores.isSuccess} aoEditar={item => { if (setores.isSuccess) setEdicao(item) }} aoExcluir={item => { excluir.reset(); setExclusao(item) }} reenvioEmAndamento={reenviar.isPending} aoReenviarConvite={item => reenviar.mutate(item)} />
         {consulta.isSuccess && (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-500">
             <span>{filtrados.length} usuário(s) · Página {paginaAtual} de {totalPaginas}</span>

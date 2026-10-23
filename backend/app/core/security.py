@@ -28,6 +28,8 @@ def criar_access_token(usuario: Usuario) -> str:
   )
   payload = {
     "sub": str(usuario.id),
+    # Para o indicador do usuário logado no frontend (AUT-03).
+    "nome": usuario.nome,
     "role": usuario.role,
     "setor_id": str(usuario.setor_id) if usuario.setor_id else None,
     "exp": expira_em,
@@ -35,11 +37,12 @@ def criar_access_token(usuario: Usuario) -> str:
   return jwt.encode(payload, configuracoes.jwt_secret, algorithm=ALGORITMO)
 
 
-def gerar_refresh_token() -> str:
+def gerar_token() -> str:
+  """Token opaco (refresh token e magic link): só o hash vai pro banco."""
   return secrets.token_urlsafe(32)
 
 
-def hash_refresh_token(token: str) -> str:
+def hash_token(token: str) -> str:
   return hashlib.sha256(token.encode()).hexdigest()
 
 

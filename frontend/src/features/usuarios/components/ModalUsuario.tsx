@@ -1,5 +1,4 @@
 import { useForm } from 'react-hook-form'
-import { isAxiosError } from 'axios'
 import type { Papel } from '../../../lib/auth/tipos'
 import Botao from '../../../shared/components/Botao'
 import Campo from '../../../shared/components/Campo'
@@ -7,13 +6,12 @@ import Input from '../../../shared/components/Input'
 import Modal from '../../../shared/components/Modal'
 import Select from '../../../shared/components/Select'
 import type { SetorComRamais } from '../../setores/types'
-import { mensagemErroUsuario, useSalvarUsuario } from '../hooks/useUsuarios'
-import { ROTULOS_PAPEL, type DadosUsuario, type ErroUsuario, type UsuarioCadastro } from '../types'
+import { erroUsuario, mensagemErroUsuario, useSalvarUsuario } from '../hooks/useUsuarios'
+import { ROTULOS_PAPEL, type DadosUsuario, type UsuarioCadastro } from '../types'
 
 interface ValoresFormulario {
   nome: string
   email: string
-  senha: string
   role: Papel
   setorId: string
   dataNascimento: string
@@ -30,7 +28,7 @@ export default function ModalUsuario({ usuarioEditando, setores, aoFechar }: Pro
   const salvar = useSalvarUsuario()
   const { register, handleSubmit, setError, formState: { errors } } = useForm<ValoresFormulario>({
     defaultValues: {
-      nome: usuarioEditando?.nome ?? '', email: usuarioEditando?.email ?? '', senha: '',
+      nome: usuarioEditando?.nome ?? '', email: usuarioEditando?.email ?? '',
       role: usuarioEditando?.role ?? 'comum', setorId: usuarioEditando?.setorId ?? '',
       dataNascimento: usuarioEditando?.dataNascimento ?? '', ativo: usuarioEditando?.ativo ?? true,
     },
@@ -44,16 +42,14 @@ export default function ModalUsuario({ usuarioEditando, setores, aoFechar }: Pro
     try {
       await salvar.mutateAsync(usuarioEditando
         ? { tipo: 'editar', id: usuarioEditando.id, dados: { ...dados, ativo: valores.ativo } }
-        : { tipo: 'criar', dados: { ...dados, senha: valores.senha } })
+        : { tipo: 'criar', dados })
       aoFechar()
     } catch (erro: unknown) {
-      if (isAxiosError<ErroUsuario>(erro)) {
-        const campo = erro.response?.data?.campo
-        if (campo === 'nome' || campo === 'email' || campo === 'senha' || campo === 'role' || campo === 'ativo') {
-          setError(campo, { message: mensagemErroUsuario(erro) })
-        } else if (campo === 'setor_id' || campo === 'data_nascimento') {
-          setError(campo === 'setor_id' ? 'setorId' : 'dataNascimento', { message: mensagemErroUsuario(erro) })
-        }
+      const { campo, mensagem } = erroUsuario(erro)
+      if (campo === 'nome' || campo === 'email' || campo === 'role' || campo === 'ativo') {
+        setError(campo, { message: mensagem })
+      } else if (campo === 'setor_id' || campo === 'data_nascimento') {
+        setError(campo === 'setor_id' ? 'setorId' : 'dataNascimento', { message: mensagem })
       }
     }
   }
@@ -70,9 +66,9 @@ export default function ModalUsuario({ usuarioEditando, setores, aoFechar }: Pro
           <Campo rotulo="E-mail" erro={errors.email?.message} className="sm:col-span-2">
             <Input type="email" autoComplete="email" maxLength={200} {...register('email', { required: 'Informe o e-mail.', maxLength: 200 })} />
           </Campo>
-          {!usuarioEditando && <Campo rotulo="Senha inicial" erro={errors.senha?.message} className="sm:col-span-2">
-            <Input type="password" autoComplete="new-password" maxLength={128} {...register('senha', { required: 'Informe a senha inicial.', minLength: { value: 8, message: 'Use pelo menos 8 caracteres.' }, maxLength: 128 })} />
-          </Campo>}
+          {!usuarioEditando && <p className="text-sm text-slate-500 sm:col-span-2">
+            O colaborador recebe neste e-mail um convite para criar a própria senha e confirmar os dados.
+          </p>}
           <Campo rotulo="Perfil de acesso" erro={errors.role?.message}>
             <Select {...register('role')}>
               {Object.entries(ROTULOS_PAPEL).map(([valor, rotulo]) => <option key={valor} value={valor} >{rotulo}</option>)}

@@ -36,7 +36,10 @@ desktop (GER-15).
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
 
 Toda rota da API exige access token válido, exceto: `POST /auth/login`, `POST /auth/refresh`,
-`GET /murais/avisos/{id}/imagem` (ver MUR-09) e `GET /saude`.
+`GET /murais/avisos/{id}/imagem` (ver MUR-09), `GET /saude` e as rotas de magic link (AUT-08):
+`POST /auth/convite/verificar`, `POST /auth/convite/aceitar` (AUT-09), `POST
+/auth/redefinicao-senha`, `POST /auth/redefinicao-senha/verificar` e `POST
+/auth/redefinicao-senha/confirmar` (USU-07).
 
 - **Dado** uma rota protegida, **quando** a requisição vem sem `Authorization`, com token
   malformado, com assinatura inválida ou expirado, **então** responde `401`
@@ -105,7 +108,7 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   - Imagens (capa): png, jpg, jpeg, webp.
 - Extensão fora da lista → `415`; acima do limite → `413`; sem nome ou vazio → `422`. Todos com
   `campo` apontando o campo do formulário.
-- Limite geral `TAMANHO_MAXIMO_UPLOAD_MB` (padrão 50 MB), igual ao `client_max_body_size` do
+- Limite geral `MAX_UPLOAD_SIZE_MB` (padrão 50 MB), igual ao `client_max_body_size` do
   nginx. O frontend valida tipo e tamanho antes de enviar (só UX).
 - Download passa pelo backend em stream (MinIO não é exposto ao navegador), com
   `Content-Disposition` preservando o nome original com acentos (RFC 5987), `Content-Length` e
@@ -163,10 +166,26 @@ O frontend esconde ações que o usuário não pode executar (`podeGerenciarCont
 mas a API é a fonte de verdade: qualquer chamada direta continua sujeita a GER-02/03/04.
 
 ### GER-13 — Infraestrutura
-Origem: [ESP] [COD] · Back ✅ · Front ✅ · Teste —
+Origem: [ESP] [COD] · Back ✅ · Front ✅ · Teste ✅
 
 Ambiente reproduzível via `docker-compose` (Postgres, MinIO, backend, frontend com nginx). O nginx
 remove o prefixo `/api` e repassa ao backend.
+
+- A API monta a conexão com o Postgres a partir de `POSTGRES_HOST`, `POSTGRES_PORT`,
+  `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD` — não existe `DATABASE_URL`. No compose, host
+  e porta são fixos (`banco:5432`, a rede interna); fora do Docker valem os do `.env` (padrão
+  `localhost:5432`, banco e usuário `intranet`; a senha é obrigatória).
+- Senha com caracteres especiais (`@ : / # %`) funciona: cada parte é escapada ao montar a URL.
+- O backend lê o `.env` da raiz (o mesmo do compose) e, por cima, o `backend/.env`, que é
+  opcional; variável de ambiente vence os dois.
+- Em produção só existe o `.env` da raiz: o container do backend recebe as credenciais em tempo de
+  execução pelo `environment` do compose, e nenhum `.env` entra na imagem. O `backend/.env` é só
+  para desenvolvimento.
+- As variáveis de ambiente têm nome em inglês (`MINIO_PASSWORD`, `EMAIL_PROVIDER`, `INVITE_HOURS`…),
+  no `.env`, no compose e no código. Os campos da configuração no Python continuam em português e
+  leem a variável pelo nome em inglês.
+- Segredos (senhas do banco e do MinIO, `JWT_SECRET`, `RESEND_API_KEY`) nunca aparecem na representação
+  da configuração, que vai parar em tracebacks e erros de validação.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
 
@@ -328,3 +347,48 @@ persiste em `localStorage` nem recarregando).
 - **Dado** "Reduzir animações" ligado (GER-14) ou `prefers-reduced-motion`, **então** colapsar ou
   expandir é imediato, sem animação.
 - **Quando** a página é recarregada, **então** todas as seções voltam a expandidas.
+
+### GER-22 — Envio de e-mail
+Origem: [CTX] · Back ✅ · Front — · Teste ✅
+
+Serviço único de e-mail em `core/`, usado por qualquer módulo (hoje: convite, USU-02/USU-08, e
+redefinição de senha, USU-07). O provedor é escolhido por `EMAIL_PROVIDER`:
+
+- `resend` — envio pela API HTTP do **Resend** (`POST https://api.resend.com/emails`, HTTPS), autenticado
+  pela chave de API em `RESEND_API_KEY`.
+- `console` — padrão em desenvolvimento: escreve destinatário, assunto e texto (com o link) no log,
+  sem enviar nada. Ninguém do time precisa de credencial de e-mail para rodar o projeto. Só para
+  desenvolvimento: o link em claro fica no log.
+- Nos testes, o envio é sempre substituído por um falso em memória (como o MinIO, GER-07); código
+  que chegar à API real quebra o teste.
+- ~~`mailgun`~~, ~~`smtp`~~ — removidos: a API do Mailgun foi trocada pelo SMTP da Brevo, e este
+  pela API do Resend.
+
+Critérios:
+
+- Todo e-mail tem versão HTML e texto puro, remetente `EMAIL_FROM`, e os links são montados a
+  partir de `FRONTEND_URL`.
+- O HTML usa o layout comum (`core/modelo_email.py`), com a identidade da tela de login: faixa
+  bordeaux com "Hospital Decós", cartão branco com título, botão bordeaux para o link, o mesmo
+  link por extenso para quem não consegue clicar, e o rodapé "Uso restrito a colaboradores".
+  Estilos inline em tabelas, sem `<style>` nem imagem externa, para Gmail e Outlook mostrarem
+  igual. Texto vindo do banco (ex: o nome) é escapado.
+- **Dado** uma ação que grava no banco e envia e-mail, **então** o envio só acontece depois do
+  commit.
+- **Dado** `EMAIL_PROVIDER=resend`, **então** o e-mail sai num `POST` JSON para a API do Resend,
+  com `Authorization: Bearer <RESEND_API_KEY>`, e o provedor monta os cabeçalhos da mensagem
+  (`Date`, `Message-ID`).
+- **Dado** que o provedor falha (resposta de erro da API, erro de rede ou timeout de 10 s),
+  **então** a gravação não é desfeita:
+  a falha vira `logger.warning` e a resposta indica que o e-mail não saiu onde o requisito pedir
+  (`email_enviado: false`).
+- 🐞 **Dado** um erro inesperado durante o envio (ex: timeout ao ler o corpo da resposta de erro),
+  **então** o comportamento é o mesmo da falha do provedor: nada é desfeito e o envio devolve
+  `false`, sem virar `500`.
+- 🐞 **Dado** `EMAIL_PROVIDER=console`, **então** a resposta indica que o e-mail não saiu
+  (`email_enviado: false`) — um deploy que esqueceu o `resend` aparece para o superadmin logo no
+  primeiro convite — e a API avisa no log ao subir que os e-mails não são enviados.
+- **Dado** `EMAIL_PROVIDER=resend` sem `RESEND_API_KEY`, **então** a API não sobe (erro de
+  configuração no startup).
+- ❓ Remetente: o Resend só envia de um domínio verificado (SPF e DKIM). Domínio do hospital ×
+  domínio próprio do projeto — a combinar com a TI do hospital.

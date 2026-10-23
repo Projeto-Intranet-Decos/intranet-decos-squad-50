@@ -13,6 +13,18 @@ Nível de acesso do usuário:
 - `admin_setor` — administrador **operacional**: cria e mantém conteúdo do dia a dia (avisos, documentos, eventos, ramal do próprio setor), em geral escopado ao próprio setor. **Sem acesso** às páginas de Administração (Usuários, Registro de atividades) nem à criação de setores novos.
 - `superadmin` — papel de nível **sistêmico** (equivalente a alguém de TI), com acesso irrestrito, independente de setor. Exclusivo das páginas de Administração e da criação de setores novos.
 
+**Magic link**:
+Link enviado por e-mail com um token de uso único e validade curta, que leva o usuário a uma página da aplicação para concluir uma ação sem estar logado. É um mecanismo só, com finalidades: convite (ativar a conta) e redefinição de senha. Não é sessão: o token autoriza apenas a ação da sua finalidade.
+_Avoid_: SSO (SSO é entrar com a conta de um provedor externo, como o Microsoft 365), sessão temporária, token de acesso
+
+**Convite**:
+E-mail com magic link enviado quando o `superadmin` cadastra um usuário, para o colaborador criar a própria senha e completar os dados pessoais (ativar a conta). E-mail, papel e setor são definidos pelo `superadmin` e não mudam na ativação.
+_Avoid_: cadastro pelo próprio usuário, auto-registro
+
+**Usuário pendente**:
+Usuário convidado que ainda não ativou a conta (ainda não tem senha). Não faz login e não aparece para os colaboradores (aniversariantes, diretórios); só o `superadmin` o vê, na lista de Usuários.
+_Avoid_: usuário inativo (inativo é o desativado, soft delete)
+
 **Log de auditoria**:
 Registro de ações administrativas (criar, editar, deletar) em qualquer módulo, persistido no Postgres para consulta (ex: "tudo que o usuário X fez"). Não inclui ações de leitura.
 _Avoid_: Log técnico, log de erro

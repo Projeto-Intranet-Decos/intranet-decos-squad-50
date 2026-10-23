@@ -216,6 +216,7 @@ sem `mes`, usa o mês atual. Substitui o antigo `GET /calendario/aniversariantes
 
 - Retorna `id`, `nome`, `dia`, `setor_id`, `setor_nome` (ou `null`), ordenado por dia e nome.
 - Só usuários **ativos** com `data_nascimento` preenchida entram.
+- Usuários pendentes (convite ainda não aceito, USU-02) não entram.
 - Frontend: painel de aniversariantes no mural e no calendário.
 
 ### MUR-14 — Filtrar aniversariantes por setor e data

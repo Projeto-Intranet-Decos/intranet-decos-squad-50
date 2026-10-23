@@ -1,11 +1,32 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { definirPreferencias, iniciarPreferencias } from '../../lib/preferencias/preferencias'
-import { simularConsultasDeMidia } from '../../testes/apoio'
+import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
 import estilos from '../../index.css?raw'
+import { salvarAccessToken } from '../../lib/auth/useAuth'
 import Layout from './Layout'
+
+const renovacao = vi.hoisted(() => ({ token: '' }))
+vi.mock('../../lib/api', async (original) => {
+  const modulo = await original<typeof import('../../lib/api')>()
+  const { salvarAccessToken: salvar } = await import('../../lib/auth/useAuth')
+  return {
+    ...modulo,
+    // Faz o que a renovação real faz: grava o access token novo que a API devolveu. Sem token
+    // configurado no teste, falha, como uma renovação recusada: nada muda.
+    renovarAccessToken: vi.fn(async () => {
+      if (!renovacao.token) throw new Error('Renovação não configurada neste teste')
+      salvar(renovacao.token)
+      return renovacao.token
+    }),
+  }
+})
+
+beforeEach(() => {
+  renovacao.token = ''
+})
 
 vi.mock('../../features/atalhos/api', async (original) => ({
   ...(await original<typeof import('../../features/atalhos/api')>()),
@@ -172,5 +193,71 @@ describe('GER-18 — vidro do menu e da barra superior', () => {
 
   it('o vidro estrutural é tão branco quanto o dos modais', () => {
     expect(fundoDoUtilitario('glass')).toBe(fundoDoUtilitario('glass-modal'))
+  })
+})
+
+describe('USU-07 — botão de alterar senha', () => {
+  beforeEach(() => {
+    const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
+    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+  })
+
+  it('fica ao lado de Sair e abre o modal', async () => {
+    render(<Aplicacao />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alterar senha' }))
+
+    expect(await screen.findByRole('dialog', { name: 'Alterar senha' })).toBeTruthy()
+  })
+})
+
+describe('AUT-03 — indicador do usuário logado', () => {
+  function entrarComo(carga: object) {
+    localStorage.setItem('intranet:token', tokenDeAcessoFalso(carga))
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+    render(<Aplicacao />)
+  }
+
+  it('mostra o nome e não o papel de quem não é superadmin', () => {
+    entrarComo({ sub: '1', nome: 'Maria Silva', role: 'admin_setor', setor_id: 's1' })
+
+    expect(screen.getByText('Maria Silva')).toBeTruthy()
+    expect(screen.queryByText('Administrador de setor')).toBeNull()
+  })
+
+  it('mostra o papel abaixo do nome para o superadmin', () => {
+    entrarComo({ sub: '1', nome: 'Ana Souza', role: 'superadmin', setor_id: null })
+
+    expect(screen.getByText('Ana Souza')).toBeTruthy()
+    expect(screen.getByText('Superadministrador')).toBeTruthy()
+  })
+})
+
+describe('AUT-03 🐞 — indicador acompanha o token', () => {
+  beforeEach(() => {
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+  })
+
+  it('token renovado atualiza o indicador sem recarregar a página', async () => {
+    localStorage.setItem('intranet:token', tokenDeAcessoFalso({ sub: '1', nome: 'Nome Antigo', role: 'comum', setor_id: null }))
+    render(<Aplicacao />)
+    expect(screen.getByText('Nome Antigo')).toBeTruthy()
+
+    act(() => salvarAccessToken(tokenDeAcessoFalso({ sub: '1', nome: 'Nome Novo', role: 'comum', setor_id: null })))
+
+    expect(await screen.findByText('Nome Novo')).toBeTruthy()
+  })
+
+  it('token emitido antes do nome é renovado na hora e o nome aparece', async () => {
+    renovacao.token = tokenDeAcessoFalso({ sub: '1', nome: 'Maria Silva', role: 'comum', setor_id: null })
+    localStorage.setItem('intranet:token', tokenDeAcessoFalso({ sub: '1', role: 'comum', setor_id: null }))
+
+    render(<Aplicacao />)
+
+    expect(await screen.findByText('Maria Silva')).toBeTruthy()
   })
 })

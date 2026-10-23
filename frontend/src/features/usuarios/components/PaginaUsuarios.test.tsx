@@ -4,6 +4,7 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { toast } from 'sonner'
 import type { Papel } from '../../../lib/auth/tipos'
 import * as usuariosApi from '../api'
 import * as setoresApi from '../../setores/api'
@@ -13,8 +14,10 @@ import PaginaUsuarios from './PaginaUsuarios'
 vi.mock('../../../lib/auth/useAuth', () => ({ useAuth: () => ({ usuario: estado.usuario }) }))
 vi.mock('../api')
 vi.mock('../../setores/api')
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } }))
 const estado = vi.hoisted(() => ({ usuario: { id: 'admin', role: 'superadmin' as Papel, setorId: null } }))
-const pessoa: UsuarioCadastro = { id:'pessoa',nome:'Maria',email:'maria@example.com',role:'comum',setorId:null,dataNascimento:null,ativo:true,criadoEm:'2026-10-16T10:00:00Z' }
+const pessoa: UsuarioCadastro = { id:'pessoa',nome:'Maria',email:'maria@example.com',role:'comum',setorId:null,dataNascimento:null,ativo:true,criadoEm:'2026-10-16T10:00:00Z',convitePendente:false }
+const convidada: UsuarioCadastro = { ...pessoa, id:'convidada', nome:'Joana', email:'joana@example.com', convitePendente:true }
 
 function montar(lista: UsuarioCadastro[] = [pessoa]) {
   vi.mocked(usuariosApi.listarUsuarios).mockResolvedValue(lista)
@@ -39,24 +42,41 @@ describe('USU-01 a USU-04 — gestão exclusiva de superadmin', () => {
     await interagir.clear(screen.getByLabelText(/^BUSCAR POR NOME OU E-MAIL$/i))
     expect(screen.getByText('Maria')).toBeTruthy()
   })
-  it('USU-02: cadastra e envia campos tipados ao contrato HTTP', async () => {
+  it('USU-02: cadastra sem senha e avisa que o convite foi enviado', async () => {
     const interagir=montar(); await screen.findByText('Maria')
-    vi.mocked(usuariosApi.criarUsuario).mockResolvedValue(pessoa)
+    vi.mocked(usuariosApi.criarUsuario).mockResolvedValue({...pessoa, convitePendente:true, emailEnviado:true})
+    await waitFor(() => expect((screen.getByRole('button',{name:'Novo usuário'}) as HTMLButtonElement).disabled).toBe(false))
+    await interagir.click(screen.getByRole('button',{name:'Novo usuário'}))
+    expect(screen.queryByLabelText(/SENHA/i)).toBeNull()
+    await interagir.type(screen.getByLabelText(/^NOME COMPLETO$/i),'Maria')
+    await interagir.type(screen.getByLabelText(/^E-MAIL$/i),'maria@example.com')
+    await interagir.click(screen.getByRole('button',{name:'Criar usuário'}))
+    await waitFor(() => expect(usuariosApi.criarUsuario).toHaveBeenCalledWith({nome:'Maria', email:'maria@example.com', role:'comum',setorId:null,dataNascimento:null}))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(toast.success).toHaveBeenCalledWith('Convite enviado para maria@example.com.')
+  })
+  it('USU-02: e-mail que não saiu vira aviso com a ação de reenviar', async () => {
+    const interagir=montar(); await screen.findByText('Maria')
+    vi.mocked(usuariosApi.criarUsuario).mockResolvedValue({...pessoa, convitePendente:true, emailEnviado:false})
+    vi.mocked(usuariosApi.reenviarConvite).mockResolvedValue(true)
     await waitFor(() => expect((screen.getByRole('button',{name:'Novo usuário'}) as HTMLButtonElement).disabled).toBe(false))
     await interagir.click(screen.getByRole('button',{name:'Novo usuário'}))
     await interagir.type(screen.getByLabelText(/^NOME COMPLETO$/i),'Maria')
     await interagir.type(screen.getByLabelText(/^E-MAIL$/i),'maria@example.com')
-    await interagir.type(screen.getByLabelText(/^SENHA INICIAL$/i),'Senha123!')
     await interagir.click(screen.getByRole('button',{name:'Criar usuário'}))
-    await waitFor(() => expect(usuariosApi.criarUsuario).toHaveBeenCalledWith({nome:'Maria', email:'maria@example.com', senha:'Senha123!',role:'comum',setorId:null,dataNascimento:null}))
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await waitFor(() => expect(toast.warning).toHaveBeenCalled())
+    const [mensagem, opcoes] = vi.mocked(toast.warning).mock.calls[0] as [string, { action: { label: string, onClick: () => void } }]
+    expect(mensagem).toBe('Usuário cadastrado, mas o convite não foi enviado.')
+    expect(opcoes.action.label).toBe('Reenviar convite')
+    opcoes.action.onClick()
+    await waitFor(() => expect(usuariosApi.reenviarConvite).toHaveBeenCalledWith('pessoa'))
   })
   it('USU-03: edita sem pedir ou enviar senha', async () => {
     const interagir=montar(); await screen.findByText('Maria')
     vi.mocked(usuariosApi.editarUsuario).mockResolvedValue({...pessoa,nome:'Maria Silva'})
     await waitFor(() => expect((screen.getByRole('button',{name:'Editar Maria'}) as HTMLButtonElement).disabled).toBe(false))
     await interagir.click(screen.getByRole('button',{name:'Editar Maria'}))
-    expect(screen.queryByLabelText(/^SENHA INICIAL$/i)).toBeNull()
+    expect(screen.queryByLabelText(/SENHA/i)).toBeNull()
     await interagir.clear(screen.getByLabelText(/^NOME COMPLETO$/i));await interagir.type(screen.getByLabelText(/^NOME COMPLETO$/i),'Maria Silva')
     await interagir.click(screen.getByRole('button',{name:'Salvar alterações'}))
     await waitFor(() => expect(usuariosApi.editarUsuario).toHaveBeenCalledWith('pessoa', expect.objectContaining({nome:'Maria Silva',ativo:true})))
@@ -113,10 +133,46 @@ describe('USU-01/USU-02 — paginação e falhas de validação', () => {
     await interagir.click(screen.getByRole('button',{name:'Novo usuário'}))
     await interagir.type(screen.getByLabelText(/^NOME COMPLETO$/i),'Maria')
     await interagir.type(screen.getByLabelText(/^E-MAIL$/i),'maria@example.com')
-    await interagir.type(screen.getByLabelText(/^SENHA INICIAL$/i),'Senha123!')
     await interagir.click(screen.getByRole('button',{name:'Criar usuário'}))
     await waitFor(() => expect(screen.getAllByText('E-mail duplicado').length).toBe(2))
     expect(screen.getByRole('dialog')).toBeTruthy()
     expect((within(screen.getByRole('dialog')).getByRole('textbox', {name:/E-MAIL/i}) as HTMLInputElement).value).toBe('maria@example.com')
+  })
+})
+
+describe('USU-01/USU-08 — convite pendente', () => {
+  it('USU-01: mostra o selo e filtra pendentes separados dos ativos', async () => {
+    const interagir=montar([pessoa, convidada]); await screen.findByText('Maria')
+    expect(within(screen.getByText('Joana').closest('tr')!).getByText('Convite pendente')).toBeTruthy()
+    expect(within(screen.getByText('Maria').closest('tr')!).queryByText('Convite pendente')).toBeNull()
+    // "Status" também é o cabeçalho ordenável da tabela; o filtro é o botão fora dela.
+    await interagir.click(screen.getAllByRole('button',{name:'Status'}).find(botao => !botao.closest('table'))!)
+    await interagir.click(screen.getByRole('button',{name:'Pendentes'}))
+    expect(screen.getByText('Joana')).toBeTruthy()
+    expect(screen.queryByText('Maria')).toBeNull()
+    // Com o filtro ativo, o botão do dropdown mostra a opção escolhida.
+    await interagir.click(screen.getByRole('button',{name:'Pendentes'}))
+    await interagir.click(screen.getByRole('button',{name:'Ativos'}))
+    expect(screen.getByText('Maria')).toBeTruthy()
+    expect(screen.queryByText('Joana')).toBeNull()
+  })
+  it('USU-08: reenvia o convite só de quem está pendente', async () => {
+    const interagir=montar([pessoa, convidada]); await screen.findByText('Maria')
+    vi.mocked(usuariosApi.reenviarConvite).mockResolvedValue(true)
+    expect(screen.queryByRole('button',{name:'Reenviar convite para Maria'})).toBeNull()
+    await interagir.click(screen.getByRole('button',{name:'Reenviar convite para Joana'}))
+    await waitFor(() => expect(usuariosApi.reenviarConvite).toHaveBeenCalledWith('convidada'))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Convite reenviado para joana@example.com.'))
+  })
+  it('USU-08: avisa quando o reenvio não saiu', async () => {
+    const interagir=montar([convidada]); await screen.findByText('Joana')
+    vi.mocked(usuariosApi.reenviarConvite).mockResolvedValue(false)
+    await interagir.click(screen.getByRole('button',{name:'Reenviar convite para Joana'}))
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith('O convite não foi enviado. Tente novamente em instantes.'))
+  })
+  it('USU-08: desativado não tem reenvio', async () => {
+    montar([{...convidada, ativo:false}]); await screen.findByText('Joana')
+    expect(screen.queryByRole('button',{name:'Reenviar convite para Joana'})).toBeNull()
+    expect(within(screen.getByText('Joana').closest('tr')!).getByText('Inativo')).toBeTruthy()
   })
 })

@@ -6,8 +6,11 @@ import PaginaLogs from './features/logs/components/PaginaLogs'
 import PaginaMural from './features/murais/components/PaginaMural'
 import PaginaSetores from './features/setores/components/PaginaSetores'
 import PaginaUsuarios from './features/usuarios/components/PaginaUsuarios'
+import PaginaAtivarConta from './lib/auth/PaginaAtivarConta'
+import PaginaEsqueciSenha from './lib/auth/PaginaEsqueciSenha'
 import PaginaLogin from './lib/auth/PaginaLogin'
 import PaginaNaoAutorizado from './lib/auth/PaginaNaoAutorizado'
+import PaginaRedefinirSenha from './lib/auth/PaginaRedefinirSenha'
 import RotaProtegida from './lib/auth/RotaProtegida'
 import { PAPEIS_ADMINISTRACAO } from './lib/permissions'
 import PaginaConfiguracoes from './lib/preferencias/PaginaConfiguracoes'
@@ -18,6 +21,9 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/mural" replace />} />
       <Route path="/login" element={<PaginaLogin />} />
+      <Route path="/ativar-conta" element={<PaginaAtivarConta />} />
+      <Route path="/esqueci-senha" element={<PaginaEsqueciSenha />} />
+      <Route path="/redefinir-senha" element={<PaginaRedefinirSenha />} />
       <Route
         path="/nao-autorizado"
         element={

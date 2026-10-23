@@ -1,9 +1,13 @@
 import CabecalhoOrdenavel from '../../../shared/components/CabecalhoOrdenavel'
-import { IconeLapis, IconeLixeira } from '../../../shared/components/icones'
+import { IconeLapis, IconeLixeira, IconeReenviar } from '../../../shared/components/icones'
 import Botao from '../../../shared/components/Botao'
 import Skeleton from '../../../shared/components/Skeleton'
 import type { DirecaoOrdenacao } from '../../../shared/hooks/useOrdenacaoClique'
-import { ROTULOS_PAPEL, type ColunaUsuario, type UsuarioCadastro } from '../types'
+import { ROTULOS_PAPEL, ROTULOS_SITUACAO, situacaoDoUsuario, type ColunaUsuario, type SituacaoUsuario, type UsuarioCadastro } from '../types'
+
+const ESTILOS_SITUACAO: Record<SituacaoUsuario, string> = {
+  ativo: 'bg-green-50 text-green-700', pendente: 'bg-amber-50 text-amber-800', inativo: 'bg-slate-100 text-slate-500',
+}
 
 interface Propriedades {
   usuarios: UsuarioCadastro[]
@@ -15,6 +19,8 @@ interface Propriedades {
   edicaoDisponivel: boolean
   aoEditar: (usuario: UsuarioCadastro) => void
   aoExcluir: (usuario: UsuarioCadastro) => void
+  reenvioEmAndamento: boolean
+  aoReenviarConvite: (usuario: UsuarioCadastro) => void
 }
 
 const COLUNAS: { coluna: ColunaUsuario; titulo: string }[] = [
@@ -38,7 +44,7 @@ function LinhaSkeleton({ indice }: { indice: number }) {
   )
 }
 
-export default function TabelaUsuarios({ usuarios, isLoading, setores, ordenarPor, direcao, aoClicarColuna, edicaoDisponivel, aoEditar, aoExcluir }: Propriedades) {
+export default function TabelaUsuarios({ usuarios, isLoading, setores, ordenarPor, direcao, aoClicarColuna, edicaoDisponivel, aoEditar, aoExcluir, reenvioEmAndamento, aoReenviarConvite }: Propriedades) {
   return (
     <div className="surface overflow-x-auto">
       <table className="w-full text-left text-sm">
@@ -55,16 +61,17 @@ export default function TabelaUsuarios({ usuarios, isLoading, setores, ordenarPo
         </thead>
         <tbody className="divide-y divide-brand-100/50">
           {isLoading && Array.from({ length: LINHAS_SKELETON }, (_, indice) => <LinhaSkeleton key={indice} indice={indice} />)}
-          {!isLoading && usuarios.map(usuario => <tr key={usuario.id} className="tabela-linha">
+          {!isLoading && usuarios.map(usuario => { const situacao = situacaoDoUsuario(usuario); return <tr key={usuario.id} className="tabela-linha">
             <td className="px-4 py-3"><span className="font-medium text-slate-800">{usuario.nome}</span><span className="block text-xs text-slate-500">{usuario.email}</span></td>
             <td className="px-4 py-3 text-slate-600">{ROTULOS_PAPEL[usuario.role]}</td>
             <td className="px-4 py-3 text-slate-600">{usuario.setorId ? setores.get(usuario.setorId) ?? 'Setor indisponível' : 'Sem setor'}</td>
-            <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs ${usuario.ativo ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{usuario.ativo ? 'Ativo' : 'Inativo'}</span></td>
+            <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs whitespace-nowrap ${ESTILOS_SITUACAO[situacao]}`}>{ROTULOS_SITUACAO[situacao]}</span></td>
             <td className="px-4 py-3"><div className="flex gap-1">
+              {situacao === 'pendente' && <Botao variante="icone" disabled={reenvioEmAndamento} title="Reenviar convite" aria-label={`Reenviar convite para ${usuario.nome}`} onClick={() => aoReenviarConvite(usuario)}><IconeReenviar tamanho={18} /></Botao>}
               <Botao variante="icone" disabled={!edicaoDisponivel} title={edicaoDisponivel ? "Editar usuário" : "Aguarde o carregamento dos setores"} aria-label={`Editar ${usuario.nome}`} onClick={() => aoEditar(usuario)}><IconeLapis tamanho={18} /></Botao>
               <Botao variante="icone" title="Excluir (desativar) usuário" aria-label={`Excluir ${usuario.nome}`} disabled={!usuario.ativo} onClick={() => aoExcluir(usuario)}><IconeLixeira tamanho={18} /></Botao>
             </div></td>
-          </tr>)}
+          </tr> })}
           {!isLoading && !usuarios.length && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">Nenhum usuário encontrado com esses filtros.</td></tr>}
         </tbody>
       </table>
