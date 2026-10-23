@@ -38,7 +38,7 @@ class Configuracoes(BaseSettings):
     minio_bucket: str = "intranet"
     minio_seguro: bool = Field(default=False, validation_alias="MINIO_SECURE")
 
-    # Tem que bater com o client_max_body_size do frontend/nginx.conf.
+    # Tem que bater com o client_max_body_size do frontend/nginx.conf.template.
     tamanho_maximo_upload_mb: int = Field(default=50, validation_alias="MAX_UPLOAD_SIZE_MB")
 
     # E-mail (GER-22). "console" só escreve o e-mail no log; "resend" envia de verdade.

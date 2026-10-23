@@ -108,3 +108,19 @@ docker compose -f docker-compose.prod.yml exec backend python -m scripts.criar_s
 A chave do armazenamento precisa de `s3:ListBucket` no bucket e de `s3:GetObject`, `s3:PutObject` e `s3:DeleteObject` nos objetos. Se o bucket não existir, o backend tenta criá-lo ao subir, o que exige também `s3:CreateBucket`.
 
 A API não publica porta: o acesso é só pelo nginx do frontend, em `/api` (porta `FRONTEND_PORT`, padrão `80`). O TLS fica a cargo de um proxy na frente. O backend só fica `healthy`, e o frontend só sobe, quando o `GET /saude` responde com banco e armazenamento `ok`. Se travar, veja `docker compose -f docker-compose.prod.yml logs backend`.
+
+### Railway
+
+O Railway não usa o `docker-compose.prod.yml`: cada serviço sobe do próprio Dockerfile.
+
+**Backend** (Root Directory `backend`):
+
+- Custom Start Command vazio. O `CMD` do Dockerfile já roda as migrations e sobe a API na porta do `PORT`, ouvindo em IPv4 e IPv6, como a rede privada do Railway exige.
+- Healthcheck Path: `/saude`.
+- Variáveis: as do `.env.prod.example`, mais `PORT=8000`. Com o Postgres do Railway, use as referências `${{Postgres.PGHOST}}`, `${{Postgres.PGPORT}}`, `${{Postgres.PGDATABASE}}`, `${{Postgres.PGUSER}}` e `${{Postgres.PGPASSWORD}}` nas `POSTGRES_*`.
+
+**Frontend** (Root Directory `frontend`):
+
+- Start Command vazio.
+- Domínio público com target port `80`.
+- Variável `API_UPSTREAM=http://<nome-do-serviço-backend>.railway.internal:8000`. A porta tem que ser o `PORT` do backend. Sem essa variável, o nginx procura o backend em `http://backend:8000`, que é o endereço dentro do compose.

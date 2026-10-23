@@ -18,7 +18,9 @@ USER app
 EXPOSE 8000
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/saude')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8000}/saude')" || exit 1
 
-# Aplica as migrations pendentes antes de subir a API.
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"]
+# Aplica as migrations pendentes antes de subir a API. A porta vem do PORT, que o Railway define.
+# Com host vazio, o asyncio abre um socket IPv4 e outro IPv6. O "::" sozinho fica só em IPv6,
+# e a rede privada do Railway pode usar qualquer um dos dois.
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host '' --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
