@@ -9,6 +9,7 @@ import Select from '../../../shared/components/Select'
 import Textarea from '../../../shared/components/Textarea'
 import { IconeArquivoTexto, IconeClipe, IconeImagem, IconeX } from '../../../shared/components/icones'
 import type { Usuario } from '../../../lib/auth/tipos'
+import { canEscolherSetor } from '../../../lib/permissions'
 import { useSalvarAviso } from '../hooks/useSalvarAviso'
 import { formatarTamanhoArquivo } from '../formatadores'
 import { combinarDataHora, separarDataHora } from '../formatadoresCalendario'
@@ -69,7 +70,7 @@ interface PropriedadesModalAviso {
 function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesModalAviso) {
   const editando = !!avisoEditando
   // O backend não troca o setor de um aviso existente (AvisoAtualizar não tem setor_id).
-  const setorTravado = usuario?.role === 'admin_setor' || editando
+  const setorTravado = !canEscolherSetor(usuario) || editando
   const salvarAviso = useSalvarAviso()
   const inputArquivoRef = useRef<HTMLInputElement>(null)
   const inputImagemRef = useRef<HTMLInputElement>(null)

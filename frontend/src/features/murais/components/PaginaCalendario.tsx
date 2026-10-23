@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { podeEditar } from '../../../lib/permissions'
+import { canEditar } from '../../../lib/permissions'
 import { IconeAlerta } from '../../../shared/components/icones'
 import Skeleton from '../../../shared/components/Skeleton'
 import {
@@ -84,7 +84,7 @@ function PaginaCalendario() {
   }
 
   function podeGerenciarEsteAviso(aviso: Aviso) {
-    return usuario ? podeEditar(usuario, aviso) : false
+    return canEditar(usuario, aviso)
   }
 
   function periodoAnterior() {

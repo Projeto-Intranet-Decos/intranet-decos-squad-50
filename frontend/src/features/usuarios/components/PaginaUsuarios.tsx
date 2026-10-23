@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Navigate } from 'react-router-dom'
 import { IconeFunil, IconeLupa, IconeMais } from '../../../shared/components/icones'
 import { useAuth } from '../../../lib/auth/useAuth'
+import { canAcessarAdministracao } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import Dropdown from '../../../shared/components/Dropdown'
 import Modal from '../../../shared/components/Modal'
@@ -33,7 +34,7 @@ function compararUsuarios(a: UsuarioCadastro, b: UsuarioCadastro, coluna: Coluna
 
 export default function PaginaUsuarios() {
   const { usuario } = useAuth()
-  const permitido = usuario?.role === 'superadmin'
+  const permitido = canAcessarAdministracao(usuario)
   const consulta = useUsuarios(usuario?.id, permitido)
   const setores = useQuery({ queryKey: ['setores-usuarios'], queryFn: listarSetores, enabled: permitido })
   const excluir = useExcluirUsuario()
