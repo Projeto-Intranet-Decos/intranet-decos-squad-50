@@ -7,7 +7,7 @@ Monorepo com `backend/` (FastAPI) e `frontend/` (React + TypeScript). Glossário
 - [`docs/specs/`](./docs/specs/README.md) — requisitos por domínio (IDs `GER`, `AUT`, `USU`, `SET`, `MUR`, `CAL`, `DOC`, `DUV`, `LOG`, `ATA`), com origem, status e critérios de aceite. Fonte do **que** o sistema faz.
 - [`docs/arquitetura-backend.md`](./docs/arquitetura-backend.md) — stack (FastAPI, SQLAlchemy+Pydantic separados, Postgres, Alembic, MinIO, JWT, pwdlib), organização de módulos, RBAC (dependency vs service), logs.
 - [`docs/arquitetura-frontend.md`](./docs/arquitetura-frontend.md) — stack (React+TS, Tailwind, Axios, TanStack Query, React Hook Form, Sonner), estrutura por feature, RBAC no frontend (UX apenas, nunca fonte de verdade), padrão de erro do backend.
-- [`docs/convencao-branches-commits.md`](./docs/convencao-branches-commits.md) — branches (`feature/<camada>/<modulo>/<descricao>`), Conventional Commits, fluxo `dev → homolog → main`.
+- [`docs/convencao-branches-commits.md`](./docs/convencao-branches-commits.md) — branches (`feature/<camada>/<modulo>/<descricao>`), Conventional Commits, fluxo `feature → main → homolog` (`homolog` é produção).
 
 ## Regras rápidas
 

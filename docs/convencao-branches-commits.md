@@ -3,15 +3,14 @@
 ## Contexto
 
 - Monorepo: frontend e backend no mesmo repositório.
-- Ambientes: `main` (produção) e `homolog` (homologação/staging).
+- Ambientes: `homolog` (produção) e `main` (integração do time).
 - Gestão de tarefas: Trello, sem IDs de card referenciados por enquanto (ver seção "Próximos passos").
 
 ## Branches
 
 ```
-main         # produção
-homolog      # staging/homologação, validação do hospital
-dev          # integração contínua do time
+homolog      # produção — só recebe releases vindas da main
+main         # integração contínua do time, destino dos PRs
 feature/<camada>/<modulo>/<descricao-curta>
 fix/<camada>/<modulo>/<descricao-curta>
 chore/<camada-ou-geral>/<descricao-curta>
@@ -33,10 +32,11 @@ chore/geral/configura-ci
 
 ### Fluxo
 
-1. `feature/*` e `fix/*` nascem a partir de `dev`.
-2. PR de volta para `dev` — é onde o time integra o trabalho continuamente, pode ter código instável.
-3. Quando um conjunto de features está estável, `dev` é promovida para `homolog`, para validação do hospital.
-4. Validado em `homolog`, é promovida para `main` via PR/release.
+1. `feature/*`, `fix/*` e `chore/*` nascem a partir de `main`.
+2. PR de volta para `main` — é onde o time integra o trabalho continuamente.
+3. Quando um conjunto de features está estável e validado, `main` é promovida para `homolog` (produção) por PR de release, com merge commit (sem squash) intitulado `Release <versão> — <descrição>` (ex: `Release 0.1 — MVP`).
+
+A `dev` foi descontinuada a partir da release 0.1; PRs abertos contra ela devem ser redirecionados para `main`.
 
 ### Tarefas que mexem em frontend e backend ao mesmo tempo
 
