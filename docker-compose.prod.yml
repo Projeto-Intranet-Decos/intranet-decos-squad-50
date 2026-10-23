@@ -1,0 +1,18 @@
+# Deploy com um S3 externo (AWS S3, Cloudflare R2, DigitalOcean Spaces...) no lugar do MinIO local.
+# Uso: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+services:
+  # O profile tira o MinIO local da subida; ele só sobe com --profile minio-local.
+  armazenamento:
+    profiles: [minio-local]
+
+  backend:
+    environment:
+      # Só o host (ex: s3.sa-east-1.amazonaws.com), sem https:// e sem o bucket.
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:?defina MINIO_ENDPOINT no .env}
+      MINIO_USER: ${MINIO_USER:?defina MINIO_USER (Access Key ID) no .env}
+      MINIO_PASSWORD: ${MINIO_PASSWORD:?defina MINIO_PASSWORD (Secret Access Key) no .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:?defina MINIO_BUCKET no .env}
+      MINIO_SECURE: ${MINIO_SECURE:-true}
+    depends_on: !override
+      banco:
+        condition: service_healthy
