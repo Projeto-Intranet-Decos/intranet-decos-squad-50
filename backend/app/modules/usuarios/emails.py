@@ -1,9 +1,8 @@
 """Textos dos e-mails do módulo de usuários (o envio é do core/correio.py, GER-19)."""
 
-from html import escape
-
 from app.core.config import configuracoes
 from app.core.correio import Email
+from app.core.modelo_email import html_com_botao
 from app.modules.usuarios.models import Usuario
 
 
@@ -20,13 +19,18 @@ def convite(usuario: Usuario, token: str) -> Email:
     f"O link vale por {validade} e só pode ser usado uma vez. Se você não esperava este "
     "convite, ignore este e-mail.\n"
   )
-  html = (
-    f"<p>Olá, {escape(usuario.nome)}!</p>"
-    "<p>Você recebeu um convite para acessar a Intranet do Hospital. Para ativar sua conta, "
-    "crie sua senha e confira seus dados:</p>"
-    f'<p><a href="{escape(link)}">Ativar minha conta</a></p>'
-    f"<p>O link vale por {validade} e só pode ser usado uma vez. Se você não esperava este "
-    "convite, ignore este e-mail.</p>"
+  html = html_com_botao(
+    titulo="Ative sua conta",
+    resumo="Crie sua senha para acessar a Intranet do Hospital.",
+    paragrafos=[
+      f"Olá, {usuario.nome}!",
+      "Você recebeu um convite para acessar a Intranet do Hospital. Para ativar sua conta, "
+      "crie sua senha e confira seus dados.",
+    ],
+    botao="Ativar minha conta",
+    link=link,
+    observacao=f"O link vale por {validade} e só pode ser usado uma vez. Se você não esperava "
+    "este convite, ignore este e-mail.",
   )
   return Email(
     para=usuario.email,

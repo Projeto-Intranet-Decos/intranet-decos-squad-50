@@ -38,6 +38,7 @@ backend/
       config.py           # env vars, settings
       armazenamento.py     # cliente MinIO compartilhado entre os módulos
       correio.py           # envio de e-mail (Resend, console ou falso nos testes)
+      modelo_email.py      # layout HTML comum dos e-mails
       security.py          # hash de senha, criação/validação de JWT
       permissions.py        # lógica de RBAC + escopo por setor
       database.py            # engine, sessão do SQLAlchemy
@@ -203,7 +204,9 @@ no service daquele módulo, não numa segunda implementação de `usuario_atual`
 `core/correio.py` expõe uma função sem domínio, `enviar_email(Email(para, assunto, texto, html))`,
 e o provedor é escolhido por `EMAIL_PROVIDER` (GER-19): `resend` (API HTTP do Resend),
 `console` (padrão em dev, escreve o e-mail no log) e, nos testes, um falso em memória. Os textos de
-cada e-mail ficam no módulo dono (o convite em `usuarios`, a redefinição em `autenticacao`).
+cada e-mail ficam no módulo dono (o convite em `usuarios`, a redefinição em `autenticacao`), e o
+HTML sai do layout comum de `core/modelo_email.py` (`html_com_botao`), que recebe texto puro e faz
+o escape.
 
 Banco e provedor de e-mail não compartilham transação, então vale a mesma lógica da ordem
 Postgres/MinIO: **commit → envio**. Falha no envio não desfaz a gravação; vira `logger.warning` e,

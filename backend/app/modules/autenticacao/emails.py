@@ -1,9 +1,8 @@
 """Textos dos e-mails do módulo de autenticação (o envio é do core/correio.py, GER-19)."""
 
-from html import escape
-
 from app.core.config import configuracoes
 from app.core.correio import Email
+from app.core.modelo_email import html_com_botao
 from app.modules.usuarios.models import Usuario
 
 
@@ -20,12 +19,17 @@ def redefinicao_senha(usuario: Usuario, token: str) -> Email:
     f"O link vale por {validade} e só pode ser usado uma vez. Se você não pediu, ignore este "
     "e-mail: a sua senha atual continua valendo.\n"
   )
-  html = (
-    f"<p>Olá, {escape(usuario.nome)}!</p>"
-    "<p>Recebemos um pedido para redefinir a sua senha da Intranet do Hospital.</p>"
-    f'<p><a href="{escape(link)}">Criar uma senha nova</a></p>'
-    f"<p>O link vale por {validade} e só pode ser usado uma vez. Se você não pediu, ignore este "
-    "e-mail: a sua senha atual continua valendo.</p>"
+  html = html_com_botao(
+    titulo="Redefinição de senha",
+    resumo="Use o link para criar uma senha nova na Intranet do Hospital.",
+    paragrafos=[
+      f"Olá, {usuario.nome}!",
+      "Recebemos um pedido para redefinir a sua senha da Intranet do Hospital.",
+    ],
+    botao="Criar uma senha nova",
+    link=link,
+    observacao=f"O link vale por {validade} e só pode ser usado uma vez. Se você não pediu, "
+    "ignore este e-mail: a sua senha atual continua valendo.",
   )
   return Email(
     para=usuario.email,

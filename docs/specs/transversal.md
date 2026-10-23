@@ -367,6 +367,11 @@ Critérios:
 
 - Todo e-mail tem versão HTML e texto puro, remetente `EMAIL_FROM`, e os links são montados a
   partir de `FRONTEND_URL`.
+- O HTML usa o layout comum (`core/modelo_email.py`), com a identidade da tela de login: faixa
+  bordeaux com "Hospital Decós", cartão branco com título, botão bordeaux para o link, o mesmo
+  link por extenso para quem não consegue clicar, e o rodapé "Uso restrito a colaboradores".
+  Estilos inline em tabelas, sem `<style>` nem imagem externa, para Gmail e Outlook mostrarem
+  igual. Texto vindo do banco (ex: o nome) é escapado.
 - **Dado** uma ação que grava no banco e envia e-mail, **então** o envio só acontece depois do
   commit.
 - **Dado** `EMAIL_PROVIDER=resend`, **então** o e-mail sai num `POST` JSON para a API do Resend,
