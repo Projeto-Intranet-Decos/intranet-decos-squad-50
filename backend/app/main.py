@@ -32,11 +32,16 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:
-    # A API sobe mesmo com o MinIO fora; o /saude denuncia a indisponibilidade.
+    # A API sobe mesmo com o armazenamento fora; o /saude denuncia a indisponibilidade.
     try:
         garantir_bucket()
     except ErroArmazenamento:
-        logger.warning("Não foi possível garantir o bucket do MinIO", exc_info=True)
+        logger.warning(
+            "Não foi possível garantir o bucket %s em %s",
+            configuracoes.armazenamento_bucket,
+            configuracoes.armazenamento_url,
+            exc_info=True,
+        )
     avisar_se_nao_envia()
     yield
 

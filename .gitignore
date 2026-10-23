@@ -1,7 +1,6 @@
 .env
 .env.*
 !.env.example
-!.env.prod.example
 
 backend/__pycache__/
 backend/**/__pycache__/

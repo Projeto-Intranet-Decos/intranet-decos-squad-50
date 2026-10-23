@@ -38,4 +38,4 @@ Nomes de arquivos, componentes, funções, variáveis, classes e rotas em **port
 
 Exceção: identificadores fixos de bibliotecas/frameworks continuam em inglês, porque não são nossos — imports, hooks (`useState`, `useQuery`), tipos e classes de lib (`QueryClient`, `Route`), nomes de arquivo de convenção da ferramenta (`main.tsx`, `vite.config.ts`). A regra é sobre o que a gente nomeia, não sobre a API externa que a gente consome.
 
-Outra exceção: variáveis de ambiente têm nome em **inglês** (`MINIO_PASSWORD`, `EMAIL_PROVIDER`, `INVITE_HOURS`). Os campos de `core/config.py` continuam em português e leem a variável por `validation_alias`.
+Outra exceção: variáveis de ambiente têm nome em **inglês** (`AWS_SECRET_ACCESS_KEY`, `EMAIL_PROVIDER`, `INVITE_HOURS`). Os campos de `core/config.py` continuam em português e leem a variável por `validation_alias`.

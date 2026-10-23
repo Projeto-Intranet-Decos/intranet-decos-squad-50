@@ -11,7 +11,7 @@ server {
     # (o frontend confere antes de enviar). Tem que bater com MAX_UPLOAD_SIZE_MB do backend.
     client_max_body_size 50m;
 
-    # As variáveis de ambiente API_UPSTREAM e NGINX_LOCAL_RESOLVERS são preenchidas pela imagem do
+    # As variáveis de ambiente API_URL e NGINX_LOCAL_RESOLVERS são preenchidas pela imagem do
     # nginx ao subir (ver Dockerfile). Com o endereço numa variável, o nginx resolve o nome a cada 10 s em vez
     # de só na partida, então continua achando o backend depois de ele ser recriado com outro IP.
     resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
@@ -19,7 +19,7 @@ server {
     # O frontend chama a API em /api (ver src/lib/api.ts); o prefixo é removido
     # antes de repassar ao backend, que expõe as rotas sem ele.
     location /api/ {
-        set $api ${API_UPSTREAM};
+        set $api ${API_URL};
         rewrite ^/api/(.*)$ /$1 break;
         proxy_pass $api;
         proxy_set_header Host $host;

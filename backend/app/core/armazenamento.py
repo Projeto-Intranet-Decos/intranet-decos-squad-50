@@ -1,4 +1,4 @@
-"""Cliente MinIO compartilhado entre os módulos.
+"""Cliente S3 (SDK do MinIO) compartilhado entre os módulos.
 
 Não sabe nada de domínio: quem chama monta a chave completa do objeto (ex: o layout de
 `app/modules/documentos/storage.py`). Todos os módulos usam o mesmo bucket, separados por
@@ -15,7 +15,7 @@ from minio.commonconfig import CopySource
 from minio.error import MinioException, S3Error
 from urllib3.exceptions import HTTPError
 
-from app.core.config import configuracoes
+from app.core.config import Configuracoes, configuracoes
 
 logger = logging.getLogger(__name__)
 
@@ -25,21 +25,32 @@ T = TypeVar("T")
 
 
 class ErroArmazenamento(Exception):
-    """MinIO fora do ar ou recusou a operação. Vira 503 em core/erros.py."""
+    """Armazenamento fora do ar ou recusou a operação. Vira 503 em core/erros.py."""
 
 
 class ArquivoNaoEncontrado(ErroArmazenamento):
     """O objeto não existe no bucket. Vira 404 em core/erros.py."""
 
 
+def criar_cliente(config: Configuracoes) -> Minio:
+    cliente = Minio(
+        config.armazenamento_endpoint,
+        access_key=config.armazenamento_chave,
+        secret_key=config.armazenamento_segredo,
+        secure=config.armazenamento_seguro,
+        region=config.armazenamento_regiao,
+    )
+    # Por conta própria, o SDK só usa virtual-hosted com a AWS.
+    if config.armazenamento_usa_path_style:
+        cliente.disable_virtual_style_endpoint()
+    else:
+        cliente.enable_virtual_style_endpoint()
+    return cliente
+
+
 @lru_cache
 def obter_cliente() -> Minio:
-    return Minio(
-        configuracoes.minio_endpoint,
-        access_key=configuracoes.minio_usuario,
-        secret_key=configuracoes.minio_senha,
-        secure=configuracoes.minio_seguro,
-    )
+    return criar_cliente(configuracoes)
 
 
 def _executar(operacao: Callable[[], T]) -> T:
@@ -55,14 +66,14 @@ def _executar(operacao: Callable[[], T]) -> T:
 
 def garantir_bucket() -> None:
     cliente = obter_cliente()
-    bucket = configuracoes.minio_bucket
+    bucket = configuracoes.armazenamento_bucket
     if not _executar(lambda: cliente.bucket_exists(bucket)):
         _executar(lambda: cliente.make_bucket(bucket))
 
 
 def armazenamento_disponivel() -> bool:
     try:
-        return _executar(lambda: obter_cliente().bucket_exists(configuracoes.minio_bucket))
+        return _executar(lambda: obter_cliente().bucket_exists(configuracoes.armazenamento_bucket))
     except ErroArmazenamento:
         return False
 
@@ -70,7 +81,7 @@ def armazenamento_disponivel() -> bool:
 def enviar_arquivo(chave: str, conteudo: BinaryIO, tamanho: int, tipo_conteudo: str) -> None:
     _executar(
         lambda: obter_cliente().put_object(
-            configuracoes.minio_bucket,
+            configuracoes.armazenamento_bucket,
             chave,
             conteudo,
             length=tamanho,
@@ -81,7 +92,7 @@ def enviar_arquivo(chave: str, conteudo: BinaryIO, tamanho: int, tipo_conteudo: 
 
 def ler_arquivo(chave: str) -> Iterator[bytes]:
     """Abre o objeto já aqui, para 404/503 saírem antes de a resposta começar a ser enviada."""
-    resposta = _executar(lambda: obter_cliente().get_object(configuracoes.minio_bucket, chave))
+    resposta = _executar(lambda: obter_cliente().get_object(configuracoes.armazenamento_bucket, chave))
 
     def blocos() -> Iterator[bytes]:
         try:
@@ -94,7 +105,7 @@ def ler_arquivo(chave: str) -> Iterator[bytes]:
 
 
 def mover_arquivo(origem: str, destino: str) -> None:
-    bucket = configuracoes.minio_bucket
+    bucket = configuracoes.armazenamento_bucket
     _executar(lambda: obter_cliente().copy_object(bucket, destino, CopySource(bucket, origem)))
     remover_arquivo(origem)
 
@@ -102,6 +113,6 @@ def mover_arquivo(origem: str, destino: str) -> None:
 def remover_arquivo(chave: str) -> None:
     """Tolerante a falha: é sempre chamado depois do commit, então no pior caso sobra um órfão."""
     try:
-        _executar(lambda: obter_cliente().remove_object(configuracoes.minio_bucket, chave))
+        _executar(lambda: obter_cliente().remove_object(configuracoes.armazenamento_bucket, chave))
     except ErroArmazenamento:
         logger.warning("Objeto órfão no armazenamento: %s", chave, exc_info=True)
