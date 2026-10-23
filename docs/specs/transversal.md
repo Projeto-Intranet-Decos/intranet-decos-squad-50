@@ -168,8 +168,9 @@ mas a API é a fonte de verdade: qualquer chamada direta continua sujeita a GER-
 ### GER-13 — Infraestrutura
 Origem: [ESP] [COD] · Back ✅ · Front ✅ · Teste ✅
 
-Ambiente reproduzível via `docker-compose` (Postgres, MinIO, backend, frontend com nginx). O nginx
-remove o prefixo `/api` e repassa ao backend.
+Ambiente de desenvolvimento reproduzível via `docker-compose` (Postgres, MinIO, backend, frontend
+com nginx). Em produção, o backend e o frontend sobem no Railway, cada um do próprio Dockerfile,
+com Postgres e armazenamento à parte. O nginx remove o prefixo `/api` e repassa ao backend.
 
 - A API monta a conexão com o Postgres a partir de `POSTGRES_HOST`, `POSTGRES_PORT`,
   `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD` — não existe `DATABASE_URL`. No compose, host
@@ -178,14 +179,29 @@ remove o prefixo `/api` e repassa ao backend.
 - Senha com caracteres especiais (`@ : / # %`) funciona: cada parte é escapada ao montar a URL.
 - O backend lê o `.env` da raiz (o mesmo do compose) e, por cima, o `backend/.env`, que é
   opcional; variável de ambiente vence os dois.
-- Em produção só existe o `.env` da raiz: o container do backend recebe as credenciais em tempo de
-  execução pelo `environment` do compose, e nenhum `.env` entra na imagem. O `backend/.env` é só
+- Nenhum `.env` entra na imagem: o container recebe as credenciais em tempo de execução, pelo
+  `environment` do compose em dev e pelas variáveis do serviço no Railway. O `backend/.env` é só
   para desenvolvimento.
-- As variáveis de ambiente têm nome em inglês (`MINIO_PASSWORD`, `EMAIL_PROVIDER`, `INVITE_HOURS`…),
-  no `.env`, no compose e no código. Os campos da configuração no Python continuam em português e
-  leem a variável pelo nome em inglês.
-- Segredos (senhas do banco e do MinIO, `JWT_SECRET`, `RESEND_API_KEY`) nunca aparecem na representação
-  da configuração, que vai parar em tracebacks e erros de validação.
+- O backend ouve na porta do `PORT` (padrão `8000`), em IPv4 e IPv6: a rede privada do Railway
+  pode usar qualquer um dos dois. O nginx acha o backend em `API_URL` (padrão
+  `http://backend:8000`, o do compose) e resolve o nome de novo a cada 10 s, então segue funcionando
+  quando o backend é recriado com outro IP.
+- As variáveis de ambiente têm nome em inglês (`AWS_SECRET_ACCESS_KEY`, `EMAIL_PROVIDER`,
+  `INVITE_HOURS`…), no `.env`, no compose e no código. Os campos da configuração no Python continuam
+  em português e leem a variável pelo nome em inglês.
+- O armazenamento é qualquer serviço compatível com S3 (o MinIO do compose, AWS S3, Railway
+  Buckets…) e lê as variáveis no padrão da AWS, que são as que esses provedores injetam:
+  `AWS_ENDPOINT_URL`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME` (padrão
+  `intranet`) e `AWS_DEFAULT_REGION` (opcional; `auto` no Railway).
+  - `AWS_ENDPOINT_URL` é uma URL completa (`https://t3.storageapi.dev`, `http://localhost:9000`):
+    o esquema decide se a conexão usa TLS. Sem `http://`/`https://`, ou com caminho depois do host,
+    a configuração é recusada e a API não sobe.
+  - Endereçamento: virtual-hosted (`<bucket>.<host>`) por padrão, que é o que o Railway Buckets e a
+    AWS usam; path style (`<host>/<bucket>`) quando o host é `localhost`, um IP ou um nome sem ponto
+    (serviço do compose). `AWS_S3_FORCE_PATH_STYLE=true` ou `false` força um dos dois (ex: MinIO
+    próprio atrás de um domínio, que só aceita path style).
+- Segredos (senha do banco, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, `RESEND_API_KEY`) nunca aparecem na
+  representação da configuração, que vai parar em tracebacks e erros de validação.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
 

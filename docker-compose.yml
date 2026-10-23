@@ -50,10 +50,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       ACCESS_TOKEN_MINUTES: ${ACCESS_TOKEN_MINUTES:-30}
       REFRESH_TOKEN_DAYS: ${REFRESH_TOKEN_DAYS:-7}
-      MINIO_ENDPOINT: armazenamento:9000
-      MINIO_USER: ${MINIO_ROOT_USER:-intranet}
-      MINIO_PASSWORD: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
-      MINIO_BUCKET: ${MINIO_BUCKET:-intranet}
+      AWS_ENDPOINT_URL: http://armazenamento:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-intranet}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-intranet}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
       EMAIL_FROM: ${EMAIL_FROM:-Intranet <nao-responda@localhost>}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}

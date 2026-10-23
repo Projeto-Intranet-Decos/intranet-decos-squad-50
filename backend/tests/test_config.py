@@ -1,18 +1,26 @@
 """GER-13 — conexão com o banco montada a partir das variáveis POSTGRES_*."""
 
+from urllib.parse import urlsplit
+
 import pytest
+from pydantic import ValidationError
 from sqlalchemy.engine import make_url
 
 from app.core import config
+from app.core.armazenamento import criar_cliente
 from app.core.config import Configuracoes
 
 VARIAVEIS_DO_BANCO = ["POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"]
+# As chaves de acesso ficam: o conftest garante um valor para elas.
+VARIAVEIS_DO_ARMAZENAMENTO = [
+    "AWS_ENDPOINT_URL", "AWS_S3_BUCKET_NAME", "AWS_DEFAULT_REGION", "AWS_S3_FORCE_PATH_STYLE",
+]
 
 
 @pytest.fixture(autouse=True)
 def sem_variaveis_do_banco_no_ambiente(monkeypatch: pytest.MonkeyPatch) -> None:
     # Variável de ambiente vence os arquivos: o shell de quem roda os testes não pode interferir.
-    for nome in VARIAVEIS_DO_BANCO:
+    for nome in VARIAVEIS_DO_BANCO + VARIAVEIS_DO_ARMAZENAMENTO:
         monkeypatch.delenv(nome, raising=False)
 
 
@@ -80,12 +88,12 @@ def test_ger13_segredos_nao_aparecem_na_representacao():
         _env_file=None,
         postgres_password="senha-do-banco",
         jwt_secret="segredo-jwt",
-        minio_senha="senha-do-minio",
+        armazenamento_segredo="segredo-do-s3",
         resend_chave_api="re_chave-resend",
     )
 
     representacao = repr(configuracoes) + str(configuracoes)
-    for segredo in ("senha-do-banco", "segredo-jwt", "senha-do-minio", "re_chave-resend"):
+    for segredo in ("senha-do-banco", "segredo-jwt", "segredo-do-s3", "re_chave-resend"):
         assert segredo not in representacao
 
 
@@ -95,11 +103,12 @@ def test_ger13_segredos_nao_aparecem_na_representacao():
         ("ACCESS_TOKEN_MINUTES", "15", "access_token_minutos", 15),
         ("REFRESH_TOKEN_DAYS", "3", "refresh_token_dias", 3),
         ("CORS_ORIGINS", '["http://localhost:5173"]', "origens_cors", ["http://localhost:5173"]),
-        ("MINIO_ENDPOINT", "minio:9000", "minio_endpoint", "minio:9000"),
-        ("MINIO_USER", "usuario", "minio_usuario", "usuario"),
-        ("MINIO_PASSWORD", "senha", "minio_senha", "senha"),
-        ("MINIO_BUCKET", "balde", "minio_bucket", "balde"),
-        ("MINIO_SECURE", "true", "minio_seguro", True),
+        ("AWS_ENDPOINT_URL", "https://t3.storageapi.dev", "armazenamento_url", "https://t3.storageapi.dev"),
+        ("AWS_ACCESS_KEY_ID", "chave", "armazenamento_chave", "chave"),
+        ("AWS_SECRET_ACCESS_KEY", "segredo", "armazenamento_segredo", "segredo"),
+        ("AWS_S3_BUCKET_NAME", "balde", "armazenamento_bucket", "balde"),
+        ("AWS_DEFAULT_REGION", "auto", "armazenamento_regiao", "auto"),
+        ("AWS_S3_FORCE_PATH_STYLE", "true", "armazenamento_path_style", True),
         ("MAX_UPLOAD_SIZE_MB", "20", "tamanho_maximo_upload_mb", 20),
         ("EMAIL_FROM", "Intranet <a@b.com>", "email_remetente", "Intranet <a@b.com>"),
         ("FRONTEND_URL", "http://intranet", "url_frontend", "http://intranet"),
@@ -121,3 +130,95 @@ def test_ger13_provedor_de_email_vem_de_email_provider(monkeypatch: pytest.Monke
     monkeypatch.setenv("RESEND_API_KEY", "re_chave")
 
     assert Configuracoes(_env_file=None, postgres_password="x").email_provedor == "resend"
+
+
+def _armazenamento(**campos: object) -> Configuracoes:
+    return Configuracoes(_env_file=None, postgres_password="x", **campos)
+
+
+def test_ger13_armazenamento_padrao_e_o_minio_local():
+    configuracoes = _armazenamento()
+
+    assert (configuracoes.armazenamento_endpoint, configuracoes.armazenamento_seguro) == (
+        "localhost:9000", False,
+    )
+    assert configuracoes.armazenamento_bucket == "intranet"
+    assert configuracoes.armazenamento_regiao is None
+
+
+@pytest.mark.parametrize(
+    ("url", "endpoint", "seguro"),
+    [
+        ("https://t3.storageapi.dev", "t3.storageapi.dev", True),
+        ("https://t3.storageapi.dev/", "t3.storageapi.dev", True),
+        ("http://armazenamento:9000", "armazenamento:9000", False),
+        ("https://minio.hospital.com.br:9443", "minio.hospital.com.br:9443", True),
+    ],
+)
+def test_ger13_endpoint_e_tls_vem_da_url(url: str, endpoint: str, seguro: bool):
+    configuracoes = _armazenamento(armazenamento_url=url)
+
+    assert (configuracoes.armazenamento_endpoint, configuracoes.armazenamento_seguro) == (endpoint, seguro)
+
+
+@pytest.mark.parametrize(
+    "url", ["t3.storageapi.dev", "localhost:9000", "ftp://t3.storageapi.dev", "https://t3.storageapi.dev/balde"]
+)
+def test_ger13_endpoint_sem_esquema_ou_com_caminho_e_recusado(url: str):
+    with pytest.raises(ValidationError, match="AWS_ENDPOINT_URL"):
+        _armazenamento(armazenamento_url=url)
+
+
+def test_ger13_regiao_vazia_vale_como_ausente(monkeypatch: pytest.MonkeyPatch):
+    # O compose repassa ${AWS_DEFAULT_REGION:-}, que chega como texto vazio.
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "")
+    monkeypatch.setenv("AWS_S3_FORCE_PATH_STYLE", "")
+
+    configuracoes = _armazenamento()
+
+    assert configuracoes.armazenamento_regiao is None
+    assert configuracoes.armazenamento_path_style is None
+
+
+@pytest.mark.parametrize(
+    ("url", "forcar", "path_style"),
+    [
+        ("http://localhost:9000", None, True),
+        ("http://127.0.0.1:9000", None, True),
+        ("http://[::1]:9000", None, True),
+        ("http://armazenamento:9000", None, True),
+        ("https://t3.storageapi.dev", None, False),
+        ("https://s3.sa-east-1.amazonaws.com", None, False),
+        ("https://minio.hospital.com.br", True, True),
+        ("http://localhost:9000", False, False),
+    ],
+)
+def test_ger13_path_style_so_para_host_local_salvo_se_forcado(url: str, forcar: bool | None, path_style: bool):
+    configuracoes = _armazenamento(armazenamento_url=url, armazenamento_path_style=forcar)
+
+    assert configuracoes.armazenamento_usa_path_style is path_style
+
+
+@pytest.mark.parametrize(
+    ("url", "regiao", "forcar", "host_esperado", "caminho_esperado"),
+    [
+        ("https://t3.storageapi.dev", "auto", None, "balde.t3.storageapi.dev", "/x.pdf"),
+        ("http://armazenamento:9000", "us-east-1", None, "armazenamento:9000", "/balde/x.pdf"),
+        ("https://minio.hospital.com.br", "us-east-1", True, "minio.hospital.com.br", "/balde/x.pdf"),
+        ("https://s3.sa-east-1.amazonaws.com", "sa-east-1", None, "balde.s3.sa-east-1.amazonaws.com", "/x.pdf"),
+        ("https://s3.sa-east-1.amazonaws.com", "sa-east-1", True, "s3.sa-east-1.amazonaws.com", "/balde/x.pdf"),
+    ],
+)
+def test_ger13_cliente_monta_a_url_no_estilo_e_esquema_certos(
+    url: str, regiao: str, forcar: bool | None, host_esperado: str, caminho_esperado: str
+):
+    # Com a região definida, a URL assinada sai sem chamada de rede.
+    configuracoes = _armazenamento(
+        armazenamento_url=url, armazenamento_regiao=regiao, armazenamento_path_style=forcar
+    )
+
+    assinada = urlsplit(criar_cliente(configuracoes).presigned_get_object("balde", "x.pdf"))
+
+    assert (assinada.scheme, assinada.netloc, assinada.path) == (
+        urlsplit(url).scheme, host_esperado, caminho_esperado,
+    )
