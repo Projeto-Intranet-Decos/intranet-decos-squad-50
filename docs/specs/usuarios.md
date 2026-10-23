@@ -120,8 +120,9 @@ moram em `/auth` (módulo `autenticacao`).
 - **Dado** e-mail inexistente, de usuário desativado ou de usuário pendente, **então** nada é
   enviado (o pendente precisa de um novo convite, USU-08).
 - **Dado** que o envio falha, **então** a resposta é a mesma; a falha fica só no log técnico.
-- O e-mail sai depois da resposta (tarefa em segundo plano): o tempo de resposta não pode revelar se
-  a conta existe.
+- 🐞 A busca da conta, a geração do link e o envio do e-mail acontecem depois da resposta (tarefa
+  em segundo plano, com sessão de banco própria): o tempo de resposta não pode revelar se a conta
+  existe, então a requisição não toca o banco antes de responder.
 - O e-mail traz o nome, o link para `/redefinir-senha` com a validade, e avisa que, se a pessoa não
   pediu, pode ignorar — a senha atual continua valendo.
 - ❓ Limitar pedidos por e-mail/IP (ex: um a cada 5 minutos) — hoje a aplicação não tem rate limit.
@@ -147,6 +148,9 @@ moram em `/auth` (módulo `autenticacao`).
 - **Dado** `senha_atual` errada, **então** `400 {"campo": "senha_atual", "mensagem": "Senha atual
   incorreta"}` e nada muda.
 - **Dado** `senha_nova` curta, **então** `422` com o campo.
+- 🐞 **Dado** um link de redefinição pendente, **quando** a senha é trocada (logado ou por outro
+  link), **então** o link deixa de valer (AUT-08) — quem pediu o link antes da troca não redefine
+  a senha nova.
 - **Dado** um usuário desativado depois do login (access token ainda válido), **então** `401` e nada
   muda.
 
@@ -170,6 +174,9 @@ envia para o e-mail atual do usuário.
   chega e o link anterior deixa de valer.
 - **Dado** que o envio falha (GER-22), **então** `200 {"email_enviado": false}` e o link anterior
   continua invalidado.
+- 🐞 **Dado** um reenvio bem-sucedido (mesmo com `email_enviado: false`), **então** grava um
+  registro de auditoria (LOG-02): `editar` no módulo `usuarios`, resumo `Convite reenviado:
+  {email}`.
 - **Dado** um usuário que já ativou a conta, **então** `409 {"mensagem": "Usuário já ativou a
   conta"}`.
 - **Dado** um usuário desativado, **então** `409 {"mensagem": "Usuário desativado"}` — reative

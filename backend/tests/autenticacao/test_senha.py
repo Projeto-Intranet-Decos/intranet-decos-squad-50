@@ -6,6 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+import app.main
+from app.core.database import obter_sessao
 from app.core.security import hash_token
 from app.modules.autenticacao.models import FinalidadeToken, TokenUsoUnico
 from app.modules.setores.models import Setor
@@ -100,6 +102,23 @@ def test_usu07_falha_no_envio_nao_muda_a_resposta(
     assert resposta.json() == MENSAGEM_NEUTRA
 
 
+def test_usu07_pedido_nao_toca_o_banco_antes_de_responder(
+    cliente: TestClient, correio_falso: CorreioFalso, colaborador: Usuario
+):
+    # Sem consulta na requisição, o tempo de resposta não depende de a conta existir.
+    def sessao_da_requisicao():
+        pytest.fail("O pedido usou a sessão da requisição: a conta é procurada antes da resposta")
+
+    app.main.app.dependency_overrides[obter_sessao] = sessao_da_requisicao
+
+    resposta = pedir(cliente, colaborador.email)
+
+    assert resposta.status_code == 202
+    assert resposta.json() == MENSAGEM_NEUTRA
+    [email] = correio_falso.enviados
+    assert email.para == colaborador.email
+
+
 def test_usu07_pedido_com_email_invalido_responde_422(cliente: TestClient):
     resposta = pedir(cliente, "nao-e-email")
 
@@ -186,6 +205,17 @@ def test_usu07_trocar_senha_logado_revoga_sessoes_e_devolve_tokens_novos(
     assert corpo["usuario"]["id"] == str(comum.id)
     assert refresh_vale(cliente, corpo["refresh_token"])
     assert not refresh_vale(cliente, sessao_antiga)
+    assert login(cliente, comum.email, SENHA_NOVA).status_code == 200
+
+
+def test_usu07_trocar_senha_invalida_o_link_de_redefinicao_pendente(
+    cliente: TestClient, fabrica: Fabrica, comum: Usuario
+):
+    token = fabrica.link(comum, FinalidadeToken.redefinicao_senha)
+
+    assert trocar(cliente, comum, SENHA_PADRAO).status_code == 200
+
+    assert confirmar(cliente, token, senha="senha-de-quem-pediu").json() == LINK_INVALIDO
     assert login(cliente, comum.email, SENHA_NOVA).status_code == 200
 
 

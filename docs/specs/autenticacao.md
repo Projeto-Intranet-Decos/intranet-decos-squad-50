@@ -100,7 +100,8 @@ entra aqui, sem tabela nova. O token não é sessão: só autoriza a ação da s
 
 - Token aleatório (`secrets.token_urlsafe(32)`) guardado só como hash SHA-256, como o refresh token
   (AUT-07), na tabela `tokens_uso_unico` (`usuario_id`, `finalidade`, `expira_em`, `usado_em`,
-  `criado_em`). O valor em claro existe só no e-mail.
+  `criado_em`). O valor em claro existe só no e-mail — e no log, com `EMAIL_PROVIDER=console`,
+  que é só para desenvolvimento (GER-22).
 - Validade por finalidade: convite `INVITE_HOURS` (padrão 72); redefinição de senha
   `PASSWORD_RESET_MINUTES` (padrão 60).
 - Link: `{FRONTEND_URL}/ativar-conta#token=...` ou `{FRONTEND_URL}/redefinir-senha#token=...`. O
@@ -111,8 +112,8 @@ entra aqui, sem tabela nova. O token não é sessão: só autoriza a ação da s
   **então** `400 {"mensagem": "Link inválido ou expirado"}` — a mesma mensagem em todos os casos.
 - **Dado** um token emitido, **quando** outro da mesma finalidade é emitido para o mesmo usuário,
   **então** o anterior deixa de valer.
-- **Dado** um usuário com links pendentes, **quando** o e-mail dele muda (USU-03) ou ele é
-  desativado (USU-04), **então** todos os links pendentes deixam de valer.
+- **Dado** um usuário com links pendentes, **quando** o e-mail dele muda (USU-03), ele é
+  desativado (USU-04) ou a senha muda (USU-07), **então** todos os links pendentes deixam de valer.
 - **Dado** um token, **quando** é só verificado (`.../verificar`), **então** continua válido. Só a
   confirmação grava `usado_em`, na mesma transação da mudança — filtros de e-mail (ex: Safe Links
   do Microsoft 365) abrem os links antes da pessoa, então abrir a página não pode gastar o token.

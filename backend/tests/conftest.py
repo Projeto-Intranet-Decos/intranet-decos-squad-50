@@ -20,11 +20,15 @@ from sqlalchemy.engine import make_url
 # "banco" é o Postgres do docker compose visto de dentro da rede do compose.
 HOSTS_LOCAIS = {"localhost", "127.0.0.1", "::1", "banco"}
 
-# Têm que vir antes de importar a configuração, que exige as duas.
+# Têm que vir antes de importar a configuração, que exige todas.
 # 32+ bytes: o PyJWT avisa quando a chave HMAC é curta.
 os.environ.setdefault("JWT_SECRET", "segredo-so-para-teste-com-32-bytes-ou-mais")
 os.environ.setdefault("MINIO_USER", "teste")
 os.environ.setdefault("MINIO_PASSWORD", "teste")
+# Com TEST_DATABASE_URL a senha vem da URL, e a configuração não pode exigir POSTGRES_PASSWORD de
+# quem roda sem .env. Só nesse caso: a variável de ambiente venceria a senha do .env.
+if os.environ.get("TEST_DATABASE_URL"):
+    os.environ.setdefault("POSTGRES_PASSWORD", "vem-da-TEST_DATABASE_URL")
 # Os testes não dependem do provedor de e-mail configurado no .env de quem os roda.
 os.environ["EMAIL_PROVIDER"] = "console"
 
@@ -68,7 +72,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 
 import app.main  # noqa: E402
 from app.core import armazenamento, correio  # noqa: E402
-from app.core.database import SessaoLocal, engine, obter_sessao  # noqa: E402
+from app.core.database import SessaoLocal, engine, obter_fabrica_de_sessoes, obter_sessao  # noqa: E402
 from app.modules.setores.models import Setor  # noqa: E402
 from app.modules.usuarios.models import Papel, Usuario  # noqa: E402
 from tests.apoio import ArmazenamentoFalso, CorreioFalso, Fabrica  # noqa: E402
@@ -141,6 +145,8 @@ def cliente(conexao: Connection) -> Iterator[TestClient]:
             sessao.close()
 
     app.main.app.dependency_overrides[obter_sessao] = obter_sessao_de_teste
+    # Tarefas em segundo plano abrem a própria sessão; nos testes, também presa à transação.
+    app.main.app.dependency_overrides[obter_fabrica_de_sessoes] = lambda: lambda: _nova_sessao(conexao)
     try:
         # Sem `with`: não roda o lifespan, que tentaria criar o bucket no MinIO real.
         yield TestClient(app.main.app)

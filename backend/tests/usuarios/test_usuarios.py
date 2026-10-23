@@ -3,9 +3,11 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy import select
 from tests.apoio import autenticar
 from app.core.security import hash_token
 from app.modules.autenticacao.models import FinalidadeToken, TokenUsoUnico
+from app.modules.logs.models import AcaoLog, Log, ModuloLog
 from app.modules.usuarios.models import Usuario
 
 DADOS = {"nome": "Pessoa Teste", "email": "pessoa@example.com"}
@@ -160,7 +162,20 @@ def test_usu08_falha_no_envio_tambem_invalida_o_anterior(cliente, fabrica, corre
     assert not link_valido(cliente, anterior)
 
 
-def test_usu08_recusa_quem_ja_ativou_desativado_e_inexistente(cliente, fabrica, correio_falso, comum, superadmin):
+def test_usu08_reenvio_grava_registro_de_auditoria_mesmo_sem_email(cliente, sessao, fabrica, correio_falso, superadmin):
+    pendente = fabrica.usuario(pendente=True)
+    correio_falso.indisponivel = True
+    resposta = cliente.post(f'/usuarios/{pendente.id}/convite', headers=autenticar(superadmin))
+    assert resposta.json() == {'email_enviado': False}
+    [log] = sessao.scalars(select(Log)).all()
+    assert log.usuario_id == superadmin.id
+    assert log.acao == AcaoLog.EDITAR
+    assert log.modulo == ModuloLog.USUARIOS
+    assert log.entidade_id == pendente.id
+    assert log.resumo == f'Convite reenviado: {pendente.email}'
+
+
+def test_usu08_recusa_quem_ja_ativou_desativado_e_inexistente(cliente, sessao, fabrica, correio_falso, comum, superadmin):
     ja_ativou = cliente.post(f'/usuarios/{comum.id}/convite', headers=autenticar(superadmin))
     assert ja_ativou.status_code == 409
     assert ja_ativou.json() == {'mensagem': 'Usuário já ativou a conta'}
@@ -170,6 +185,7 @@ def test_usu08_recusa_quem_ja_ativou_desativado_e_inexistente(cliente, fabrica, 
     assert resposta.json() == {'mensagem': 'Usuário desativado'}
     assert cliente.post(f'/usuarios/{uuid.uuid4()}/convite', headers=autenticar(superadmin)).status_code == 404
     assert correio_falso.enviados == []
+    assert sessao.scalars(select(Log)).all() == []
 
 
 @pytest.mark.parametrize('perfil', ['comum', 'admin_setor'])

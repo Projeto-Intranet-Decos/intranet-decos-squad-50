@@ -4,7 +4,8 @@ Não sabe nada de domínio: quem chama monta o `Email` (os textos ficam no módu
 vem de `EMAIL_PROVIDER`: `console` escreve o e-mail no log, `resend` envia pela API do Resend.
 
 Banco e provedor não compartilham transação: chame `enviar_email` só depois do commit. A falha
-não desfaz nada, vira `logger.warning` e o retorno `False`, para quem chamou avisar o usuário.
+não desfaz nada, vira `logger.warning` e o retorno `False`, para quem chamou avisar o usuário. No
+console nada sai, então o retorno também é `False`.
 """
 
 import json
@@ -37,18 +38,28 @@ class ErroEmail(Exception):
 def enviar_email(email: Email) -> bool:
   """Devolve se o e-mail saiu; nunca levanta."""
   try:
-    _entregar(email)
-  except ErroEmail:
+    return _entregar(email)
+  # Qualquer erro, não só ErroEmail: o envio vem depois do commit e não pode virar 500.
+  except Exception:
     logger.warning("E-mail não enviado para %s: %s", email.para, email.assunto, exc_info=True)
     return False
-  return True
 
 
-def _entregar(email: Email) -> None:
+def avisar_se_nao_envia() -> None:
+  """Chamada ao subir a API: um deploy com `console` precisa aparecer no log."""
+  if configuracoes.email_provedor == "console":
+    logger.warning(
+      "EMAIL_PROVIDER=console: os e-mails não são enviados, só escritos no log com os links. "
+      "Use só em desenvolvimento."
+    )
+
+
+def _entregar(email: Email) -> bool:
   if configuracoes.email_provedor == "resend":
     _entregar_pelo_resend(email)
-  else:
-    _entregar_pelo_console(email)
+    return True
+  _entregar_pelo_console(email)
+  return False
 
 
 def _entregar_pelo_console(email: Email) -> None:

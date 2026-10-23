@@ -69,7 +69,9 @@ def criar_usuario(
   return usuario, correio.enviar_email(emails.convite(usuario, token))
 
 
-def reenviar_convite(sessao: Session, usuario_id: uuid.UUID) -> bool:
+def reenviar_convite(
+  sessao: Session, usuario_id: uuid.UUID, ator: UsuarioAutenticado
+) -> bool:
   """Novo convite para um pendente (USU-08). Devolve se o e-mail saiu."""
   usuario = _buscar(sessao, usuario_id)
   if not usuario.convite_pendente:
@@ -77,6 +79,7 @@ def reenviar_convite(sessao: Session, usuario_id: uuid.UUID) -> bool:
   if not usuario.ativo:
     raise HTTPException(status.HTTP_409_CONFLICT, "Usuário desativado")
   token = autenticacao_service.emitir_link(sessao, usuario, FinalidadeToken.convite)
+  _registrar(sessao, ator, AcaoLog.EDITAR, usuario, f"Convite reenviado: {usuario.email}")
   repository.salvar(sessao, usuario)
   return correio.enviar_email(emails.convite(usuario, token))
 
@@ -108,6 +111,12 @@ def desativar_usuario(
 
 
 def _registrar(
-  sessao: Session, ator: UsuarioAutenticado, acao: AcaoLog, usuario: Usuario
+  sessao: Session,
+  ator: UsuarioAutenticado,
+  acao: AcaoLog,
+  usuario: Usuario,
+  resumo: str | None = None,
 ) -> None:
-  registrar(sessao, ator, acao, ModuloLog.USUARIOS, "usuario", usuario.id, usuario.email)
+  registrar(
+    sessao, ator, acao, ModuloLog.USUARIOS, "usuario", usuario.id, resumo or usuario.email
+  )

@@ -22,6 +22,10 @@ EMAIL = correio.Email(
 )
 
 
+# Guardada antes do fixture correio_falso trocar a entrega pelo falso.
+ENTREGAR_DE_VERDADE = correio._entregar
+
+
 class RespostaFalsa(io.BytesIO):
     status = 200
 
@@ -64,6 +68,70 @@ def test_ger22_falha_do_provedor_retorna_false_e_avisa_no_log(
         assert correio.enviar_email(EMAIL) is False
 
     assert "pessoa@example.com" in caplog.text
+
+
+def test_ger22_erro_inesperado_no_envio_retorna_false(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    def entregar(email: correio.Email) -> bool:
+        raise RuntimeError("erro que ninguém previu")
+
+    monkeypatch.setattr(correio, "_entregar", entregar)
+
+    with caplog.at_level(logging.WARNING, logger="app.core.correio"):
+        assert correio.enviar_email(EMAIL) is False
+
+    assert "pessoa@example.com" in caplog.text
+
+
+class CorpoQueTrava(io.BytesIO):
+    def read(self, *args: object) -> bytes:
+        raise TimeoutError("sem resposta ao ler o corpo")
+
+
+def test_ger22_resend_erro_ao_ler_a_recusa_retorna_false(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(configuracoes, "email_provedor", "resend")
+    monkeypatch.setattr(correio, "_entregar", ENTREGAR_DE_VERDADE)
+    _falhar_com(
+        monkeypatch,
+        HTTPError("https://api.resend.com/emails", 500, "Erro", Message(), CorpoQueTrava()),
+    )
+
+    assert correio.enviar_email(EMAIL) is False
+
+
+def test_ger22_console_responde_que_o_email_nao_saiu(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    monkeypatch.setattr(configuracoes, "email_provedor", "console")
+    monkeypatch.setattr(correio, "_entregar", ENTREGAR_DE_VERDADE)
+
+    with caplog.at_level(logging.WARNING, logger="app.core.correio"):
+        assert correio.enviar_email(EMAIL) is False
+
+    assert EMAIL.texto in caplog.text
+
+
+def test_ger22_console_avisa_ao_subir_que_nao_envia(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    monkeypatch.setattr(configuracoes, "email_provedor", "console")
+
+    with caplog.at_level(logging.WARNING, logger="app.core.correio"):
+        correio.avisar_se_nao_envia()
+
+    assert "EMAIL_PROVIDER=console" in caplog.text
+
+
+def test_ger22_resend_nao_avisa_ao_subir(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    monkeypatch.setattr(configuracoes, "email_provedor", "resend")
+
+    with caplog.at_level(logging.WARNING, logger="app.core.correio"):
+        correio.avisar_se_nao_envia()
+
+    assert caplog.text == ""
 
 
 def test_ger22_console_escreve_o_email_no_log(caplog: pytest.LogCaptureFixture):

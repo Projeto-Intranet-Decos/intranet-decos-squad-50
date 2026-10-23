@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
 import uuid
@@ -13,7 +14,7 @@ from app.core.security import (
   hash_token,
   verificar_senha,
 )
-from app.core.correio import Email
+from app.core import correio
 from app.modules.autenticacao import emails, repository, schemas
 from app.modules.autenticacao.models import FinalidadeToken, TokenAtualizacao, TokenUsoUnico
 from app.modules.usuarios import repository as usuarios_repository
@@ -141,21 +142,29 @@ def aceitar_convite(
 
 
 def _definir_senha(sessao: Session, usuario: Usuario, senha: str) -> tuple[str, str]:
-  """Grava a senha, encerra as outras sessões e abre uma nova, tudo num commit só."""
+  """Grava a senha, encerra as outras sessões, invalida os links pendentes e abre uma sessão nova,
+  tudo num commit só."""
   usuario.senha_hash = gerar_hash_senha(senha)
   repository.revogar_tokens_do_usuario(sessao, usuario.id)
+  # Um link de redefinição pedido antes da troca não pode redefinir a senha nova (AUT-08).
+  repository.apagar_links_pendentes(sessao, usuario.id)
   return _abrir_sessao(sessao, usuario)
 
 
-def pedir_redefinicao(sessao: Session, email: str) -> Email | None:
-  """Devolve o e-mail a enviar, ou None. Quem chama responde igual nos dois casos."""
-  usuario = usuarios_repository.buscar_por_email(sessao, email)
-  # Pendente não redefine: precisa de um novo convite (USU-08).
-  if not usuario or not usuario.ativo or usuario.convite_pendente:
-    return None
-  token = emitir_link(sessao, usuario, FinalidadeToken.redefinicao_senha)
-  sessao.commit()
-  return emails.redefinicao_senha(usuario, token)
+def pedir_redefinicao(abrir_sessao: Callable[[], Session], email: str) -> None:
+  """Tarefa em segundo plano (USU-07): procura a conta, gera o link e envia o e-mail.
+
+  Roda depois da resposta, com sessão própria: o tempo de resposta não pode revelar se a conta
+  existe.
+  """
+  with abrir_sessao() as sessao:
+    usuario = usuarios_repository.buscar_por_email(sessao, email)
+    # Pendente não redefine: precisa de um novo convite (USU-08).
+    if not usuario or not usuario.ativo or usuario.convite_pendente:
+      return
+    token = emitir_link(sessao, usuario, FinalidadeToken.redefinicao_senha)
+    sessao.commit()
+    correio.enviar_email(emails.redefinicao_senha(usuario, token))
 
 
 def verificar_redefinicao(sessao: Session, token: str) -> Usuario:
@@ -170,6 +179,8 @@ def confirmar_redefinicao(
     sessao, dados.token, FinalidadeToken.redefinicao_senha, travar=True
   )
   link.usado_em = datetime.now(timezone.utc)
+  # Grava o uso já: `_definir_senha` apaga os links ainda não usados, e este fica como histórico.
+  sessao.flush()
   access_token, refresh_token = _definir_senha(sessao, usuario, dados.senha)
   return access_token, refresh_token, usuario
 

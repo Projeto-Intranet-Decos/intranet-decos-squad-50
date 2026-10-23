@@ -357,7 +357,8 @@ redefinição de senha, USU-07). O provedor é escolhido por `EMAIL_PROVIDER`:
 - `resend` — envio pela API HTTP do **Resend** (`POST https://api.resend.com/emails`, HTTPS), autenticado
   pela chave de API em `RESEND_API_KEY`.
 - `console` — padrão em desenvolvimento: escreve destinatário, assunto e texto (com o link) no log,
-  sem enviar nada. Ninguém do time precisa de credencial de e-mail para rodar o projeto.
+  sem enviar nada. Ninguém do time precisa de credencial de e-mail para rodar o projeto. Só para
+  desenvolvimento: o link em claro fica no log.
 - Nos testes, o envio é sempre substituído por um falso em memória (como o MinIO, GER-07); código
   que chegar à API real quebra o teste.
 - ~~`mailgun`~~, ~~`smtp`~~ — removidos: a API do Mailgun foi trocada pelo SMTP da Brevo, e este
@@ -381,6 +382,12 @@ Critérios:
   **então** a gravação não é desfeita:
   a falha vira `logger.warning` e a resposta indica que o e-mail não saiu onde o requisito pedir
   (`email_enviado: false`).
+- 🐞 **Dado** um erro inesperado durante o envio (ex: timeout ao ler o corpo da resposta de erro),
+  **então** o comportamento é o mesmo da falha do provedor: nada é desfeito e o envio devolve
+  `false`, sem virar `500`.
+- 🐞 **Dado** `EMAIL_PROVIDER=console`, **então** a resposta indica que o e-mail não saiu
+  (`email_enviado: false`) — um deploy que esqueceu o `resend` aparece para o superadmin logo no
+  primeiro convite — e a API avisa no log ao subir que os e-mails não são enviados.
 - **Dado** `EMAIL_PROVIDER=resend` sem `RESEND_API_KEY`, **então** a API não sobe (erro de
   configuração no startup).
 - ❓ Remetente: o Resend só envia de um domínio verificado (SPF e DKIM). Domínio do hospital ×

@@ -1,8 +1,9 @@
+from collections.abc import Callable
+
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core import correio
-from app.core.database import obter_sessao
+from app.core.database import obter_fabrica_de_sessoes, obter_sessao
 from app.core.permissions import UsuarioAutenticado, usuario_atual
 from app.modules.autenticacao import schemas, service
 from app.modules.usuarios.schemas import UsuarioResposta
@@ -57,12 +58,10 @@ def _sessao_aberta(access_token: str, refresh_token: str, usuario) -> schemas.To
 def pedir_redefinicao_senha(
   dados: schemas.PedidoRedefinicao,
   tarefas: BackgroundTasks,
-  sessao: Session = Depends(obter_sessao),
+  abrir_sessao: Callable[[], Session] = Depends(obter_fabrica_de_sessoes),
 ):
-  email = service.pedir_redefinicao(sessao, dados.email)
-  # Depois da resposta: o tempo dela não pode revelar se a conta existe.
-  if email:
-    tarefas.add_task(correio.enviar_email, email)
+  # Nem a busca da conta roda antes da resposta: o tempo dela não pode revelar se a conta existe.
+  tarefas.add_task(service.pedir_redefinicao, abrir_sessao, dados.email)
   return schemas.MensagemResposta(mensagem=service.MENSAGEM_REDEFINICAO)
 
 

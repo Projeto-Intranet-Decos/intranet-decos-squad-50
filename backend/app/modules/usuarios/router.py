@@ -33,14 +33,14 @@ def criar_usuario(
   )
 
 
-@router.post(
-  "/{usuario_id}/convite",
-  response_model=schemas.ConviteEnviadoResposta,
-  dependencies=[Depends(requer_superadmin)],
-)
-def reenviar_convite(usuario_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
+@router.post("/{usuario_id}/convite", response_model=schemas.ConviteEnviadoResposta)
+def reenviar_convite(
+  usuario_id: uuid.UUID,
+  ator: UsuarioAutenticado = Depends(requer_superadmin),
+  sessao: Session = Depends(obter_sessao),
+):
   return schemas.ConviteEnviadoResposta(
-    email_enviado=service.reenviar_convite(sessao, usuario_id)
+    email_enviado=service.reenviar_convite(sessao, usuario_id, ator)
   )
 
 

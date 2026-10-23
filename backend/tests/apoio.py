@@ -150,10 +150,11 @@ class CorreioFalso:
         # True simula o provedor fora do ar: a entrega levanta ErroEmail.
         self.indisponivel = False
 
-    def entregar(self, email: correio.Email) -> None:
+    def entregar(self, email: correio.Email) -> bool:
         if self.indisponivel:
             raise correio.ErroEmail("Provedor de e-mail falso indisponível")
         self.enviados.append(email)
+        return True
 
     def ultimo_token(self) -> str:
         """Token do magic link do último e-mail enviado."""
