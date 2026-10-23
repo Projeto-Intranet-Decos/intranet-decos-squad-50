@@ -145,10 +145,14 @@ describe('USU-01/USU-08 — convite pendente', () => {
     const interagir=montar([pessoa, convidada]); await screen.findByText('Maria')
     expect(within(screen.getByText('Joana').closest('tr')!).getByText('Convite pendente')).toBeTruthy()
     expect(within(screen.getByText('Maria').closest('tr')!).queryByText('Convite pendente')).toBeNull()
-    await interagir.selectOptions(screen.getByLabelText(/^STATUS$/i), 'pendente')
+    // "Status" também é o cabeçalho ordenável da tabela; o filtro é o botão fora dela.
+    await interagir.click(screen.getAllByRole('button',{name:'Status'}).find(botao => !botao.closest('table'))!)
+    await interagir.click(screen.getByRole('button',{name:'Pendentes'}))
     expect(screen.getByText('Joana')).toBeTruthy()
     expect(screen.queryByText('Maria')).toBeNull()
-    await interagir.selectOptions(screen.getByLabelText(/^STATUS$/i), 'ativo')
+    // Com o filtro ativo, o botão do dropdown mostra a opção escolhida.
+    await interagir.click(screen.getByRole('button',{name:'Pendentes'}))
+    await interagir.click(screen.getByRole('button',{name:'Ativos'}))
     expect(screen.getByText('Maria')).toBeTruthy()
     expect(screen.queryByText('Joana')).toBeNull()
   })

@@ -11,9 +11,9 @@ import {
   setoresParaPublicar,
 } from './permissions'
 
-const comum: Usuario = { id: 'c', role: 'comum', setorId: 'enf' }
-const adminEnfermagem: Usuario = { id: 'a', role: 'admin_setor', setorId: 'enf' }
-const superadmin: Usuario = { id: 's', role: 'superadmin', setorId: null }
+const comum: Usuario = { id: 'c', nome: 'Comum', role: 'comum', setorId: 'enf' }
+const adminEnfermagem: Usuario = { id: 'a', nome: 'Admin', role: 'admin_setor', setorId: 'enf' }
+const superadmin: Usuario = { id: 's', nome: 'Superadmin', role: 'superadmin', setorId: null }
 
 describe('permissões por papel', () => {
   it('sem usuário logado não pode nada', () => {

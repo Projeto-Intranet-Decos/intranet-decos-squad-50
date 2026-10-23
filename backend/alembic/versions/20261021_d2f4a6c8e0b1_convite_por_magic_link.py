@@ -1,7 +1,7 @@
 """convite por magic link: senha opcional e tokens_uso_unico
 
 Revision ID: d2f4a6c8e0b1
-Revises: c9e1f3a5b7d2
+Revises: d1a3c5e7f9b2
 Create Date: 2026-10-21 00:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'd2f4a6c8e0b1'
-down_revision: Union[str, Sequence[str], None] = 'c9e1f3a5b7d2'
+down_revision: Union[str, Sequence[str], None] = 'd1a3c5e7f9b2'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
