@@ -1,5 +1,6 @@
 server {
     listen 80;
+    listen [::]:80;
     server_name _;
 
     root /usr/share/nginx/html;
@@ -10,10 +11,17 @@ server {
     # (o frontend confere antes de enviar). Tem que bater com MAX_UPLOAD_SIZE_MB do backend.
     client_max_body_size 50m;
 
+    # As variáveis de ambiente API_UPSTREAM e NGINX_LOCAL_RESOLVERS são preenchidas pela imagem do
+    # nginx ao subir (ver Dockerfile). Com o endereço numa variável, o nginx resolve o nome a cada 10 s em vez
+    # de só na partida, então continua achando o backend depois de ele ser recriado com outro IP.
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
+
     # O frontend chama a API em /api (ver src/lib/api.ts); o prefixo é removido
     # antes de repassar ao backend, que expõe as rotas sem ele.
     location /api/ {
-        proxy_pass http://backend:8000/;
+        set $api ${API_UPSTREAM};
+        rewrite ^/api/(.*)$ /$1 break;
+        proxy_pass $api;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
