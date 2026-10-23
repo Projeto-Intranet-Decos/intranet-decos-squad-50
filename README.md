@@ -52,26 +52,6 @@ docker compose exec backend python -m scripts.criar_superadmin
 
 Ele pergunta nome, e-mail e senha no terminal (a senha não aparece ao digitar). Regras: e-mail válido (domínios como `.local` e `localhost` são recusados) e senha com no mínimo 8 caracteres. O script é idempotente: se o e-mail já existir, não altera nada. Depois é só entrar em http://localhost:8080.
 
-### Deploy com S3 externo
-
-Para guardar os arquivos num S3 gerenciado (AWS S3, Cloudflare R2, DigitalOcean Spaces...) em vez do MinIO local, preencha no `.env` da raiz:
-
-| Variável | O que é |
-|---|---|
-| `MINIO_ENDPOINT` | Só o host do serviço, sem `https://` e sem o bucket (ex: `s3.sa-east-1.amazonaws.com`). |
-| `MINIO_BUCKET` | Nome do bucket. |
-| `MINIO_USER` | Access Key ID. |
-| `MINIO_PASSWORD` | Secret Access Key. |
-| `MINIO_SECURE` | `true` (padrão) para HTTPS. |
-
-Remova `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD` do `.env`: quando a senha root está definida, ela tem prioridade sobre o `MINIO_PASSWORD`. Depois suba com o override, que desliga o MinIO local:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-```
-
-A chave precisa de `s3:ListBucket` no bucket e de `s3:GetObject`, `s3:PutObject` e `s3:DeleteObject` nos objetos. Se o bucket ainda não existir, o backend tenta criá-lo ao subir, o que exige também `s3:CreateBucket`. O `GET /saude` mostra `"armazenamento": "ok"` quando a conexão funciona.
-
 ### Rodando comandos dentro dos containers
 
 ```bash
@@ -104,3 +84,27 @@ docker compose up -d --build backend # rebuild após mudar código/dependências
 docker compose down                  # parar (dados ficam nos volumes)
 docker compose down -v               # parar e apagar banco e arquivos
 ```
+
+## Produção
+
+O `docker-compose.prod.yml` sobe só a API e o frontend. O Postgres e o armazenamento são externos: um Postgres gerenciado ou da infraestrutura do hospital, e qualquer serviço compatível com S3 (AWS S3, Cloudflare R2, um MinIO próprio...).
+
+```bash
+cp .env.prod.example .env     # preencha os valores
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec backend python -m scripts.criar_superadmin
+```
+
+| Variável | O que é |
+|---|---|
+| `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Conexão com o banco externo. O banco e o usuário já precisam existir. As migrations rodam sozinhas quando o backend sobe. |
+| `PGSSLMODE` | `prefer` (padrão) ou `require`, se o banco só aceitar TLS. |
+| `MINIO_ENDPOINT` | Só o host do armazenamento, sem `https://` e sem o bucket (ex: `s3.sa-east-1.amazonaws.com`). |
+| `MINIO_BUCKET` | Nome do bucket. |
+| `MINIO_USER` / `MINIO_PASSWORD` | Access Key ID / Secret Access Key. |
+| `MINIO_SECURE` | `true` (padrão) para HTTPS. |
+| `FRONTEND_URL` | Endereço público do frontend, usado nos links dos e-mails. |
+
+A chave do armazenamento precisa de `s3:ListBucket` no bucket e de `s3:GetObject`, `s3:PutObject` e `s3:DeleteObject` nos objetos. Se o bucket não existir, o backend tenta criá-lo ao subir, o que exige também `s3:CreateBucket`.
+
+A API não publica porta: o acesso é só pelo nginx do frontend, em `/api` (porta `FRONTEND_PORT`, padrão `80`). O TLS fica a cargo de um proxy na frente. O backend só fica `healthy`, e o frontend só sobe, quando o `GET /saude` responde com banco e armazenamento `ok`. Se travar, veja `docker compose -f docker-compose.prod.yml logs backend`.
