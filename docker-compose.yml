@@ -24,7 +24,9 @@ services:
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-intranet}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
+      # Cai no MINIO_PASSWORD para o deploy com docker-compose.prod.yml, que não usa este serviço
+      # mas passa pela mesma interpolação.
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-${MINIO_PASSWORD:?defina MINIO_ROOT_PASSWORD (ou MINIO_PASSWORD, com S3 externo) no .env}}
     volumes:
       - dados_armazenamento:/data
     ports:
@@ -52,7 +54,7 @@ services:
       REFRESH_TOKEN_DAYS: ${REFRESH_TOKEN_DAYS:-7}
       MINIO_ENDPOINT: armazenamento:9000
       MINIO_USER: ${MINIO_ROOT_USER:-intranet}
-      MINIO_PASSWORD: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
+      MINIO_PASSWORD: ${MINIO_ROOT_PASSWORD:-${MINIO_PASSWORD:?defina MINIO_ROOT_PASSWORD (ou MINIO_PASSWORD, com S3 externo) no .env}}
       MINIO_BUCKET: ${MINIO_BUCKET:-intranet}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
       EMAIL_FROM: ${EMAIL_FROM:-Intranet <nao-responda@localhost>}

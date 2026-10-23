@@ -52,6 +52,26 @@ docker compose exec backend python -m scripts.criar_superadmin
 
 Ele pergunta nome, e-mail e senha no terminal (a senha não aparece ao digitar). Regras: e-mail válido (domínios como `.local` e `localhost` são recusados) e senha com no mínimo 8 caracteres. O script é idempotente: se o e-mail já existir, não altera nada. Depois é só entrar em http://localhost:8080.
 
+### Deploy com S3 externo
+
+Para guardar os arquivos num S3 gerenciado (AWS S3, Cloudflare R2, DigitalOcean Spaces...) em vez do MinIO local, preencha no `.env` da raiz:
+
+| Variável | O que é |
+|---|---|
+| `MINIO_ENDPOINT` | Só o host do serviço, sem `https://` e sem o bucket (ex: `s3.sa-east-1.amazonaws.com`). |
+| `MINIO_BUCKET` | Nome do bucket. |
+| `MINIO_USER` | Access Key ID. |
+| `MINIO_PASSWORD` | Secret Access Key. |
+| `MINIO_SECURE` | `true` (padrão) para HTTPS. |
+
+Remova `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD` do `.env`: quando a senha root está definida, ela tem prioridade sobre o `MINIO_PASSWORD`. Depois suba com o override, que desliga o MinIO local:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+A chave precisa de `s3:ListBucket` no bucket e de `s3:GetObject`, `s3:PutObject` e `s3:DeleteObject` nos objetos. Se o bucket ainda não existir, o backend tenta criá-lo ao subir, o que exige também `s3:CreateBucket`. O `GET /saude` mostra `"armazenamento": "ok"` quando a conexão funciona.
+
 ### Rodando comandos dentro dos containers
 
 ```bash
