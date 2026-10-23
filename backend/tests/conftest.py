@@ -23,8 +23,8 @@ HOSTS_LOCAIS = {"localhost", "127.0.0.1", "::1", "banco"}
 # Têm que vir antes de importar a configuração, que exige todas.
 # 32+ bytes: o PyJWT avisa quando a chave HMAC é curta.
 os.environ.setdefault("JWT_SECRET", "segredo-so-para-teste-com-32-bytes-ou-mais")
-os.environ.setdefault("MINIO_USER", "teste")
-os.environ.setdefault("MINIO_PASSWORD", "teste")
+os.environ.setdefault("AWS_ACCESS_KEY_ID", "teste")
+os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "teste")
 # Com TEST_DATABASE_URL a senha vem da URL, e a configuração não pode exigir POSTGRES_PASSWORD de
 # quem roda sem .env. Só nesse caso: a variável de ambiente venceria a senha do .env.
 if os.environ.get("TEST_DATABASE_URL"):

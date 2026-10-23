@@ -1,7 +1,9 @@
+import ipaddress
 from pathlib import Path
 from typing import Literal, Self
+from urllib.parse import urlsplit
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -32,13 +34,21 @@ class Configuracoes(BaseSettings):
     # Só necessário em dev, quando frontend e backend rodam em portas diferentes.
     origens_cors: list[str] = Field(default=[], validation_alias="CORS_ORIGINS")
 
-    minio_endpoint: str = "localhost:9000"
-    minio_usuario: str = Field(validation_alias="MINIO_USER")
-    minio_senha: str = Field(repr=False, validation_alias="MINIO_PASSWORD")
-    minio_bucket: str = "intranet"
-    minio_seguro: bool = Field(default=False, validation_alias="MINIO_SECURE")
+    # Qualquer armazenamento compatível com S3 (o MinIO do compose, AWS S3, Railway Buckets...). Os
+    # nomes das variáveis seguem o padrão da AWS, que é o que esses provedores injetam.
+    # A URL traz o esquema (http/https), que decide o TLS.
+    armazenamento_url: str = Field(default="http://localhost:9000", validation_alias="AWS_ENDPOINT_URL")
+    armazenamento_chave: str = Field(validation_alias="AWS_ACCESS_KEY_ID")
+    armazenamento_segredo: str = Field(repr=False, validation_alias="AWS_SECRET_ACCESS_KEY")
+    armazenamento_bucket: str = Field(default="intranet", validation_alias="AWS_S3_BUCKET_NAME")
+    # Sem região, o SDK descobre a do bucket com uma chamada a mais; no Railway ela é "auto".
+    armazenamento_regiao: str | None = Field(default=None, validation_alias="AWS_DEFAULT_REGION")
+    # Sem valor, decide pelo host (ver armazenamento_usa_path_style).
+    armazenamento_path_style: bool | None = Field(
+        default=None, validation_alias="AWS_S3_FORCE_PATH_STYLE"
+    )
 
-    # Tem que bater com o client_max_body_size do frontend/nginx.conf.
+    # Tem que bater com o client_max_body_size do frontend/nginx.conf.template.
     tamanho_maximo_upload_mb: int = Field(default=50, validation_alias="MAX_UPLOAD_SIZE_MB")
 
     # E-mail (GER-22). "console" só escreve o e-mail no log; "resend" envia de verdade.
@@ -55,11 +65,51 @@ class Configuracoes(BaseSettings):
     convite_horas: int = Field(default=72, validation_alias="INVITE_HOURS")
     redefinicao_senha_minutos: int = Field(default=60, validation_alias="PASSWORD_RESET_MINUTES")
 
+    @field_validator("armazenamento_regiao", "armazenamento_path_style", mode="before")
+    @classmethod
+    def vazio_vale_como_ausente(cls, valor: object) -> object:
+        # O compose repassa ${AWS_DEFAULT_REGION:-}, que chega como texto vazio.
+        return None if valor == "" else valor
+
+    @field_validator("armazenamento_url")
+    @classmethod
+    def exigir_url_do_armazenamento(cls, valor: str) -> str:
+        partes = urlsplit(valor)
+        if partes.scheme not in ("http", "https") or not partes.hostname or partes.path not in ("", "/"):
+            raise ValueError(
+                "AWS_ENDPOINT_URL precisa ser só esquema e host, ex: https://t3.storageapi.dev "
+                "ou http://localhost:9000 (o bucket vai em AWS_S3_BUCKET_NAME)"
+            )
+        return valor
+
     @model_validator(mode="after")
     def exigir_provedor_de_email_configurado(self) -> Self:
         if self.email_provedor == "resend" and not self.resend_chave_api:
             raise ValueError("EMAIL_PROVIDER=resend exige RESEND_API_KEY")
         return self
+
+    @property
+    def armazenamento_endpoint(self) -> str:
+        """host[:porta], o formato que o SDK do MinIO espera."""
+        return urlsplit(self.armazenamento_url).netloc
+
+    @property
+    def armazenamento_seguro(self) -> bool:
+        return urlsplit(self.armazenamento_url).scheme == "https"
+
+    @property
+    def armazenamento_usa_path_style(self) -> bool:
+        """Path style (host/bucket) só onde o bucket não tem como virar subdomínio: localhost, IP e
+        serviço do compose (nome sem ponto). O resto usa virtual-hosted (bucket.host), que é o que
+        o Railway Buckets e a AWS usam. AWS_S3_FORCE_PATH_STYLE vence a regra."""
+        if self.armazenamento_path_style is not None:
+            return self.armazenamento_path_style
+        host = urlsplit(self.armazenamento_url).hostname or ""
+        try:
+            ipaddress.ip_address(host)
+            return True
+        except ValueError:
+            return host == "localhost" or "." not in host
 
     @property
     def url_banco(self) -> URL:

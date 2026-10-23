@@ -61,7 +61,7 @@ nada de domínio: recebe a chave completa do objeto e expõe `enviar_arquivo`, `
 `core/erros.py` traduz para 503 (`ArquivoNaoEncontrado` vira 404). O bucket é criado no startup
 da API, e o `/saude` também checa o MinIO.
 
-Um bucket só (`MINIO_BUCKET`, padrão `intranet`), com o nome do módulo como prefixo de primeiro
+Um bucket só (`AWS_S3_BUCKET_NAME`, padrão `intranet`), com o nome do módulo como prefixo de primeiro
 nível. Cada módulo define o próprio layout; o de documentos fica em `documentos/storage.py`:
 
 ```
