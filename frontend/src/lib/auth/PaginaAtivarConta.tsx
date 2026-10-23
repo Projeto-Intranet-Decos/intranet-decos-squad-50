@@ -7,6 +7,7 @@ import { aceitarConvite, verificarConvite, type AceiteConvite, type DadosConvite
 import AvisoDoLink from './AvisoDoLink'
 import CampoAcesso from './CampoAcesso'
 import { lerErroDaApi } from './erros'
+import { BOTAO_ACESSO } from './estilos'
 import LayoutAcesso from './LayoutAcesso'
 import { limparTokens, useAuth } from './useAuth'
 import { ehLinkRecusado, useTokenDoLink } from './useTokenDoLink'
@@ -30,7 +31,7 @@ function PaginaAtivarConta() {
     return (
       <LayoutAcesso titulo={TITULO}>
         <AvisoDoLink mensagem="Link inválido ou expirado. Peça um novo convite ao administrador.">
-          <Link to="/login" className="btn btn-primary min-h-12 w-full">Ir para o login</Link>
+          <Link to="/login" className={BOTAO_ACESSO}>Ir para o login</Link>
         </AvisoDoLink>
       </LayoutAcesso>
     )
@@ -40,7 +41,7 @@ function PaginaAtivarConta() {
     return (
       <LayoutAcesso titulo={TITULO}>
         <AvisoDoLink mensagem="Não foi possível verificar o convite agora.">
-          <button type="button" onClick={() => void convite.refetch()} className="btn btn-primary min-h-12 w-full">
+          <button type="button" onClick={() => void convite.refetch()} className={BOTAO_ACESSO}>
             Tentar novamente
           </button>
         </AvisoDoLink>
@@ -143,7 +144,7 @@ function FormularioAtivacao({ token, convite, aoRecusarLink }: PropriedadesFormu
             validate: valor => valor === getValues('senha') || 'As senhas não conferem.',
           })}
         />
-        <button type="submit" className="btn btn-primary mt-3 min-h-12 w-full">
+        <button type="submit" className={`mt-[12px] ${BOTAO_ACESSO}`}>
           {aceitar.isPending ? 'Ativando…' : 'Ativar conta'}
         </button>
       </fieldset>

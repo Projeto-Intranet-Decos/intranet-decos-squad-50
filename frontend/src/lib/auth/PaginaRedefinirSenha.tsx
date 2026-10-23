@@ -7,6 +7,7 @@ import { confirmarRedefinicao, verificarRedefinicao } from './api'
 import AvisoDoLink from './AvisoDoLink'
 import CampoAcesso from './CampoAcesso'
 import { lerErroDaApi } from './erros'
+import { BOTAO_ACESSO } from './estilos'
 import LayoutAcesso from './LayoutAcesso'
 import { limparTokens, useAuth } from './useAuth'
 import { ehLinkRecusado, useTokenDoLink } from './useTokenDoLink'
@@ -30,7 +31,7 @@ function PaginaRedefinirSenha() {
     return (
       <LayoutAcesso titulo={TITULO}>
         <AvisoDoLink mensagem="Link inválido ou expirado. Peça um novo link para redefinir a senha.">
-          <Link to="/esqueci-senha" className="btn btn-primary min-h-12 w-full">Pedir um novo link</Link>
+          <Link to="/esqueci-senha" className={BOTAO_ACESSO}>Pedir um novo link</Link>
         </AvisoDoLink>
       </LayoutAcesso>
     )
@@ -40,7 +41,7 @@ function PaginaRedefinirSenha() {
     return (
       <LayoutAcesso titulo={TITULO}>
         <AvisoDoLink mensagem="Não foi possível verificar o link agora.">
-          <button type="button" onClick={() => void verificacao.refetch()} className="btn btn-primary min-h-12 w-full">
+          <button type="button" onClick={() => void verificacao.refetch()} className={BOTAO_ACESSO}>
             Tentar novamente
           </button>
         </AvisoDoLink>
@@ -120,7 +121,7 @@ function FormularioNovaSenha({ token, email, aoRecusarLink }: PropriedadesFormul
             validate: valor => valor === getValues('senha') || 'As senhas não conferem.',
           })}
         />
-        <button type="submit" className="btn btn-primary mt-3 min-h-12 w-full">
+        <button type="submit" className={`mt-[12px] ${BOTAO_ACESSO}`}>
           {confirmar.isPending ? 'Salvando…' : 'Salvar nova senha'}
         </button>
       </fieldset>

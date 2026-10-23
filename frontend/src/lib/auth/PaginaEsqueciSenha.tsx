@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { pedirRedefinicao } from './api'
 import CampoAcesso from './CampoAcesso'
 import { lerErroDaApi } from './erros'
+import { BOTAO_ACESSO } from './estilos'
 import LayoutAcesso from './LayoutAcesso'
 
 const CLASSE_LINK_LOGIN = 'self-center text-sm font-medium text-brand-700 hover:underline'
@@ -27,7 +28,7 @@ function PaginaEsqueciSenha() {
       {pedir.isSuccess ? (
         <div className="flex w-full flex-col gap-5 text-sm text-slate-600">
           <p role="status">{pedir.data}</p>
-          <Link to="/login" className="btn btn-primary min-h-12 w-full">Voltar para o login</Link>
+          <Link to="/login" className={BOTAO_ACESSO}>Voltar para o login</Link>
         </div>
       ) : (
         <form
@@ -47,7 +48,7 @@ function PaginaEsqueciSenha() {
               erro={errors.email?.message}
               {...register('email', { required: 'Informe o e-mail.' })}
             />
-            <button type="submit" className="btn btn-primary mt-3 min-h-12 w-full">
+            <button type="submit" className={`mt-[12px] ${BOTAO_ACESSO}`}>
               {pedir.isPending ? 'Enviando…' : 'Enviar link'}
             </button>
           </fieldset>

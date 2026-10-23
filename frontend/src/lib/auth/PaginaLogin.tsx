@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { api } from '../api'
 import CampoAcesso from './CampoAcesso'
+import { BOTAO_ACESSO } from './estilos'
 import LayoutAcesso from './LayoutAcesso'
 import { useAuth } from './useAuth'
 
@@ -50,7 +51,7 @@ function PaginaLogin() {
         <button
           type="submit"
           disabled={isPending}
-          className="mt-[12px] w-full rounded-lg bg-[#800020] py-[14px] text-center text-sm font-medium text-white transition-colors hover:bg-[#3b000e] disabled:cursor-not-allowed disabled:opacity-50"
+          className={`mt-[12px] ${BOTAO_ACESSO}`}
         >
           {isPending ? 'Entrando...' : 'Entrar'}
         </button>
