@@ -1,6 +1,7 @@
 server {
-    listen 80;
-    listen [::]:80;
+    # PORT vem do Railway; no compose fica o padrão 80 do Dockerfile.
+    listen ${PORT};
+    listen [::]:${PORT};
     server_name _;
 
     root /usr/share/nginx/html;
