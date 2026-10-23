@@ -9,9 +9,21 @@ Unidade organizacional do hospital (ex: enfermagem, farmácia) que delimita o es
 
 **Role**:
 Nível de acesso do usuário:
-- `comum` — consome conteúdo, sem permissão administrativa (mas pode enviar dúvidas).
+- `comum` — só consome conteúdo (lê mural, calendário, documentos, FAQ, setores/ramais); não cria nem envia nada.
 - `admin_setor` — administrador **operacional**: cria e mantém conteúdo do dia a dia (avisos, documentos, eventos, ramal do próprio setor), em geral escopado ao próprio setor. **Sem acesso** às páginas de Administração (Usuários, Registro de atividades) nem à criação de setores novos.
 - `superadmin` — papel de nível **sistêmico** (equivalente a alguém de TI), com acesso irrestrito, independente de setor. Exclusivo das páginas de Administração e da criação de setores novos.
+
+**Magic link**:
+Link enviado por e-mail com um token de uso único e validade curta, que leva o usuário a uma página da aplicação para concluir uma ação sem estar logado. É um mecanismo só, com finalidades: convite (ativar a conta) e redefinição de senha. Não é sessão: o token autoriza apenas a ação da sua finalidade.
+_Avoid_: SSO (SSO é entrar com a conta de um provedor externo, como o Microsoft 365), sessão temporária, token de acesso
+
+**Convite**:
+E-mail com magic link enviado quando o `superadmin` cadastra um usuário, para o colaborador criar a própria senha e completar os dados pessoais (ativar a conta). E-mail, papel e setor são definidos pelo `superadmin` e não mudam na ativação.
+_Avoid_: cadastro pelo próprio usuário, auto-registro
+
+**Usuário pendente**:
+Usuário convidado que ainda não ativou a conta (ainda não tem senha). Não faz login e não aparece para os colaboradores (aniversariantes, diretórios); só o `superadmin` o vê, na lista de Usuários.
+_Avoid_: usuário inativo (inativo é o desativado, soft delete)
 
 **Log de auditoria**:
 Registro de ações administrativas (criar, editar, deletar) em qualquer módulo, persistido no Postgres para consulta (ex: "tudo que o usuário X fez"). Não inclui ações de leitura.
@@ -25,13 +37,42 @@ _Avoid_: Log de auditoria
 Arquivo pertencente a um setor (ex: POP). O metadado (nome, setor, quem fez upload) mora no Postgres; o binário mora no MinIO — são armazenados separadamente por design.
 
 **Mural**:
-Módulo de comunicados/avisos do setor ou do hospital.
+Módulo de comunicados/avisos do setor ou do hospital. Cada Aviso tem uma categoria: `comunicado`, `promocao` ou `evento`. Também concentra os aniversariantes e a tela de calendário.
+_Avoid_: categoria `convite` (substituída por `evento`)
 
-**Dúvidas**:
-Módulo onde colaboradores enviam perguntas; um admin cadastra manualmente a resposta, que passa a aparecer na lista pública de FAQ. Não há rastreamento individual — quem enviou não acompanha status da própria pergunta.
+**Capa (do aviso)**:
+Imagem opcional exibida no card, no carrossel de destaques e no detalhe do aviso. Uma por aviso; o binário mora no MinIO. É o único arquivo acessível sem login (ver `docs/arquitetura-backend.md`).
+_Avoid_: Imagem de destaque, banner
+
+**Anexo (do aviso)**:
+Arquivo baixável anexado a um aviso (até 10), com os mesmos tipos permitidos de Documento. Pertence ao aviso e some com ele; não é um Documento do setor.
+_Avoid_: Documento (quando se fala do arquivo do aviso)
+
+**Central de Dúvidas / FAQ**:
+Lista de perguntas e respostas cadastrada diretamente por um admin (`admin_setor` ou `superadmin`) — não existe envio de pergunta por colaborador `comum`. Guarda o setor de quem criou (mesma regra de escopo de edição de Aviso).
+_Avoid_: Dúvida enviada, ticket
 
 **Ramal**:
 Número de telefone interno associado a um setor. Um setor pode ter mais de um ramal.
 
 **Evento**:
-Item do calendário (ex: reunião, treinamento), distinto de aniversariante (que é derivado da data de nascimento do usuário, não um registro próprio). Criado por `admin_setor` ou `superadmin`; sempre visível a todos, sem escopo por setor.
+Aviso de categoria `evento` (ex: reunião, treinamento), com data de início obrigatória e fim opcional. Não é registro próprio: aparece no feed do mural como qualquer aviso (com capa, anexos, fixado) e também na tela de calendário, na sua data. Distinto de aniversariante, que é derivado da data de nascimento do usuário.
+_Avoid_: Evento como entidade separada do Aviso, convite
+
+**Calendário**:
+Tela do mural que posiciona os Eventos nas suas datas (visões de dia, semana, mês e ano). É uma visão, não um módulo; clicar num evento abre o detalhe do aviso.
+_Avoid_: módulo calendário
+
+**Preferências de interface**:
+Ajustes visuais (desfoque e transparência do vidro, gradiente de fundo, efeito elástico na rolagem, animações) escolhidos na página Configurações. Pertencem ao navegador, não ao usuário: moram no `localStorage` e não existem no backend.
+_Avoid_: configurações do usuário, perfil
+
+## Regra de escopo de edição
+
+Vale pra Aviso (inclusive Evento), FAQ e Documento: o registro guarda o setor de quem criou. `admin_setor` só edita/exclui o que foi criado por alguém do próprio setor; `superadmin` edita/exclui qualquer um. A **visibilidade** de leitura desses três é sempre institucional (todo mundo vê tudo) — o escopo por setor vale só pra edição, não pra leitura.
+
+Documento segue a mesma regra: todo usuário autenticado lista e baixa documentos de qualquer setor; criar, editar, substituir o arquivo e excluir seguem o escopo por setor.
+
+**Atalho (acesso rápido)**:
+Link externo fixo na seção "Acesso rápido" da barra lateral (ex: prontuário eletrônico, portal do colaborador). Igual para todos os usuários e sem setor: só o `superadmin` cria, edita e exclui.
+_Avoid_: favorito, link do setor

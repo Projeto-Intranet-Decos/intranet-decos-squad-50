@@ -23,20 +23,22 @@ backend/
         schemas.py       # Pydantic
         router.py         # endpoints FastAPI
         service.py         # lógica de negócio
-        dependencies.py     # checagem de permissão específica do módulo
-      murais/
-      calendario/
+      murais/            # avisos, eventos (aviso de categoria evento) e aniversariantes
       documentos/
         models.py        # metadados do arquivo (nome, setor, uploaded_by, storage_key)
         schemas.py
         router.py
         service.py         # lógica de upload/download, fala com o MinIO
-        storage.py          # cliente MinIO isolado
+        storage.py          # layout das chaves do módulo no bucket (usa core/armazenamento.py)
       setores/
       duvidas/
+      atalhos/            # links de acesso rápido da barra lateral (só superadmin escreve)
       logs/
     core/
       config.py           # env vars, settings
+      armazenamento.py     # cliente MinIO compartilhado entre os módulos
+      correio.py           # envio de e-mail (Resend, console ou falso nos testes)
+      modelo_email.py      # layout HTML comum dos e-mails
       security.py          # hash de senha, criação/validação de JWT
       permissions.py        # lógica de RBAC + escopo por setor
       database.py            # engine, sessão do SQLAlchemy
@@ -51,6 +53,61 @@ Separação `router.py` / `service.py`: o router só valida input (via Pydantic)
 
 Documentos: Postgres guarda apenas os **metadados** do arquivo; o binário fica no MinIO — evita inchar o banco com blobs.
 
+## Armazenamento (MinIO)
+
+O cliente MinIO mora em `core/armazenamento.py` e é compartilhado entre os módulos. Ele não sabe
+nada de domínio: recebe a chave completa do objeto e expõe `enviar_arquivo`, `ler_arquivo`,
+`mover_arquivo` e `remover_arquivo`. Falha do MinIO vira `ErroArmazenamento`, que
+`core/erros.py` traduz para 503 (`ArquivoNaoEncontrado` vira 404). O bucket é criado no startup
+da API, e o `/saude` também checa o MinIO.
+
+Um bucket só (`MINIO_BUCKET`, padrão `intranet`), com o nome do módulo como prefixo de primeiro
+nível. Cada módulo define o próprio layout; o de documentos fica em `documentos/storage.py`:
+
+```
+documentos/setores/{setor_id}/{categoria}/{documento_id}/{nome-sanitizado}.{ext}
+```
+
+O setor entra pelo id, e não pelo nome, porque setor pode ser renomeado. Se a categoria do
+documento mudar, o objeto é movido para a pasta nova.
+
+O mural guarda a capa e os anexos de cada aviso (`murais/storage.py`):
+
+```
+murais/avisos/{aviso_id}/capa/{uuid}.{ext}
+murais/avisos/{aviso_id}/anexos/{anexo_id}/{nome-sanitizado}.{ext}
+```
+
+A capa ganha um uuid novo a cada troca. A API expõe esse uuid como `versao_imagem`, e o
+frontend monta a URL `/murais/avisos/{id}/imagem?v={versao_imagem}`, que é servida com
+`Cache-Control: immutable`: capa nova é sempre URL nova, sem cache velho.
+
+A capa é o único arquivo servido **sem autenticação** (`GET /murais/avisos/{id}/imagem`): é
+conteúdo institucional que todo colaborador já vê, o id do aviso é um UUID que não dá para
+adivinhar, e a tag `<img>` não envia o header `Authorization`. Os anexos seguem a regra dos
+documentos: download autenticado, via stream. Capa aceita png/jpg/webp até 5 MB; anexos usam
+a mesma lista de tipos e o mesmo `MAX_UPLOAD_SIZE_MB` dos documentos, até 10 por aviso.
+Ao excluir o aviso, a FK com `ON DELETE CASCADE` apaga os anexos no banco e depois todos os
+objetos do aviso são removidos do bucket.
+
+Postgres e MinIO não compartilham transação. A ordem das operações garante que uma falha deixe,
+no pior caso, um **objeto órfão** no bucket, e nunca uma linha sem arquivo:
+
+| Operação | Ordem |
+|---|---|
+| Criar | envia objeto → insere linha; se o commit falhar, remove o objeto |
+| Substituir arquivo / capa | envia objeto novo → commit → remove o antigo |
+| Mudar categoria | move objeto → commit; se o commit falhar, move de volta |
+| Excluir | commit da remoção → remove objeto (falha vira só `logger.warning`) |
+
+O tipo do arquivo salvo e servido no download vem de uma lista fechada de extensões
+(`core/arquivos.py`), nunca do `content-type` enviado pelo cliente — evita servir um
+`text/html` enviado como documento. O download passa pelo backend (stream), então o MinIO não
+precisa ficar exposto ao navegador.
+
+Dívidas técnicas: o backend usa a credencial root do MinIO (o ideal é um usuário com policy
+restrita ao bucket) e não há rotina de limpeza de objetos órfãos.
+
 ## Autenticação (JWT)
 
 - **Access token**: expira em 15-30 min.
@@ -58,28 +115,49 @@ Documentos: Postgres guarda apenas os **metadados** do arquivo; o binário fica 
 - Refresh token deve ser rastreável no banco (permite revogação/logout remoto).
 - Frontend intercepta 401 do access token expirado, chama `/auth/refresh` automaticamente e repete a requisição original (via interceptor do axios).
 
+### Magic link (convite e redefinição de senha)
+
+Um mecanismo só para todo link de uso único enviado por e-mail (AUT-08). A tabela
+`tokens_uso_unico` (módulo `autenticacao`, ao lado de `tokens_atualizacao`) guarda `usuario_id`,
+`finalidade`, `token_hash`, `expira_em` e `usado_em`. Finalidade nova (ex: troca de e-mail) é um
+valor novo, não uma tabela nova.
+
+- O token é opaco (`secrets.token_urlsafe`), não JWT, e é guardado só como hash SHA-256 — o mesmo
+  tratamento do refresh token. Revogar é apagar ou marcar a linha, sem depender de expiração.
+- O usuário convidado já existe em `usuarios` desde o convite, com `senha_hash` nulo; "pendente" é
+  derivado disso (`convite_pendente` na resposta), não é uma coluna de status a mais. Login,
+  aniversariantes e diretórios ignoram pendentes.
+- Verificar o token não consome; só a confirmação grava `usado_em`, na mesma transação da
+  mudança. Filtros de e-mail abrem os links antes da pessoa, então nada pode ser gasto num acesso
+  só de leitura.
+- O token vai no corpo das requisições (nunca em path/query, que aparecem nos logs de acesso), e no
+  link fica no fragmento (`#token=`), que o navegador não envia ao servidor.
+- Aceitar o convite e confirmar a redefinição já devolvem o `TokenResposta` do login: o frontend
+  não precisa repetir a senha em `/auth/login`.
+
 ### Payload do access token
 
 ```json
 {
   "sub": "user_id",
+  "nome": "Maria Silva",
   "role": "admin_setor",
   "setor_id": "uuid-do-setor",
   "exp": 1234567890
 }
 ```
 
-Decisão consciente: `role` e `setor_id` embutidos no token evitam consulta ao banco a cada request. Trade-off aceito: mudança de role/setor demora até o access token expirar (15-30min) para refletir — considerado aceitável dado o baixo volume de mudanças desse tipo no contexto do hospital.
+Decisão consciente: `role` e `setor_id` embutidos no token evitam consulta ao banco a cada request (e `nome`, o indicador do usuário logado no frontend). Trade-off aceito: mudança de role/setor demora até o access token expirar (15-30min) para refletir — considerado aceitável dado o baixo volume de mudanças desse tipo no contexto do hospital.
 
 ## RBAC (controle de acesso)
 
 Duas camadas de checagem, usadas conforme o caso:
 
-- **Dependency do FastAPI** (`Depends()`) — para permissão **genérica**, que não depende do recurso específico sendo acessado (ex: "só admin ou superadmin acessa `/logs`").
+- **Dependency do FastAPI** (`Depends()`) — para permissão **genérica**, que não depende do recurso específico sendo acessado (ex: "só admin ou superadmin acessa `/logs`"). Ficam todas centralizadas em `core/permissions.py` (`usuario_atual`, `requer_admin`, `requer_superadmin`); os módulos não têm `dependencies.py` próprio.
 - **Checagem dentro do service** — para permissão que depende de um dado que só existe **depois de buscar o recurso** no banco (ex: "admin_setor só deleta POP do próprio setor" — precisa buscar o POP primeiro para saber o setor dele).
 
 ```python
-# dependencies.py
+# core/permissions.py
 def requer_admin(usuario: User = Depends(usuario_atual)) -> User:
     if usuario.role not in ("admin_setor", "superadmin"):
         raise HTTPException(403, "Acesso negado")
@@ -108,6 +186,44 @@ Regra fixa para evitar inconsistência entre módulos/devs: dependency para regr
 
 Esta é a validação **real** de autorização — a checagem equivalente no frontend (`ProtectedRoute`, `podeDeletar`) é só UX, nunca a fonte de verdade.
 
+### Fonte do usuário autenticado
+
+`usuario_atual` mora só em `core/permissions.py` e monta o `UsuarioAutenticado` a partir dos
+claims do access token, **sem consultar o banco** — nenhuma query extra por requisição.
+
+A contrapartida é que desativar um usuário ou mudar o papel dele só passa a valer quando o
+access token atual expira (`ACCESS_TOKEN_MINUTES`). O que contém a janela é o refresh:
+`/auth/refresh` e `/auth/login` consultam o banco, então um usuário desativado não consegue
+renovar nem entrar de novo — o acesso dele morre no fim do token que já tinha em mãos.
+
+Se algum módulo precisar de revogação imediata (ex: uma ação crítica), a checagem extra vai
+no service daquele módulo, não numa segunda implementação de `usuario_atual`.
+
+## E-mail
+
+`core/correio.py` expõe uma função sem domínio, `enviar_email(Email(para, assunto, texto, html))`,
+e o provedor é escolhido por `EMAIL_PROVIDER` (GER-22): `resend` (API HTTP do Resend),
+`console` (padrão em dev, escreve o e-mail no log) e, nos testes, um falso em memória. Os textos de
+cada e-mail ficam no módulo dono (o convite em `usuarios`, a redefinição em `autenticacao`), e o
+HTML sai do layout comum de `core/modelo_email.py` (`html_com_botao`), que recebe texto puro e faz
+o escape.
+
+Banco e provedor de e-mail não compartilham transação, então vale a mesma lógica da ordem
+Postgres/MinIO: **commit → envio**. Falha no envio não desfaz a gravação; vira `logger.warning` e,
+onde o spec pede, `email_enviado: false` na resposta, para o `superadmin` reenviar. O envio é
+síncrono, com timeout curto; fila/outbox só se o volume justificar. A exceção é o "esqueci minha
+senha" (USU-07): a resposta é sempre a mesma, então o e-mail vai numa `BackgroundTasks` do FastAPI,
+depois da resposta, para o tempo dela não revelar se a conta existe.
+
+A chamada à API do Resend usa `urllib` (biblioteca padrão), sem o SDK: é um único `POST` JSON
+autenticado pela chave de API, e assim não entra dependência nova. Trocar de provedor é escrever
+outra função `_entregar_*` e uma opção nova em `EMAIL_PROVIDER`.
+
+Configuração: `EMAIL_PROVIDER`, `EMAIL_FROM`, `FRONTEND_URL`, `RESEND_API_KEY`,
+`INVITE_HOURS` (72) e `PASSWORD_RESET_MINUTES` (60). Elas entram no
+`config.py`, nos dois `.env.example` **e** no bloco `environment` do backend no `docker-compose.yml`,
+que lista as variáveis uma a uma (sem isso a credencial não chega ao container).
+
 ## Logs
 
 Duas coisas distintas, tratadas de forma diferente:
@@ -125,4 +241,4 @@ Containerização via `docker-compose`, cobrindo Postgres, MinIO, backend e fron
 - **Tratamento de erro global**: padronizar formato de erro (`{ campo, mensagem }`) via exception handler centralizado do FastAPI, ou cada endpoint formata manualmente?
 - **CORS**: configuração para dev (frontend e backend em portas diferentes) vs produção (mesmo domínio) ainda não definida.
 - **Variáveis de ambiente**: uso de `pydantic-settings` (ou equivalente) para carregar `.env` (URL do Postgres, credenciais MinIO, segredo JWT) ainda não decidido.
-- **Testes**: decisão consciente de ter ou não no MVP, ainda em aberto (mesmo ponto pendente no frontend).
+- ~~**Testes**~~: decidido — entram no MVP, guiados pelos specs (pytest + TestClient). Ver [`specs/README.md`](./specs/README.md).
