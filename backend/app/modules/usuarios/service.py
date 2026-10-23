@@ -62,7 +62,9 @@ def criar_usuario(
   )
   with _traduzir_conflito(sessao):
     repository.adicionar(sessao, usuario)
-    token = autenticacao_service.emitir_link(sessao, usuario, FinalidadeToken.convite)
+    token = autenticacao_service.emitir_link(
+      sessao, usuario, FinalidadeToken.convite, usuario_novo=True
+    )
     _registrar(sessao, ator, AcaoLog.CRIAR, usuario)
     repository.salvar(sessao, usuario)
   # Depois do commit (GER-22): se o e-mail falhar, o usuário fica e o superadmin reenvia.

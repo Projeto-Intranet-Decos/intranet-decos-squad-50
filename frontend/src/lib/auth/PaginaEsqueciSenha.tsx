@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { pedirRedefinicao } from './api'
 import CampoAcesso from './CampoAcesso'
-import { lerErroDaApi } from './erros'
+import { lerErroDaApi } from '../../shared/erros'
 import { BOTAO_ACESSO } from './estilos'
 import LayoutAcesso from './LayoutAcesso'
 

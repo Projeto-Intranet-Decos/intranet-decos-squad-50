@@ -1,5 +1,4 @@
 import { useForm } from 'react-hook-form'
-import { isAxiosError } from 'axios'
 import type { Papel } from '../../../lib/auth/tipos'
 import Botao from '../../../shared/components/Botao'
 import Campo from '../../../shared/components/Campo'
@@ -7,8 +6,8 @@ import Input from '../../../shared/components/Input'
 import Modal from '../../../shared/components/Modal'
 import Select from '../../../shared/components/Select'
 import type { SetorComRamais } from '../../setores/types'
-import { mensagemErroUsuario, useSalvarUsuario } from '../hooks/useUsuarios'
-import { ROTULOS_PAPEL, type DadosUsuario, type ErroUsuario, type UsuarioCadastro } from '../types'
+import { erroUsuario, mensagemErroUsuario, useSalvarUsuario } from '../hooks/useUsuarios'
+import { ROTULOS_PAPEL, type DadosUsuario, type UsuarioCadastro } from '../types'
 
 interface ValoresFormulario {
   nome: string
@@ -46,13 +45,11 @@ export default function ModalUsuario({ usuarioEditando, setores, aoFechar }: Pro
         : { tipo: 'criar', dados })
       aoFechar()
     } catch (erro: unknown) {
-      if (isAxiosError<ErroUsuario>(erro)) {
-        const campo = erro.response?.data?.campo
-        if (campo === 'nome' || campo === 'email' || campo === 'role' || campo === 'ativo') {
-          setError(campo, { message: mensagemErroUsuario(erro) })
-        } else if (campo === 'setor_id' || campo === 'data_nascimento') {
-          setError(campo === 'setor_id' ? 'setorId' : 'dataNascimento', { message: mensagemErroUsuario(erro) })
-        }
+      const { campo, mensagem } = erroUsuario(erro)
+      if (campo === 'nome' || campo === 'email' || campo === 'role' || campo === 'ativo') {
+        setError(campo, { message: mensagem })
+      } else if (campo === 'setor_id' || campo === 'data_nascimento') {
+        setError(campo === 'setor_id' ? 'setorId' : 'dataNascimento', { message: mensagem })
       }
     }
   }

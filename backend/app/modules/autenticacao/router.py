@@ -11,14 +11,17 @@ from app.modules.usuarios.schemas import UsuarioResposta
 router = APIRouter(prefix="/auth", tags=["autenticacao"])
 
 
-@router.post("/login", response_model=schemas.TokenResposta)
-def login(dados: schemas.LoginEntrada, sessao: Session = Depends(obter_sessao)):
-  access_token, refresh_token, usuario = service.autenticar(sessao, dados.email, dados.senha)
+def _sessao_aberta(access_token: str, refresh_token: str, usuario) -> schemas.TokenResposta:
   return schemas.TokenResposta(
     access_token=access_token,
     refresh_token=refresh_token,
     usuario=UsuarioResposta.model_validate(usuario),
   )
+
+
+@router.post("/login", response_model=schemas.TokenResposta)
+def login(dados: schemas.LoginEntrada, sessao: Session = Depends(obter_sessao)):
+  return _sessao_aberta(*service.autenticar(sessao, dados.email, dados.senha))
 
 
 @router.post("/refresh", response_model=schemas.AccessTokenResposta)
@@ -34,20 +37,7 @@ def verificar_convite(dados: schemas.LinkEntrada, sessao: Session = Depends(obte
 
 @router.post("/convite/aceitar", response_model=schemas.TokenResposta)
 def aceitar_convite(dados: schemas.ConviteAceitar, sessao: Session = Depends(obter_sessao)):
-  access_token, refresh_token, usuario = service.aceitar_convite(sessao, dados)
-  return schemas.TokenResposta(
-    access_token=access_token,
-    refresh_token=refresh_token,
-    usuario=UsuarioResposta.model_validate(usuario),
-  )
-
-
-def _sessao_aberta(access_token: str, refresh_token: str, usuario) -> schemas.TokenResposta:
-  return schemas.TokenResposta(
-    access_token=access_token,
-    refresh_token=refresh_token,
-    usuario=UsuarioResposta.model_validate(usuario),
-  )
+  return _sessao_aberta(*service.aceitar_convite(sessao, dados))
 
 
 @router.post(

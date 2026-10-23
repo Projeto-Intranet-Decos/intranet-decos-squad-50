@@ -2,7 +2,8 @@ import uuid
 from datetime import date, datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Uuid, text
+from sqlalchemy import Boolean, ColumnElement, Date, DateTime, ForeignKey, String, Uuid, text
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -37,6 +38,12 @@ class Usuario(Base):
   # Sem back_populates: evita alterar setores/models.py, que é de outro módulo.
   setor: Mapped[Setor | None] = relationship()
 
-  @property
+  # Híbrida: a mesma regra vale no objeto e nas consultas (ex: `~Usuario.convite_pendente`).
+  @hybrid_property
   def convite_pendente(self) -> bool:
     return self.senha_hash is None
+
+  @convite_pendente.inplace.expression
+  @classmethod
+  def _convite_pendente_sql(cls) -> ColumnElement[bool]:
+    return cls.senha_hash.is_(None)

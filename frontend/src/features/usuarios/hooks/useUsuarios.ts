@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { criarUsuario, editarUsuario, excluirUsuario, listarUsuarios, reenviarConvite } from '../api'
-import type { ErroUsuario, OperacaoSalvarUsuario, UsuarioCadastro } from '../types'
+import { lerErroDaApi } from '../../../shared/erros'
+import type { OperacaoSalvarUsuario, UsuarioCadastro } from '../types'
+
+export function erroUsuario(erro: unknown) {
+  return lerErroDaApi(erro, 'Não foi possível concluir a operação. Tente novamente.')
+}
 
 export function mensagemErroUsuario(erro: unknown): string {
-  return isAxiosError<ErroUsuario>(erro) && typeof erro.response?.data?.mensagem === 'string'
-    ? erro.response.data.mensagem : 'Não foi possível concluir a operação. Tente novamente.'
+  return erroUsuario(erro).mensagem
 }
 
 export function useUsuarios(usuarioId: string | undefined, permitido: boolean) {

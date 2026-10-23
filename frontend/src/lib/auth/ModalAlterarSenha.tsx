@@ -6,7 +6,7 @@ import Campo from '../../shared/components/Campo'
 import Input from '../../shared/components/Input'
 import Modal from '../../shared/components/Modal'
 import { trocarSenha } from './api'
-import { lerErroDaApi } from './erros'
+import { lerErroDaApi } from '../../shared/erros'
 import { useAuth } from './useAuth'
 
 interface ValoresTroca {

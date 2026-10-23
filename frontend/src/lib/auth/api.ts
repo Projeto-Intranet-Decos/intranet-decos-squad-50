@@ -1,11 +1,5 @@
 import { api } from '../api'
 
-/** Erro da API no formato `{ campo?, mensagem }` (GER-05). */
-export interface ErroApi {
-  campo?: string
-  mensagem: string
-}
-
 export interface DadosConvite {
   email: string
   nome: string

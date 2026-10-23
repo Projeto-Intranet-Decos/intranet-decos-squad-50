@@ -74,13 +74,17 @@ def _validade(finalidade: FinalidadeToken) -> timedelta:
   return timedelta(minutes=configuracoes.redefinicao_senha_minutos)
 
 
-def emitir_link(sessao: Session, usuario: Usuario, finalidade: FinalidadeToken) -> str:
+def emitir_link(
+  sessao: Session, usuario: Usuario, finalidade: FinalidadeToken, *, usuario_novo: bool = False
+) -> str:
   """Gera um magic link e devolve o token em claro, que só existe no e-mail.
 
-  Invalida os links anteriores da mesma finalidade. Não faz commit: o link é gravado na mesma
-  transação de quem chama.
+  Invalida os links anteriores da mesma finalidade (`usuario_novo=True` pula essa etapa: quem
+  acabou de ser criado não tem nenhum). Não faz commit: o link é gravado na mesma transação de
+  quem chama.
   """
-  repository.apagar_links_pendentes(sessao, usuario.id, finalidade)
+  if not usuario_novo:
+    repository.apagar_links_pendentes(sessao, usuario.id, finalidade)
   token = gerar_token()
   repository.adicionar_link(
     sessao,

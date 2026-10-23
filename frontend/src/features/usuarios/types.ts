@@ -35,11 +35,6 @@ export type OperacaoSalvarUsuario =
   | { tipo: 'criar'; dados: NovoUsuario }
   | { tipo: 'editar'; id: string; dados: EdicaoUsuario }
 
-export interface ErroUsuario {
-  campo?: string
-  mensagem: string
-}
-
 // Desativado vence pendente: desativar é o jeito de cancelar o convite (USU-04).
 export type SituacaoUsuario = 'ativo' | 'pendente' | 'inativo'
 
