@@ -15,6 +15,8 @@ server {
     # As variáveis de ambiente API_URL e NGINX_LOCAL_RESOLVERS são preenchidas pela imagem do
     # nginx ao subir (ver Dockerfile). Com o endereço numa variável, o nginx resolve o nome a cada 10 s em vez
     # de só na partida, então continua achando o backend depois de ele ser recriado com outro IP.
+    # O API_URL chega aqui sem barra no fim (ver api-url-sem-barra.envsh): com caminho na variável,
+    # o proxy_pass mandaria esse caminho no lugar do da requisição.
     resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
 
     # O frontend chama a API em /api (ver src/lib/api.ts); o prefixo é removido

@@ -118,7 +118,7 @@ Num Railway Bucket, as `AWS_*` vêm da aba *Credentials* do bucket. O bucket só
 - **Root Directory:** `/frontend`. **Watch Paths:** `/frontend/**`.
 - **Start Command:** vazio.
 - **Rede:** domínio público com target port igual ao `PORT` que o Railway injeta (normalmente `8080`). O nginx ouve nessa porta; sem `PORT`, como no compose, ouve na `80`. Porta errada no domínio dá 502 sem nada nos logs, porque a requisição nem chega ao nginx.
-- **Variável:** `API_URL=http://<nome-do-serviço-backend>.railway.internal:8000`. A porta é o `PORT` do backend. A URL pública do backend (`https://...up.railway.app`, sem porta) também funciona, mas passa pela internet e exige o backend com domínio público. Sem essa variável, o nginx procura o backend em `http://backend:8000`, que é o endereço dentro do compose de desenvolvimento.
+- **Variável:** `API_URL=http://${{<serviço-backend>.RAILWAY_PRIVATE_DOMAIN}}:8000`, que vira `http://<serviço-backend>.railway.internal:8000`. A porta é o `PORT` do backend; se ele não tiver `PORT` definido, é a que o Railway injeta (`8080`). Só esquema, host e porta: barras no fim são removidas ao subir (`api-url-sem-barra.envsh`), mas qualquer outro caminho seria mandado ao backend no lugar do da requisição. A URL pública do backend (`https://...up.railway.app`, sem porta) também funciona, mas passa pela internet e exige o backend com domínio público. Sem essa variável, o nginx procura o backend em `http://backend:8000`, que é o endereço dentro do compose de desenvolvimento.
 
 ### Primeiro superadmin
 

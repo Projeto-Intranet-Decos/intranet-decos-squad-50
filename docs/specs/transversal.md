@@ -186,6 +186,9 @@ com Postgres e armazenamento à parte. O nginx remove o prefixo `/api` e repassa
   pode usar qualquer um dos dois. O nginx acha o backend em `API_URL` (padrão
   `http://backend:8000`, o do compose) e resolve o nome de novo a cada 10 s, então segue funcionando
   quando o backend é recriado com outro IP.
+- 🐞 `API_URL` com barra no fim (`https://backend.exemplo/`) funciona igual a sem barra: o nginx
+  remove as barras ao subir. Antes, o caminho do `API_URL` substituía o da requisição e o login
+  chegava ao backend como `POST /` (404).
 - As variáveis de ambiente têm nome em inglês (`AWS_SECRET_ACCESS_KEY`, `EMAIL_PROVIDER`,
   `INVITE_HOURS`…), no `.env`, no compose e no código. Os campos da configuração no Python continuam
   em português e leem a variável pelo nome em inglês.

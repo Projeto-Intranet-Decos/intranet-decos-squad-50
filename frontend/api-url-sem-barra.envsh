@@ -1,0 +1,8 @@
+#!/bin/sh
+# Lido pela entrada da imagem do nginx antes do envsubst gerar o default.conf (ver Dockerfile).
+# Tira as barras do fim do API_URL: com caminho no proxy_pass, mesmo só "/", o nginx troca o
+# caminho inteiro da requisição por ele, e o login chegava ao backend como POST / (404).
+while [ "${API_URL%/}" != "$API_URL" ]; do
+  API_URL="${API_URL%/}"
+done
+export API_URL
