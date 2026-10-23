@@ -1,4 +1,4 @@
-"""Textos dos e-mails do módulo de usuários (o envio é do core/correio.py, GER-19)."""
+"""Textos dos e-mails do módulo de usuários (o envio é do core/correio.py, GER-22)."""
 
 from app.core.config import configuracoes
 from app.core.correio import Email

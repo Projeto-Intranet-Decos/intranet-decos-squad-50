@@ -1,7 +1,7 @@
 # Plano: cadastro por convite com magic link
 
 > **Atualização:** o provedor `mailgun` (API HTTP) foi trocado por `smtp`, configurado para a
-> Brevo — ver GER-19 e `docs/arquitetura-backend.md` (seção E-mail). O texto abaixo é o plano
+> Brevo — ver GER-22 e `docs/arquitetura-backend.md` (seção E-mail). O texto abaixo é o plano
 > original.
 
 ## Contexto
@@ -12,7 +12,7 @@ os dados. O mesmo mecanismo serve depois para a redefinição de senha (USU-07).
 
 Specs já atualizados: [`autenticacao.md`](../../specs/autenticacao.md) (AUT-01, AUT-08, AUT-09),
 [`usuarios.md`](../../specs/usuarios.md) (USU-01 a 04, USU-07, USU-08),
-[`transversal.md`](../../specs/transversal.md) (GER-02, GER-19), MUR-13, `CONTEXT.md` e
+[`transversal.md`](../../specs/transversal.md) (GER-02, GER-22), MUR-13, `CONTEXT.md` e
 `arquitetura-*.md`.
 
 **Decisões tomadas com você:** nome "magic link" (não é SSO), convite válido por 72h, USU-07 entra
@@ -20,7 +20,7 @@ no escopo, Mailgun como provedor.
 
 ## Entregas
 
-1. **Backend do convite** (esta branch, primeira parte): GER-19, AUT-08, AUT-01, USU-01 a 04,
+1. **Backend do convite** (esta branch, primeira parte): GER-22, AUT-08, AUT-01, USU-01 a 04,
    USU-08, AUT-09, MUR-13.
 2. **Backend da USU-07**: redefinição por link e troca de senha logado.
 3. **Frontend**: `/ativar-conta`, formulário de usuário sem senha, selo "Convite pendente",
@@ -28,7 +28,7 @@ no escopo, Mailgun como provedor.
 
 ## Backend
 
-### `core/correio.py` (GER-19)
+### `core/correio.py` (GER-22)
 - `Email(para, assunto, texto, html)` e `enviar_email(email) -> bool`. A falha vira
   `logger.warning` e `False`, nunca exceção: quem chama já fez o commit.
 - `_entregar` escolhe o provedor por `EMAIL_PROVEDOR`: `console` (padrão, escreve no log) ou
@@ -80,7 +80,7 @@ no escopo, Mailgun como provedor.
 - Os textos do e-mail do convite ficam em `usuarios/emails.py`.
 
 ### Testes
-- `tests/test_correio.py` (GER-19), `tests/autenticacao/test_convite.py` (AUT-01, 08, 09),
+- `tests/test_correio.py` (GER-22), `tests/autenticacao/test_convite.py` (AUT-01, 08, 09),
   `tests/usuarios/test_usuarios.py` (USU-01 a 04, 08) e `tests/murais/test_aniversariantes.py`
   (MUR-13).
 - `Fabrica.usuario(pendente=True)` cria um usuário sem senha, e

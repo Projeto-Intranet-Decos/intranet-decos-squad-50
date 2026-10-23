@@ -1,4 +1,4 @@
-"""GER-19 — envio de e-mail (core/correio.py)."""
+"""GER-22 — envio de e-mail (core/correio.py)."""
 
 import io
 import json
@@ -50,12 +50,12 @@ def _falhar_com(monkeypatch: pytest.MonkeyPatch, falha: Exception) -> None:
     monkeypatch.setattr(correio, "urlopen", urlopen)
 
 
-def test_ger19_envio_bem_sucedido_retorna_true(correio_falso: CorreioFalso):
+def test_ger22_envio_bem_sucedido_retorna_true(correio_falso: CorreioFalso):
     assert correio.enviar_email(EMAIL) is True
     assert correio_falso.enviados == [EMAIL]
 
 
-def test_ger19_falha_do_provedor_retorna_false_e_avisa_no_log(
+def test_ger22_falha_do_provedor_retorna_false_e_avisa_no_log(
     correio_falso: CorreioFalso, caplog: pytest.LogCaptureFixture
 ):
     correio_falso.indisponivel = True
@@ -66,7 +66,7 @@ def test_ger19_falha_do_provedor_retorna_false_e_avisa_no_log(
     assert "pessoa@example.com" in caplog.text
 
 
-def test_ger19_console_escreve_o_email_no_log(caplog: pytest.LogCaptureFixture):
+def test_ger22_console_escreve_o_email_no_log(caplog: pytest.LogCaptureFixture):
     with caplog.at_level(logging.WARNING, logger="app.core.correio"):
         correio._entregar_pelo_console(EMAIL)
 
@@ -75,7 +75,7 @@ def test_ger19_console_escreve_o_email_no_log(caplog: pytest.LogCaptureFixture):
     assert EMAIL.texto in caplog.text
 
 
-def test_ger19_resend_faz_post_autenticado_na_api_com_timeout(requisicoes):
+def test_ger22_resend_faz_post_autenticado_na_api_com_timeout(requisicoes):
     correio._entregar_pelo_resend(EMAIL)
 
     [(requisicao, timeout)] = requisicoes
@@ -86,7 +86,7 @@ def test_ger19_resend_faz_post_autenticado_na_api_com_timeout(requisicoes):
     assert timeout == 10
 
 
-def test_ger19_resend_envia_texto_e_html_do_remetente_configurado(requisicoes):
+def test_ger22_resend_envia_texto_e_html_do_remetente_configurado(requisicoes):
     correio._entregar_pelo_resend(EMAIL)
 
     [(requisicao, _)] = requisicoes
@@ -111,19 +111,19 @@ def test_ger19_resend_envia_texto_e_html_do_remetente_configurado(requisicoes):
     ],
     ids=["recusa-da-api", "erro-de-rede", "timeout"],
 )
-def test_ger19_resend_falha_vira_erro_email(monkeypatch: pytest.MonkeyPatch, falha: Exception):
+def test_ger22_resend_falha_vira_erro_email(monkeypatch: pytest.MonkeyPatch, falha: Exception):
     _falhar_com(monkeypatch, falha)
 
     with pytest.raises(correio.ErroEmail):
         correio._entregar_pelo_resend(EMAIL)
 
 
-def test_ger19_resend_sem_chave_impede_a_api_de_subir():
+def test_ger22_resend_sem_chave_impede_a_api_de_subir():
     with pytest.raises(ValidationError, match="RESEND_API_KEY"):
         Configuracoes(_env_file=None, postgres_password="x", email_provedor="resend", resend_chave_api="")
 
 
-def test_ger19_padrao_e_o_console():
+def test_ger22_padrao_e_o_console():
     configuracoes_padrao = Configuracoes(_env_file=None, postgres_password="x")
 
     assert configuracoes_padrao.email_provedor == "console"

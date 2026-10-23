@@ -1,4 +1,4 @@
-"""GER-19 — layout HTML comum dos e-mails (core/modelo_email.py)."""
+"""GER-22 — layout HTML comum dos e-mails (core/modelo_email.py)."""
 
 import pytest
 
@@ -22,7 +22,7 @@ def _html(**alteracoes: object) -> str:
     return html_com_botao(**(argumentos | alteracoes))
 
 
-def test_ger19_layout_traz_marca_titulo_botao_link_por_extenso_e_rodape():
+def test_ger22_layout_traz_marca_titulo_botao_link_por_extenso_e_rodape():
     html = _html()
 
     assert "Hospital Decós" in html
@@ -34,14 +34,14 @@ def test_ger19_layout_traz_marca_titulo_botao_link_por_extenso_e_rodape():
     assert "Uso restrito a colaboradores" in html
 
 
-def test_ger19_layout_escapa_o_texto():
+def test_ger22_layout_escapa_o_texto():
     html = _html(paragrafos=["Olá, <script>alert(1)</script>!"])
 
     assert "<script>" not in html
     assert "&lt;script&gt;" in html
 
 
-def test_ger19_layout_so_tem_estilo_inline_e_nenhuma_imagem():
+def test_ger22_layout_so_tem_estilo_inline_e_nenhuma_imagem():
     html = _html()
 
     assert "<style" not in html
@@ -51,7 +51,7 @@ def test_ger19_layout_so_tem_estilo_inline_e_nenhuma_imagem():
 @pytest.mark.parametrize(
     "montar", [convite, redefinicao_senha], ids=["convite", "redefinicao-senha"]
 )
-def test_ger19_emails_de_acesso_usam_o_layout_e_escapam_o_nome(montar):
+def test_ger22_emails_de_acesso_usam_o_layout_e_escapam_o_nome(montar):
     usuario = Usuario(nome="Ana <b>Souza</b>", email="ana@example.com")
 
     email = montar(usuario, "tok")

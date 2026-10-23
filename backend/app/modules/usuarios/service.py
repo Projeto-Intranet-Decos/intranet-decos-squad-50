@@ -65,7 +65,7 @@ def criar_usuario(
     token = autenticacao_service.emitir_link(sessao, usuario, FinalidadeToken.convite)
     _registrar(sessao, ator, AcaoLog.CRIAR, usuario)
     repository.salvar(sessao, usuario)
-  # Depois do commit (GER-19): se o e-mail falhar, o usuário fica e o superadmin reenvia.
+  # Depois do commit (GER-22): se o e-mail falhar, o usuário fica e o superadmin reenvia.
   return usuario, correio.enviar_email(emails.convite(usuario, token))
 
 

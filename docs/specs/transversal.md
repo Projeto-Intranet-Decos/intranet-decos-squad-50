@@ -348,7 +348,7 @@ persiste em `localStorage` nem recarregando).
   expandir é imediato, sem animação.
 - **Quando** a página é recarregada, **então** todas as seções voltam a expandidas.
 
-### GER-19 — Envio de e-mail
+### GER-22 — Envio de e-mail
 Origem: [CTX] · Back ✅ · Front — · Teste ✅
 
 Serviço único de e-mail em `core/`, usado por qualquer módulo (hoje: convite, USU-02/USU-08, e

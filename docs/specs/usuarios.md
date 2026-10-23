@@ -44,11 +44,11 @@ completar os dados (AUT-09).
 
 - **Dado** dados válidos, **então** `201` com o usuário (`convite_pendente: true`) e
   `email_enviado: true`, e o convite chega no e-mail cadastrado com link válido por 72h.
-- **Dado** que o envio do e-mail falha (GER-19), **então** o usuário continua criado: `201` com
+- **Dado** que o envio do e-mail falha (GER-22), **então** o usuário continua criado: `201` com
   `email_enviado: false`; o reenvio é pela USU-08.
 - **Dado** um usuário pendente, **quando** tenta login, **então** `401` (AUT-01).
 - O e-mail do convite traz o nome do colaborador, o botão/link de ativação, a validade e uma
-  versão em texto puro (GER-19).
+  versão em texto puro (GER-22).
 - **Dado** e-mail já cadastrado (inclusive de usuário pendente ou desativado), **então** `409
   {"campo": "email", "mensagem": "Já existe um usuário com esse e-mail"}`, nenhuma conta é criada
   e nenhum e-mail é enviado.
@@ -168,7 +168,7 @@ envia para o e-mail atual do usuário.
 
 - **Dado** um usuário pendente e ativo, **então** `200 {"email_enviado": true}`, um novo e-mail
   chega e o link anterior deixa de valer.
-- **Dado** que o envio falha (GER-19), **então** `200 {"email_enviado": false}` e o link anterior
+- **Dado** que o envio falha (GER-22), **então** `200 {"email_enviado": false}` e o link anterior
   continua invalidado.
 - **Dado** um usuário que já ativou a conta, **então** `409 {"mensagem": "Usuário já ativou a
   conta"}`.

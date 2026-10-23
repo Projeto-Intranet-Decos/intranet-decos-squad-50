@@ -131,7 +131,7 @@ pytest tests/murais                         # um módulo
 - **E-mail:** sempre substituído por `CorreioFalso` (fixture `correio_falso`); código que chegar
   à API real do provedor quebra o teste. `correio_falso.enviados` lista os e-mails,
   `correio_falso.ultimo_token()` lê o token do magic link do último e
-  `correio_falso.indisponivel = True` simula o provedor fora do ar (GER-19).
+  `correio_falso.indisponivel = True` simula o provedor fora do ar (GER-22).
 - **Cenário pronto:** fixtures `cliente`, `sessao`, `setor` ("Enfermagem"), `comum` e
   `admin_setor` nesse setor, e `superadmin` sem setor (como o real). Outros setores/usuários com
   `fabrica.setor(...)` e `fabrica.usuario(Papel.X, setor)`. Token: `headers=autenticar(usuario)`.

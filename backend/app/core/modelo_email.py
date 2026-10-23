@@ -1,4 +1,4 @@
-"""Layout HTML comum dos e-mails (GER-19), com a identidade da tela de login.
+"""Layout HTML comum dos e-mails (GER-22), com a identidade da tela de login.
 
 Cliente de e-mail ignora boa parte do CSS: o Gmail descarta `<style>` em vários casos e o Outlook
 renderiza com o motor do Word. Por isso é tudo tabela com estilo inline, e o gradiente bordeaux tem

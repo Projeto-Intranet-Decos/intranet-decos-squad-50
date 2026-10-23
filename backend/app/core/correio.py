@@ -1,4 +1,4 @@
-"""Envio de e-mail compartilhado entre os módulos (GER-19).
+"""Envio de e-mail compartilhado entre os módulos (GER-22).
 
 Não sabe nada de domínio: quem chama monta o `Email` (os textos ficam no módulo dono). O provedor
 vem de `EMAIL_PROVIDER`: `console` escreve o e-mail no log, `resend` envia pela API do Resend.
