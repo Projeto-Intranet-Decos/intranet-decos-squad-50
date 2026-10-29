@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { canEditar, canEscolherSetor, canGerenciarConteudo, setoresParaPublicar } from '../../../lib/permissions'
+import { canBaixarArquivos, canEditar, canEscolherSetor, canGerenciarConteudo, setoresParaPublicar } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import CabecalhoOrdenavel from '../../../shared/components/CabecalhoOrdenavel'
 import Dropdown from '../../../shared/components/Dropdown'
@@ -193,6 +193,7 @@ function PaginaDocumentos() {
                 key={documento.id}
                 documento={documento}
                 podeGerenciar={podeGerenciarEste(documento)}
+                podeAbrirArquivo={canBaixarArquivos(usuario)}
                 aoVisualizar={() => setDocumentoPrevia(documento)}
                 aoBaixar={() => baixarDocumento.mutate({ documento })}
                 aoEditar={() => abrirEdicao(documento)}

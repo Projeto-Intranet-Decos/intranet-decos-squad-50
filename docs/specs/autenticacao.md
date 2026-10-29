@@ -14,6 +14,7 @@ banco. Ativação de conta e redefinição de senha por magic link enviado por e
 | AUT-07 | Armazenamento seguro de credenciais | ✅ | — | ⬜ |
 | AUT-08 | Magic link (token de uso único por e-mail) | ✅ | ✅ | ✅ |
 | AUT-09 | Ativação de conta pelo convite | ✅ | ✅ | ✅ |
+| AUT-10 | Modo visitante (somente leitura) | 🟡 | ✅ | 🟡 |
 
 ### AUT-01 — Login com e-mail e senha
 Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste 🟡
@@ -70,7 +71,8 @@ Origem: [COD] · Back — · Front ✅ · Teste ⬜
 ### AUT-05 — Rotas protegidas no frontend
 Origem: [ENT] [CTX] · Back — · Front ✅ · Teste ⬜
 
-- Sem sessão, qualquer rota interna redireciona para `/login`.
+- Sem sessão, `/usuarios` e `/logs` redirecionam para `/login`; as telas de conteúdo ficam abertas
+  ao visitante (AUT-10).
 - `/usuarios` e `/logs` só para `superadmin`; os outros papéis vão para `/nao-autorizado`.
 - `/` redireciona para `/mural`.
 
@@ -155,3 +157,35 @@ ao terminar já está logado. E-mail, papel e setor vêm do convite e não mudam
   - válido → formulário com e-mail só leitura, nome já preenchido, data de nascimento, senha e
     confirmação de senha (a confirmação é checada só no front). Sucesso → `entrar()` e `/mural`.
 - Quando o cargo existir (USU-06), ele entra nesse formulário.
+
+### AUT-10 — Modo visitante (somente leitura)
+Origem: pedido do time (2026-10-29) · Back 🟡 · Front ✅ · Teste 🟡
+
+Quem não fez login pode **ver** o conteúdo do sistema, sem baixar nem alterar nada.
+
+Backend — sem token, respondem `200`:
+- `GET /murais/avisos`, `/murais/avisos/{id}`, `/murais/eventos`, `/murais/aniversariantes`;
+- `GET /setores`, `/setores/{id}`, `/setores/{id}/ramais`;
+- `GET /duvidas/faq`, `/duvidas/faq/{id}`;
+- `GET /documentos`, `/documentos/{id}` (só metadados);
+- `GET /atalhos`.
+
+Backend — sem token, continuam `401`:
+- todo `POST`/`PUT`/`DELETE`;
+- `GET /documentos/{id}/download` e `GET /murais/avisos/{id}/anexos/{anexo_id}/download`;
+- `GET /usuarios`, `GET /logs` (e o `403` para quem está logado sem ser `superadmin`).
+
+Frontend:
+- **Dado** um visitante, **quando** abre `/mural`, `/calendario`, `/documentos`, `/duvidas` ou
+  `/setores`, **então** a tela abre, sem redirecionar para `/login`.
+- **Dado** um visitante, **então** não aparece nenhum botão de criar, editar, excluir, enviar,
+  baixar ou abrir arquivo (documento e anexo), e a barra lateral mostra "Entrar" no lugar do papel
+  e do "Sair".
+- **Dado** um visitante, **quando** abre `/usuarios` ou `/logs`, **então** vai para `/login`.
+- **Dado** que o visitante entra pelo "Entrar", **então** depois do login volta para a página em
+  que estava.
+- Um `401` de visitante (sem token salvo) não manda para `/login`; só a sessão que expirou manda.
+
+- Risco aceito: a lista de aniversariantes (nome, dia, setor) e os metadados de documentos ficam
+  legíveis por qualquer pessoa que alcance a API. Se o servidor for exposto fora da rede do
+  hospital, rever.

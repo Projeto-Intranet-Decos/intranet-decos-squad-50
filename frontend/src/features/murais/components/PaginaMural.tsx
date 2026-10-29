@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { canEditar, canGerenciarConteudo } from '../../../lib/permissions'
+import { canBaixarArquivos, canEditar, canGerenciarConteudo } from '../../../lib/permissions'
 import Skeleton from '../../../shared/components/Skeleton'
 import { useAniversariantes } from '../hooks/useAniversariantes'
 import { useAvisos } from '../hooks/useAvisos'
@@ -215,6 +215,7 @@ function PaginaMural() {
         aoFechar={() => setDetalhe(null)}
         aoEditar={detalhe && podeGerenciarEsteAviso(detalhe) ? abrirEdicao : undefined}
         aoExcluir={detalhe && podeGerenciarEsteAviso(detalhe) ? aoExcluir : undefined}
+        podeBaixarAnexos={canBaixarArquivos(usuario)}
       />
     </div>
   )

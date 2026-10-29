@@ -37,51 +37,41 @@ function App() {
       <Route
         path="/mural"
         element={
-          <RotaProtegida>
-            <Layout>
-              <PaginaMural />
-            </Layout>
-          </RotaProtegida>
+          <Layout>
+            <PaginaMural />
+          </Layout>
         }
       />
       <Route
         path="/calendario"
         element={
-          <RotaProtegida>
-            <Layout>
-              <PaginaCalendario />
-            </Layout>
-          </RotaProtegida>
+          <Layout>
+            <PaginaCalendario />
+          </Layout>
         }
       />
       <Route
         path="/documentos"
         element={
-          <RotaProtegida>
-            <Layout>
-              <PaginaDocumentos />
-            </Layout>
-          </RotaProtegida>
+          <Layout>
+            <PaginaDocumentos />
+          </Layout>
         }
       />
       <Route
         path="/duvidas"
         element={
-          <RotaProtegida>
-            <Layout>
-              <PaginaDuvidas />
-            </Layout>
-          </RotaProtegida>
+          <Layout>
+            <PaginaDuvidas />
+          </Layout>
         }
       />
       <Route
         path="/setores"
         element={
-          <RotaProtegida>
-            <Layout>
-              <PaginaSetores />
-            </Layout>
-          </RotaProtegida>
+          <Layout>
+            <PaginaSetores />
+          </Layout>
         }
       />
       <Route

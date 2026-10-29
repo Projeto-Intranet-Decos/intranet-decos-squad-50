@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import obter_sessao
-from app.core.permissions import UsuarioAutenticado, requer_admin, requer_superadmin, usuario_atual
+from app.core.permissions import UsuarioAutenticado, requer_admin, requer_superadmin
 from app.modules.setores import service
 from app.modules.setores.schemas import (
     RamalAtualizar,
@@ -21,13 +21,13 @@ router = APIRouter(tags=["setores"])
 # Setores: leitura para qualquer usuário autenticado, escrita exclusiva de superadmin.
 
 
-@router.get("/setores", response_model=list[SetorResposta], dependencies=[Depends(usuario_atual)])
+@router.get("/setores", response_model=list[SetorResposta])
 def listar_setores(sessao: Session = Depends(obter_sessao)):
     return service.listar_setores(sessao)
 
 
 @router.get(
-    "/setores/{setor_id}", response_model=SetorResposta, dependencies=[Depends(usuario_atual)]
+    "/setores/{setor_id}", response_model=SetorResposta
 )
 def buscar_setor(setor_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
     return service.buscar_setor(sessao, setor_id)
@@ -68,7 +68,6 @@ def deletar_setor(
 @router.get(
     "/setores/{setor_id}/ramais",
     response_model=list[RamalResposta],
-    dependencies=[Depends(usuario_atual)],
 )
 def listar_ramais(setor_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
     return service.listar_ramais(sessao, setor_id)

@@ -21,7 +21,7 @@ Categorias: `pop`, `protocolo`, `manual`, `formulario`, `outro`.
 ### DOC-01 — Listar e filtrar documentos
 Origem: [ESP] [ENT H2] · Back ✅ · Front ✅ · Teste ⬜
 
-`GET /documentos?setor_id=&categoria=&busca=` — qualquer autenticado (inclusive `comum`), todos os
+`GET /documentos?setor_id=&categoria=&busca=` — público, sem login (AUT-10), todos os
 setores (GER-04). Mais recentes primeiro. Sem token → `401`.
 
 - `busca` (até 200): trecho do **título**, sem diferenciar maiúsculas; `%` e `_` são tratados como
@@ -33,13 +33,14 @@ setores (GER-04). Mais recentes primeiro. Sem token → `401`.
 ### DOC-02 — Consultar um documento
 Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
 
-`GET /documentos/{id}` — qualquer autenticado; `404 "Documento não encontrado"`. Traz `titulo`,
+`GET /documentos/{id}` — público, sem login (AUT-10); `404 "Documento não encontrado"`. Traz `titulo`,
 `descricao`, `categoria`, `nome_arquivo`, `tipo_conteudo`, `tamanho_bytes`, setor e autor com nome.
 
 ### DOC-03 — Baixar e pré-visualizar documento
 Origem: [ENT H2] · Back ✅ · Front ✅ · Teste ⬜
 
-`GET /documentos/{id}/download?inline=` — qualquer autenticado, sem precisar de papel admin.
+`GET /documentos/{id}/download?inline=` — qualquer **autenticado**, sem precisar de papel admin. O
+visitante (AUT-10) vê os metadados, mas não baixa nem abre o arquivo: `401`.
 
 - Padrão `attachment` com o nome original; `inline=true` para pré-visualizar no navegador.
 - Tipo vem do cadastro (derivado da extensão, GER-06).

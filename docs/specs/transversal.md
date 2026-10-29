@@ -36,10 +36,11 @@ desktop (GER-15).
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
 
 Toda rota da API exige access token válido, exceto: `POST /auth/login`, `POST /auth/refresh`,
-`GET /murais/avisos/{id}/imagem` (ver MUR-09), `GET /saude` e as rotas de magic link (AUT-08):
+`GET /murais/avisos/{id}/imagem` (ver MUR-09), `GET /saude`, as rotas de magic link (AUT-08):
 `POST /auth/convite/verificar`, `POST /auth/convite/aceitar` (AUT-09), `POST
 /auth/redefinicao-senha`, `POST /auth/redefinicao-senha/verificar` e `POST
-/auth/redefinicao-senha/confirmar` (USU-07).
+/auth/redefinicao-senha/confirmar` (USU-07) — e as **leituras de conteúdo** do modo visitante
+(AUT-10). Escrita, downloads, `/usuarios` e `/logs` sempre exigem token.
 
 - **Dado** uma rota protegida, **quando** a requisição vem sem `Authorization`, com token
   malformado, com assinatura inválida ou expirado, **então** responde `401`
@@ -66,7 +67,7 @@ Origem: [CTX] [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
 Vale para Aviso (inclusive eventos, MUR-03), FAQ, Documento e Ramal. O registro guarda o setor de quem criou.
 
 Leitura:
-- **Dado** qualquer usuário autenticado, **quando** lista ou busca esses recursos, **então** vê os
+- **Dado** qualquer pessoa, logada ou não (AUT-10), **quando** lista ou busca esses recursos, **então** vê os
   de **todos** os setores.
 
 Edição/exclusão (checagem no service, depois de buscar o recurso):

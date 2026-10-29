@@ -32,8 +32,8 @@ def test_ata01_qualquer_autenticado_lista_atalhos_em_ordem_de_criacao(
     assert set(atalhos[0]) == {"id", "titulo", "url", "criado_em", "atualizado_em"}
 
 
-def test_ata01_sem_token_retorna_401(cliente: TestClient):
-    assert cliente.get("/atalhos").status_code == 401
+def test_ata01_visitante_sem_token_lista_atalhos(cliente: TestClient):
+    assert cliente.get("/atalhos").status_code == 200
 
 
 def test_ata02_superadmin_cria_atalho(cliente: TestClient, superadmin: Usuario):

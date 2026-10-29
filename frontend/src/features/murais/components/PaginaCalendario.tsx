@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { canEditar } from '../../../lib/permissions'
+import { canBaixarArquivos, canEditar } from '../../../lib/permissions'
 import { IconeAlerta } from '../../../shared/components/icones'
 import Skeleton from '../../../shared/components/Skeleton'
 import {
@@ -202,6 +202,7 @@ function PaginaCalendario() {
         aoFechar={() => setDetalhe(null)}
         aoEditar={detalhe && podeGerenciarEsteAviso(detalhe) ? abrirEdicao : undefined}
         aoExcluir={detalhe && podeGerenciarEsteAviso(detalhe) ? aoExcluir : undefined}
+        podeBaixarAnexos={canBaixarArquivos(usuario)}
       />
     </div>
   )

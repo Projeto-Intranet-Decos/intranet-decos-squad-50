@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
 import { renovarAccessToken } from '../../lib/api'
 import ModalAlterarSenha from '../../lib/auth/ModalAlterarSenha'
@@ -259,10 +259,32 @@ function Layout({ children }: PropriedadesLayout) {
         {/* Duas linhas: o nome ganha a largura toda, em vez de dividir a linha com os botões. */}
         <div className="mt-2 flex flex-none flex-col gap-2 border-t border-white/70 pt-4 liquido:border-slate-900/5">
           <div className={`flex items-center gap-2.5 ${compacto ? 'justify-center' : ''}`}>
-            <span title={usuario?.nome} className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9">
-              <IconeUsuario tamanho={18} />
-            </span>
-            {!compacto && (
+            {usuario ? (
+              <span title={usuario.nome} className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9">
+                <IconeUsuario tamanho={18} />
+              </span>
+            ) : (
+              <Link
+                to="/login"
+                state={{ de: pathname }}
+                title="Entrar"
+                aria-label="Entrar"
+                className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9"
+              >
+                <IconeUsuario tamanho={18} />
+              </Link>
+            )}
+            {!compacto && !usuario && (
+              <>
+                <span className="min-w-0 flex-1 truncate text-xs text-slate-600 liquido:text-[13px] liquido:font-medium liquido:text-slate-700">
+                  Visitante
+                </span>
+                <Link to="/login" state={{ de: pathname }} className="btn btn-primary min-h-10 px-3.5 text-[13px] lg:min-h-8">
+                  Entrar
+                </Link>
+              </>
+            )}
+            {!compacto && usuario && (
               /* O papel só aparece para o superadmin; os demais veem só o nome (AUT-03). */
               <div className="flex min-w-0 flex-1 flex-col leading-tight">
                 <span title={usuario?.nome} className="truncate text-[13px] font-medium text-slate-700 liquido:text-sm">
@@ -274,7 +296,7 @@ function Layout({ children }: PropriedadesLayout) {
               </div>
             )}
           </div>
-          {!compacto && (
+          {!compacto && usuario && (
             <div className="flex items-center justify-end gap-1">
               <button
                 type="button"

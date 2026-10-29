@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import obter_sessao
-from app.core.permissions import UsuarioAutenticado, requer_admin, usuario_atual
+from app.core.permissions import UsuarioAutenticado, requer_admin
 from app.modules.duvidas import service
 from app.modules.duvidas.schemas import FaqAtualizar, FaqCriar, FaqResposta
 
@@ -15,12 +15,12 @@ router = APIRouter(prefix="/duvidas", tags=["duvidas"])
 # setor, checado no service) e superadmin.
 
 
-@router.get("/faq", response_model=list[FaqResposta], dependencies=[Depends(usuario_atual)])
+@router.get("/faq", response_model=list[FaqResposta])
 def listar_faq(sessao: Session = Depends(obter_sessao)):
     return service.listar_faq(sessao)
 
 
-@router.get("/faq/{faq_id}", response_model=FaqResposta, dependencies=[Depends(usuario_atual)])
+@router.get("/faq/{faq_id}", response_model=FaqResposta)
 def buscar_faq(faq_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
     return service.buscar_faq(sessao, faq_id)
 

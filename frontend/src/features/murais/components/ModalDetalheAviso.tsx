@@ -20,9 +20,11 @@ interface PropriedadesModalDetalheAviso {
   /** Só passados quando o usuário pode gerenciar este aviso (GER-12). */
   aoEditar?: (aviso: Aviso) => void
   aoExcluir?: (aviso: Aviso) => void
+  /** Falso para o visitante: baixar anexo exige login (AUT-10). */
+  podeBaixarAnexos?: boolean
 }
 
-function ModalDetalheAviso({ aviso, aoFechar, aoEditar, aoExcluir }: PropriedadesModalDetalheAviso) {
+function ModalDetalheAviso({ aviso, aoFechar, aoEditar, aoExcluir, podeBaixarAnexos = true }: PropriedadesModalDetalheAviso) {
   const navegar = useNavigate()
 
   if (!aviso) return null
@@ -108,14 +110,16 @@ function ModalDetalheAviso({ aviso, aoFechar, aoEditar, aoExcluir }: Propriedade
                     {anexo.nome}
                   </span>
                   <span className="text-xs text-slate-600 tabular-nums">{anexo.tamanho}</span>
-                  <button
-                    type="button"
-                    onClick={() => baixar(anexo.id, anexo.nome)}
-                    title="Baixar"
-                    className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-brand-600 sm:size-8 liquido:btn-icon"
-                  >
-                    <IconeDownload tamanho={16} />
-                  </button>
+                  {podeBaixarAnexos && (
+                    <button
+                      type="button"
+                      onClick={() => baixar(anexo.id, anexo.nome)}
+                      title="Baixar"
+                      className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-brand-600 sm:size-8 liquido:btn-icon"
+                    >
+                      <IconeDownload tamanho={16} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

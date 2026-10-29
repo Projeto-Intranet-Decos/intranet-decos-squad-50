@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { api } from '../api'
 import CampoAcesso from './CampoAcesso'
@@ -17,13 +17,15 @@ function PaginaLogin() {
   const { register, handleSubmit } = useForm<FormularioLogin>()
   const { entrar } = useAuth()
   const navegar = useNavigate()
+  // Volta para a página que a pessoa estava vendo (modo visitante, AUT-10).
+  const origem = (useLocation().state as { de?: string } | null)?.de
 
   const { mutate, isPending } = useMutation({
     mutationFn: (dados: FormularioLogin) =>
       api.post<{ access_token: string; refresh_token: string }>('/auth/login', dados),
     onSuccess: (resposta) => {
       entrar(resposta.data.access_token, resposta.data.refresh_token)
-      navegar('/mural')
+      navegar(origem ?? '/mural')
     },
     onError: () => toast.error('E-mail ou senha inválidos.'),
   })

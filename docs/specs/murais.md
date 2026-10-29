@@ -36,7 +36,7 @@ Aniversariante **não é registro próprio**: é derivado de `usuarios.data_nasc
 ### MUR-01 — Listar avisos
 Origem: [ESP] [ENT H1] [CTX] · Back ✅ · Front ✅ · Teste ✅
 
-`GET /murais/avisos` — qualquer autenticado; avisos de todos os setores (GER-04), **inclusive
+`GET /murais/avisos` — público, sem login (AUT-10); avisos de todos os setores (GER-04), **inclusive
 eventos**, mais recentes primeiro (por `criado_em`). Cada aviso traz `titulo`, `conteudo`,
 `categoria`, `data_inicio`, `data_fim`, `fixado`, `possui_imagem`, `versao_imagem`, `anexos` (id,
 nome, tipo, tamanho), `setor_id/nome`, `autor_id/nome`, `criado_em`, `atualizado_em`.
@@ -49,7 +49,7 @@ nome, tipo, tamanho), `setor_id/nome`, `autor_id/nome`, `criado_em`, `atualizado
 ### MUR-02 — Consultar um aviso
 Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
 
-`GET /murais/avisos/{id}` — qualquer autenticado; `404 "Aviso não encontrado"`. Serve também para
+`GET /murais/avisos/{id}` — público, sem login (AUT-10); `404 "Aviso não encontrado"`. Serve também para
 eventos (mesmo corpo de MUR-01).
 
 ### MUR-03 — Publicar aviso
@@ -140,7 +140,8 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   novos) não passa de 10 → `422 {"campo": "arquivos", ...}`.
 - `DELETE /murais/avisos/{id}/anexos/{anexo_id}` → `204`; escopo por setor; `404` se o anexo não é
   desse aviso.
-- `GET /murais/avisos/{id}/anexos/{anexo_id}/download` — qualquer autenticado; sempre
+- `GET /murais/avisos/{id}/anexos/{anexo_id}/download` — qualquer **autenticado** (o visitante,
+  AUT-10, não baixa: `401`); sempre
   `attachment` com o nome original (GER-06).
 
 ### MUR-09 — Capa pública com cache
@@ -194,7 +195,7 @@ Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste 🟡
 ### MUR-12 — Listar eventos por período
 Origem: [ESP] [ENT H3] [CTX] · Back ✅ · Front ✅ · Teste ✅
 
-`GET /murais/eventos?de=&ate=&setor_id=` — qualquer autenticado; devolve só avisos de categoria
+`GET /murais/eventos?de=&ate=&setor_id=` — público, sem login (AUT-10); devolve só avisos de categoria
 `evento`, com o mesmo corpo de MUR-01. Todos os parâmetros opcionais; `de`/`ate` são datas
 (`YYYY-MM-DD`) interpretadas em UTC, `ate` inclusivo até o fim do dia. Ordenado por `data_inicio` e
 depois `titulo`. Substitui o antigo `GET /calendario/eventos` (CAL-01, CAL-02).
@@ -211,7 +212,7 @@ depois `titulo`. Substitui o antigo `GET /calendario/eventos` (CAL-01, CAL-02).
 ### MUR-13 — Aniversariantes do mês
 Origem: [ESP] [ENT H3] · Back ✅ · Front ✅ · Teste ✅
 
-`GET /murais/aniversariantes?mes=` — qualquer autenticado. `mes` de 1 a 12 (fora disso → `422`);
+`GET /murais/aniversariantes?mes=` — público, sem login (AUT-10). `mes` de 1 a 12 (fora disso → `422`);
 sem `mes`, usa o mês atual. Substitui o antigo `GET /calendario/aniversariantes` (CAL-06).
 
 - Retorna `id`, `nome`, `dia`, `setor_id`, `setor_nome` (ou `null`), ordenado por dia e nome.

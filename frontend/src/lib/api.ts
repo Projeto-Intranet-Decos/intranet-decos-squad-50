@@ -48,6 +48,9 @@ api.interceptors.response.use(
       return Promise.reject(erro)
     }
 
+    // Visitante (sem sessão guardada) não tem o que renovar nem para onde ser expulso.
+    if (!obterToken() && !obterRefreshToken()) return Promise.reject(erro)
+
     config._tentouRenovar = true
     try {
       const novoToken = await renovarAccessToken()
