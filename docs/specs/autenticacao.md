@@ -66,7 +66,8 @@ Origem: [COD] · Back — · Front ✅ · Teste ⬜
   ainda não foi repetida, **então** o interceptor chama `/auth/refresh` e repete a requisição com o
   novo token.
 - Várias requisições com `401` ao mesmo tempo compartilham **uma** renovação.
-- **Dado** que a renovação falha, **então** os tokens são apagados e o usuário vai para `/login`.
+- **Dado** que a renovação falha, **então** os tokens são apagados e a página atual recarrega como
+  visitante (AUT-10); só as telas de administração levam ao `/login`.
 
 ### AUT-05 — Rotas protegidas no frontend
 Origem: [ENT] [CTX] · Back — · Front ✅ · Teste ⬜
@@ -184,7 +185,9 @@ Frontend:
 - **Dado** um visitante, **quando** abre `/usuarios` ou `/logs`, **então** vai para `/login`.
 - **Dado** que o visitante entra pelo "Entrar", **então** depois do login volta para a página em
   que estava.
-- Um `401` de visitante (sem token salvo) não manda para `/login`; só a sessão que expirou manda.
+- O ponto de entrada é o próprio site: `/` abre `/mural`, e o login só aparece quando a pessoa clica
+  em "Entrar" ou abre uma tela de administração. Sair da conta volta para `/mural`.
+- Um `401` de visitante (sem token salvo) não muda de página.
 
 - Risco aceito: a lista de aniversariantes (nome, dia, setor) e os metadados de documentos ficam
   legíveis por qualquer pessoa que alcance a API. Se o servidor for exposto fora da rede do

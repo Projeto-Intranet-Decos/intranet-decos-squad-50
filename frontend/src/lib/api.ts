@@ -57,8 +57,10 @@ api.interceptors.response.use(
       config.headers.Authorization = `Bearer ${novoToken}`
       return api(config)
     } catch {
+      // Sessão acabou: recarrega a página atual já como visitante (AUT-10). Se a página for de
+      // administração, a RotaProtegida leva ao login.
       limparTokens()
-      window.location.href = '/login'
+      window.location.reload()
       return Promise.reject(erro)
     }
   },

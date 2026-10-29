@@ -145,7 +145,7 @@ function Layout({ children }: PropriedadesLayout) {
 
   function aoSair() {
     sair()
-    navegar('/login', { replace: true })
+    navegar('/mural', { replace: true })
   }
 
   return (
