@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { canBaixarArquivos, canEditar, canGerenciarConteudo } from '../../../lib/permissions'
+import ModalConfirmacao from '../../../shared/components/ModalConfirmacao'
 import Skeleton from '../../../shared/components/Skeleton'
 import { useAniversariantes } from '../hooks/useAniversariantes'
 import { useAvisos } from '../hooks/useAvisos'
@@ -93,6 +94,7 @@ function PaginaMural() {
   const [modalAberto, setModalAberto] = useState(false)
   const [avisoEditando, setAvisoEditando] = useState<Aviso | null>(null)
   const [detalhe, setDetalhe] = useState<Aviso | null>(null)
+  const [exclusao, setExclusao] = useState<{ aviso: Aviso; voltarAoDetalhe: boolean } | null>(null)
 
   const podeCriar = canGerenciarConteudo(usuario)
 
@@ -142,10 +144,16 @@ function PaginaMural() {
     setAvisoEditando(null)
   }
 
+  // O detalhe fecha enquanto a confirmação está aberta (dois modais empilhados brigariam pelo Esc e
+  // pelo foco) e volta se a pessoa cancelar.
   function aoExcluir(aviso: Aviso) {
-    if (window.confirm(`Excluir o aviso "${aviso.titulo}"? Essa ação não pode ser desfeita.`)) {
-      excluirAviso.mutate(aviso.id, { onSuccess: () => setDetalhe(null) })
-    }
+    setExclusao({ aviso, voltarAoDetalhe: detalhe?.id === aviso.id })
+    setDetalhe(null)
+  }
+
+  function cancelarExclusao() {
+    if (exclusao?.voltarAoDetalhe) setDetalhe(exclusao.aviso)
+    setExclusao(null)
   }
 
   if (isLoading) {
@@ -217,6 +225,17 @@ function PaginaMural() {
         aoExcluir={detalhe && podeGerenciarEsteAviso(detalhe) ? aoExcluir : undefined}
         podeBaixarAnexos={canBaixarArquivos(usuario)}
       />
+      {exclusao && (
+        <ModalConfirmacao
+          titulo="Excluir aviso"
+          pergunta="Tem certeza que deseja excluir este aviso?"
+          destaque={exclusao.aviso.titulo}
+          rotuloConfirmar="Excluir aviso"
+          processando={excluirAviso.isPending}
+          aoConfirmar={() => excluirAviso.mutate(exclusao.aviso.id, { onSuccess: () => setExclusao(null) })}
+          aoFechar={cancelarExclusao}
+        />
+      )}
     </div>
   )
 }
