@@ -27,6 +27,11 @@ function paraSessao(dados: SessaoApi): SessaoNova {
   return { accessToken: dados.access_token, refreshToken: dados.refresh_token }
 }
 
+export async function entrarComSenha(dados: { email: string; senha: string }): Promise<SessaoNova> {
+  const { data } = await api.post<SessaoApi>('/auth/login', dados)
+  return paraSessao(data)
+}
+
 // O token do magic link vai sempre no corpo, nunca na URL (AUT-08).
 
 export async function verificarConvite(token: string): Promise<DadosConvite> {

@@ -29,6 +29,15 @@ from app.modules.usuarios.router import router as roteador_usuarios
 
 logger = logging.getLogger(__name__)
 
+# O uvicorn só configura os loggers dele; sem isto, o INFO do app (login_ok, e-mail em modo console,
+# GER-25) não chegaria ao log do container. Continua propagando: os testes leem pelo caplog.
+logger_app = logging.getLogger("app")
+if not logger_app.handlers:
+    saida = logging.StreamHandler()
+    saida.setFormatter(logging.Formatter("%(levelname)s:     %(name)s - %(message)s"))
+    logger_app.addHandler(saida)
+    logger_app.setLevel(logging.INFO)
+
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:

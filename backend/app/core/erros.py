@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.armazenamento import ArquivoNaoEncontrado, ErroArmazenamento
+from app.core.log_seguranca import registrar_evento
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,17 @@ def registrar_tratadores_de_erro(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def tratar_http(request: Request, erro: StarletteHTTPException) -> JSONResponse:
+        if erro.status_code == status.HTTP_403_FORBIDDEN:
+            # Todo 403 é autorização negada, venha da dependency (papel) ou do service (escopo).
+            usuario = getattr(request.state, "usuario", None)
+            registrar_evento(
+                "acesso_negado",
+                logging.WARNING,
+                usuario_id=usuario.id if usuario else "-",
+                papel=usuario.role if usuario else "-",
+                metodo=request.method,
+                caminho=request.url.path,
+            )
         corpo = erro.detail if isinstance(erro.detail, dict) else {"mensagem": erro.detail}
         return JSONResponse(corpo, status_code=erro.status_code, headers=erro.headers)
 

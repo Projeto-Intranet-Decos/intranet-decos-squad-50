@@ -71,7 +71,7 @@ from sqlalchemy.engine import Connection  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 import app.main  # noqa: E402
-from app.core import armazenamento, correio  # noqa: E402
+from app.core import armazenamento, correio, limite_tentativas  # noqa: E402
 from app.core.database import SessaoLocal, engine, obter_fabrica_de_sessoes, obter_sessao  # noqa: E402
 from app.modules.setores.models import Setor  # noqa: E402
 from app.modules.usuarios.models import Papel, Usuario  # noqa: E402
@@ -190,6 +190,17 @@ def correio_falso(monkeypatch: pytest.MonkeyPatch) -> CorreioFalso:
     # Rede de segurança: os testes do próprio envio trocam o urlopen por um falso.
     monkeypatch.setattr(correio, "urlopen", _envio_proibido)
     return falso
+
+
+# Limite de tentativas (AUT-11, USU-07): o contador é global do processo, então cada teste começa
+# do zero, sem herdar as falhas de login do anterior.
+
+
+@pytest.fixture(autouse=True)
+def limites_zerados() -> Iterator[None]:
+    limite_tentativas.zerar_todos()
+    yield
+    limite_tentativas.zerar_todos()
 
 
 # Cenário: um setor com um usuário comum e um admin_setor nele, e um superadmin sem setor (como o

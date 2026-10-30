@@ -2,7 +2,17 @@ import uuid
 from datetime import date, datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, ColumnElement, Date, DateTime, ForeignKey, String, Uuid, text
+from sqlalchemy import (
+  Boolean,
+  CheckConstraint,
+  ColumnElement,
+  Date,
+  DateTime,
+  ForeignKey,
+  String,
+  Uuid,
+  text,
+)
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -17,6 +27,11 @@ class Papel(str, Enum):
 
 class Usuario(Base):
   __tablename__ = "usuarios"
+  # O schema já grava em minúsculas (USU-02); a constraint impede que um caminho por fora (script,
+  # SQL direto) crie Maria@x ao lado de maria@x.
+  __table_args__ = (
+    CheckConstraint("email = lower(email)", name="ck_usuarios_email_minusculo"),
+  )
 
   id: Mapped[uuid.UUID] = mapped_column(
       Uuid, primary_key=True, server_default=text("gen_random_uuid()")

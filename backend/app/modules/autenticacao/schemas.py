@@ -1,13 +1,14 @@
 from datetime import date
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, StringConstraints
+from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
 
-from app.modules.usuarios.schemas import Senha, UsuarioResposta
+from app.modules.usuarios.schemas import Email, Senha, UsuarioResposta
 
 
 class LoginEntrada(BaseModel):
-  email: str
+  # Texto livre (e-mail malformado é só mais um 401), mas comparado como é gravado (USU-02).
+  email: Annotated[str, AfterValidator(lambda email: email.strip().lower())]
   senha: str
 
 
@@ -54,7 +55,7 @@ class MensagemResposta(BaseModel):
 
 
 class PedidoRedefinicao(BaseModel):
-  email: EmailStr
+  email: Email
 
 
 class RedefinicaoResposta(BaseModel):

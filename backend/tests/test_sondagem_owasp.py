@@ -73,7 +73,6 @@ def test_a01_visitante_nao_baixa_documento(cliente, superadmin, setor):
     assert cliente.get(f"/documentos/{doc['id']}/download").status_code == 401
 
 
-@pendencia("A01: superadmin consegue se desativar (USU-04 ❓)")
 def test_a01_superadmin_nao_desativa_a_si_mesmo(cliente, superadmin):
     """USU-04 ❓: o único superadmin pode se trancar fora do sistema."""
     r = cliente.delete(f"/usuarios/{superadmin.id}", headers=autenticar(superadmin))
@@ -173,22 +172,21 @@ def test_a05_nome_de_arquivo_com_crlf_nao_injeta_header(cliente, superadmin, set
 # ---------- A06 Insecure Design ----------
 
 
-@pendencia("A06: login sem rate limit/bloqueio")
 def test_a06_login_tem_limite_de_tentativas(cliente, comum):
     respostas = [_login(cliente, comum.email, "errada").status_code for _ in range(20)]
     assert 429 in respostas, "20 senhas erradas seguidas, nenhuma barrada"
 
 
-@pendencia("A06: redefinição sem rate limit (USU-07 ❓)")
-def test_a06_redefinicao_de_senha_tem_limite(cliente, comum):
+def test_a06_redefinicao_de_senha_tem_limite(cliente, fabrica):
+    # E-mail válido: o .local da fábrica para no 422 do validador, antes do limite.
+    colaborador = fabrica.usuario(email="colaborador@example.com")
     respostas = [
-        cliente.post("/auth/redefinicao-senha", json={"email": comum.email}).status_code
+        cliente.post("/auth/redefinicao-senha", json={"email": colaborador.email}).status_code
         for _ in range(10)
     ]
     assert 429 in respostas, "10 pedidos seguidos para o mesmo e-mail, nenhum barrado"
 
 
-@pendencia("A06: política de senha só exige 8 caracteres")
 @pytest.mark.parametrize("senha", ["12345678", "password", "senha123"])
 def test_a06_senha_trivial_recusada(cliente, comum, senha):
     r = cliente.put(
@@ -218,11 +216,11 @@ def test_a07_existe_logout_que_revoga_refresh(cliente, comum):
     assert cliente.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]}).status_code == 401
 
 
-@pendencia("A07: e-mail inexistente responde ~15x mais rápido")
 def test_a07_login_nao_revela_conta_pelo_tempo(cliente, comum):
     def medir(email):
         tempos = []
-        for _ in range(7):
+        # 5: a 6ª já cairia no bloqueio do AUT-11, que responde sem calcular hash.
+        for _ in range(5):
             inicio = time.perf_counter()
             _login(cliente, email, "errada")
             tempos.append(time.perf_counter() - inicio)
@@ -246,7 +244,6 @@ def test_a07_refresh_token_rotaciona(cliente, comum):
     assert "refresh_token" in r.json(), "refresh token reutilizável por 7 dias, sem rotação"
 
 
-@pendencia("A07: login diferencia maiúsculas no e-mail")
 def test_a07_email_do_login_ignora_maiusculas(cliente, comum):
     assert _login(cliente, comum.email.upper(), SENHA_PADRAO).status_code == 200
 
@@ -254,7 +251,6 @@ def test_a07_email_do_login_ignora_maiusculas(cliente, comum):
 # ---------- A09 Logging & Alerting ----------
 
 
-@pendencia("A09: falha de login não é registrada")
 def test_a09_login_falho_fica_registrado(cliente, sessao: Session, comum, caplog):
     antes = sessao.scalar(select(Log.id).limit(1))
     with caplog.at_level("INFO"):
@@ -263,7 +259,6 @@ def test_a09_login_falho_fica_registrado(cliente, sessao: Session, comum, caplog
     assert registrado, "falha de login não gera nenhum registro (log técnico ou auditoria)"
 
 
-@pendencia("A09: acesso negado não é registrado")
 def test_a09_403_fica_registrado(cliente, comum, caplog):
     with caplog.at_level("INFO"):
         cliente.get("/usuarios", headers=autenticar(comum))

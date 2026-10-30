@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
@@ -7,6 +8,8 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import configuracoes
+from app.core.limite_tentativas import LimiteDeTentativas
+from app.core.log_seguranca import registrar_evento
 from app.core.security import (
   criar_access_token,
   gerar_hash_senha,
@@ -23,18 +26,41 @@ from app.modules.usuarios.models import Usuario
 LINK_INVALIDO = "Link inválido ou expirado"
 MENSAGEM_REDEFINICAO = "Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha."
 SENHA_ATUAL_INCORRETA = {"campo": "senha_atual", "mensagem": "Senha atual incorreta"}
+MUITAS_TENTATIVAS = "Muitas tentativas. Tente de novo em alguns minutos."
+MUITOS_PEDIDOS = "Muitos pedidos. Tente de novo em alguns minutos."
+
+# AUT-11 e USU-07: por e-mail, exista a conta ou não.
+LIMITE_LOGIN = LimiteDeTentativas(maximo=5, janela_segundos=15 * 60)
+LIMITE_REDEFINICAO = LimiteDeTentativas(maximo=1, janela_segundos=5 * 60)
+
+# Conferido quando não há senha para conferir (conta inexistente ou pendente): o login leva o mesmo
+# tempo e não revela quais e-mails estão cadastrados (AUT-01). Calculado ao importar para nem a
+# primeira tentativa ser diferente.
+HASH_FICTICIO = gerar_hash_senha(gerar_token())
 
 
-def autenticar(sessao: Session, email: str, senha: str) -> tuple[str, str, Usuario]:
+def _muitas_tentativas(mensagem: str, segundos: int) -> HTTPException:
+  return HTTPException(
+    status.HTTP_429_TOO_MANY_REQUESTS, mensagem, headers={"Retry-After": str(segundos)}
+  )
+
+
+def autenticar(sessao: Session, email: str, senha: str, ip: str) -> tuple[str, str, Usuario]:
+  espera = LIMITE_LOGIN.segundos_de_espera(email)
+  if espera:
+    registrar_evento("login_bloqueado", logging.WARNING, email=email, ip=ip)
+    raise _muitas_tentativas(MUITAS_TENTATIVAS, espera)
+
   usuario = usuarios_repository.buscar_por_email(sessao, email)
-  if (
-    not usuario
-    or not usuario.ativo
-    or usuario.senha_hash is None
-    or not verificar_senha(senha, usuario.senha_hash)
-  ):
+  hash_conferido = usuario.senha_hash if usuario and usuario.senha_hash else HASH_FICTICIO
+  senha_confere = verificar_senha(senha, hash_conferido)
+  if not usuario or not usuario.ativo or usuario.senha_hash is None or not senha_confere:
+    LIMITE_LOGIN.registrar(email)
+    registrar_evento("login_falhou", logging.WARNING, email=email, ip=ip)
     raise HTTPException(401, "Email ou senha invalidos")
 
+  LIMITE_LOGIN.esquecer(email)
+  registrar_evento("login_ok", usuario_id=usuario.id, ip=ip)
   access_token, refresh_token = _abrir_sessao(sessao, usuario)
   return access_token, refresh_token, usuario
 
@@ -153,6 +179,17 @@ def _definir_senha(sessao: Session, usuario: Usuario, senha: str) -> tuple[str, 
   # Um link de redefinição pedido antes da troca não pode redefinir a senha nova (AUT-08).
   repository.apagar_links_pendentes(sessao, usuario.id)
   return _abrir_sessao(sessao, usuario)
+
+
+def aceitar_pedido_de_redefinicao(email: str, ip: str) -> None:
+  """Limite de USU-07, antes de agendar o envio. Só olha a memória, nunca o banco: o tempo da
+  resposta continua sem revelar se a conta existe."""
+  espera = LIMITE_REDEFINICAO.segundos_de_espera(email)
+  if espera:
+    registrar_evento("redefinicao_bloqueada", logging.WARNING, email=email, ip=ip)
+    raise _muitas_tentativas(MUITOS_PEDIDOS, espera)
+  LIMITE_REDEFINICAO.registrar(email)
+  registrar_evento("redefinicao_pedida", email=email, ip=ip)
 
 
 def pedir_redefinicao(abrir_sessao: Callable[[], Session], email: str) -> None:

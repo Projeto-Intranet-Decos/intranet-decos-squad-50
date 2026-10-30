@@ -15,6 +15,7 @@ banco. Ativação de conta e redefinição de senha por magic link enviado por e
 | AUT-08 | Magic link (token de uso único por e-mail) | ✅ | ✅ | ✅ |
 | AUT-09 | Ativação de conta pelo convite | ✅ | ✅ | ✅ |
 | AUT-10 | Modo visitante (somente leitura) | 🟡 | ✅ | 🟡 |
+| AUT-11 | Limite de tentativas de login | ✅ | ✅ | ✅ |
 
 ### AUT-01 — Login com e-mail e senha
 Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste 🟡
@@ -27,7 +28,13 @@ Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste 🟡
 - **Dado** e-mail inexistente, senha errada **ou** usuário desativado, **então** `401`
   `"Email ou senha invalidos"` — a mesma mensagem nos três casos, pra não revelar qual falhou.
 - **Dado** um usuário pendente (convidado que ainda não ativou a conta, USU-02), **então** `401`
-  com a mesma mensagem (único critério do AUT-01 com teste até agora).
+  com a mesma mensagem.
+- **Dado** um e-mail inexistente, **então** a resposta leva o mesmo tempo que uma senha errada: o
+  hash da senha é sempre calculado (contra um hash fictício quando não há conta), para o tempo
+  não revelar quais e-mails estão cadastrados.
+- **Dado** o e-mail com outras maiúsculas ou espaços nas pontas (`  Maria@Hospital.com`), **então**
+  o login funciona (o e-mail é comparado em minúsculas, USU-02).
+- Cada tentativa vai para o log técnico de segurança (GER-25); o limite de tentativas é o AUT-11.
 - Frontend: formulário de login; em sucesso guarda os tokens e vai para `/mural`.
 
 ### AUT-02 — Renovação do access token
@@ -192,3 +199,19 @@ Frontend:
 - Risco aceito: a lista de aniversariantes (nome, dia, setor) e os metadados de documentos ficam
   legíveis por qualquer pessoa que alcance a API. Se o servidor for exposto fora da rede do
   hospital, rever.
+
+### AUT-11 — Limite de tentativas de login
+Origem: [COD] (auditoria OWASP, A06/A07) · Back ✅ · Front ✅ · Teste ✅
+
+Contra adivinhação de senha. O limite é **por e-mail**, não por IP: no hospital todos os postos
+saem pelo mesmo NAT, e um limite por IP derrubaria o login de todo mundo por causa de um só.
+
+- **Dado** 5 senhas erradas para o mesmo e-mail (sem diferença de maiúsculas) em 15 minutos,
+  **quando** chega a 6ª tentativa, **então** `429 {"mensagem": "Muitas tentativas. Tente de novo em
+  alguns minutos."}` com `Retry-After` (segundos) — mesmo com a senha certa — até a mais antiga das
+  5 sair da janela de 15 minutos.
+- Vale para qualquer e-mail, cadastrado ou não: o `429` não revela se a conta existe.
+- **Dado** um login bem-sucedido, **então** as falhas anteriores daquele e-mail são esquecidas.
+- O bloqueio vai para o log técnico como alerta (GER-25).
+- O contador fica na memória da API (um processo só) e zera quando ela reinicia — trade-off aceito.
+- Frontend: a mensagem do `429` aparece no formulário de login.

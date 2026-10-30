@@ -435,6 +435,26 @@ Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
   colaborador não fica no cache do navegador do posto). A capa do aviso (MUR-09) mantém o
   `Cache-Control` dela.
 
+### GER-25 — Log técnico de segurança
+Origem: [COD] (auditoria OWASP, A09) · Back ✅ · Front — · Teste ✅
+
+Eventos de segurança vão para o log do container (logger `app.seguranca`), uma linha por evento no
+formato `evento=<nome> chave=valor…`, para dar para filtrar e alertar na plataforma. Não vão para o
+Registro de atividades (LOG), que é a auditoria de escrita de conteúdo. Senha e token nunca
+aparecem; o IP é o que o proxy informa (só informativo, nenhuma regra depende dele).
+
+| Evento | Nível | Campos |
+|---|---|---|
+| `login_ok` | INFO | `usuario_id`, `ip` |
+| `login_falhou` | WARNING | `email`, `ip` |
+| `login_bloqueado` (AUT-11) | WARNING | `email`, `ip` |
+| `redefinicao_pedida` (USU-07) | INFO | `email`, `ip` |
+| `redefinicao_bloqueada` (USU-07) | WARNING | `email`, `ip` |
+| `acesso_negado` (`403`, GER-03/GER-04) | WARNING | `usuario_id`, `papel`, `metodo`, `caminho` |
+| `refresh_reutilizado` (AUT-02) | WARNING | `usuario_id`, `ip` |
+
+- O nível `INFO` do logger `app` aparece no log mesmo com a configuração padrão do uvicorn.
+
 ### GER-24 — Segredo do JWT
 Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
 

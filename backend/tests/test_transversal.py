@@ -1,5 +1,7 @@
 """Regras transversais — docs/specs/transversal.md."""
 
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -112,6 +114,28 @@ def test_ger05_erro_inesperado_vira_500_no_contrato_sem_detalhe(
     assert resposta.status_code == 500
     assert resposta.json() == {"mensagem": "Erro interno do servidor"}
     assert "detalhe interno" in caplog.text
+
+
+def test_ger25_acesso_negado_vai_para_o_log(
+    cliente: TestClient, fabrica: Fabrica, comum: Usuario, admin_setor: Usuario,
+    caplog: pytest.LogCaptureFixture,
+):
+    admin_farmacia = fabrica.usuario(Papel.admin_setor, fabrica.setor("Farmácia"))
+    faq = cliente.post(
+        "/duvidas/faq", json={"pergunta": "P?", "resposta": "R."}, headers=autenticar(admin_farmacia)
+    ).json()
+
+    with caplog.at_level(logging.INFO, logger="app.seguranca"):
+        assert cliente.get("/usuarios", headers=autenticar(comum)).status_code == 403
+        assert cliente.delete(
+            f"/duvidas/faq/{faq['id']}", headers=autenticar(admin_setor)
+        ).status_code == 403
+
+    assert [r.getMessage() for r in caplog.records if r.name == "app.seguranca"] == [
+        f"evento=acesso_negado usuario_id={comum.id} papel=comum metodo=GET caminho=/usuarios",
+        f"evento=acesso_negado usuario_id={admin_setor.id} papel=admin_setor metodo=DELETE "
+        f"caminho=/duvidas/faq/{faq['id']}",
+    ]
 
 
 @pytest.mark.parametrize("rota", ["/docs", "/redoc", "/openapi.json"])
