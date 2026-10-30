@@ -48,14 +48,19 @@ api.interceptors.response.use(
       return Promise.reject(erro)
     }
 
+    // Visitante (sem sessão guardada) não tem o que renovar nem para onde ser expulso.
+    if (!obterToken() && !obterRefreshToken()) return Promise.reject(erro)
+
     config._tentouRenovar = true
     try {
       const novoToken = await renovarAccessToken()
       config.headers.Authorization = `Bearer ${novoToken}`
       return api(config)
     } catch {
+      // Sessão acabou: recarrega a página atual já como visitante (AUT-10). Se a página for de
+      // administração, a RotaProtegida leva ao login.
       limparTokens()
-      window.location.href = '/login'
+      window.location.reload()
       return Promise.reject(erro)
     }
   },

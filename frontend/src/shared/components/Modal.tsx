@@ -1,3 +1,4 @@
+import { motion } from 'motion/react'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { IconeX } from './icones'
 
@@ -23,6 +24,11 @@ const CLASSES_VARIANTE = {
     cabecalho: 'mb-[22px]',
   },
 }
+
+// Entrada do modal: o fundo aparece e o painel sobe e cresce com uma mola leve. Só na abertura,
+// porque os modais são montados e desmontados pela página. O MotionConfig global já corta o
+// movimento (mantém só o fade) com "Reduzir animações" ou prefers-reduced-motion.
+const MOLA_PAINEL = { type: 'spring', stiffness: 420, damping: 32, mass: 0.9 } as const
 
 const SELETOR_FOCAVEIS =
   'a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
@@ -93,8 +99,17 @@ function Modal({
     <div onClick={aoFechar} className={`fixed inset-0 z-50 flex items-center justify-center ${classes.fundo}`}>
       {/* O fundo é irmão do painel, não pai: um backdrop-filter dentro de outro só enxerga o
           conteúdo do pai, e o painel deixaria de desfocar a página. */}
-      <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[3px] liquido:bg-slate-900/25 liquido:backdrop-blur-sm" aria-hidden="true" />
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="absolute inset-0 bg-slate-900/20 backdrop-blur-[3px] liquido:bg-slate-900/25 liquido:backdrop-blur-sm"
+        aria-hidden="true"
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 18, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ ...MOLA_PAINEL, opacity: { duration: 0.18, ease: 'easeOut' } }}
         ref={painelRef}
         role="dialog"
         aria-modal="true"
@@ -125,7 +140,7 @@ function Modal({
           </div>
           {children}
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

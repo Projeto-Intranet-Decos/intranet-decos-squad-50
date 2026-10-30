@@ -8,7 +8,7 @@ from tests.apoio import ArmazenamentoFalso, Fabrica, autenticar
 
 
 def test_ger02_rota_protegida_sem_token_retorna_401(cliente: TestClient):
-    resposta = cliente.get("/setores")
+    resposta = cliente.get("/usuarios")
 
     assert resposta.status_code == 401
     assert resposta.json() == {"mensagem": "Não autenticado"}
@@ -16,7 +16,7 @@ def test_ger02_rota_protegida_sem_token_retorna_401(cliente: TestClient):
 
 
 def test_ger02_token_invalido_retorna_401(cliente: TestClient):
-    resposta = cliente.get("/setores", headers={"Authorization": "Bearer nao-e-um-jwt"})
+    resposta = cliente.get("/usuarios", headers={"Authorization": "Bearer nao-e-um-jwt"})
 
     assert resposta.status_code == 401
 

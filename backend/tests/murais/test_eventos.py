@@ -94,5 +94,5 @@ def test_mur12_evento_sem_fim_usa_so_a_data_de_inicio(
     assert _titulos(cliente, comum, de="2026-10-01", ate="2026-10-31") == []
 
 
-def test_mur12_exige_autenticacao(cliente: TestClient):
-    assert cliente.get("/murais/eventos").status_code == 401
+def test_mur12_visitante_sem_token_lista_eventos(cliente: TestClient):
+    assert cliente.get("/murais/eventos").status_code == 200

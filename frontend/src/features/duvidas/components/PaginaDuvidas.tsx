@@ -3,6 +3,7 @@ import { useAuth } from '../../../lib/auth/useAuth'
 import { canEditar, canGerenciarConteudo } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import { IconeMais } from '../../../shared/components/icones'
+import ModalConfirmacao from '../../../shared/components/ModalConfirmacao'
 import { useExcluirFaq } from '../hooks/useExcluirFaq'
 import { useFaq } from '../hooks/useFaq'
 import { useSetoresDuvidas } from '../hooks/useSetoresDuvidas'
@@ -20,6 +21,7 @@ function PaginaDuvidas() {
   const [expandidoId, setExpandidoId] = useState<string | null>(null)
   const [modalAberto, setModalAberto] = useState(false)
   const [faqEditando, setFaqEditando] = useState<Faq | null>(null)
+  const [faqExcluindo, setFaqExcluindo] = useState<Faq | null>(null)
 
   const podeCriar = canGerenciarConteudo(usuario)
 
@@ -53,9 +55,7 @@ function PaginaDuvidas() {
   }
 
   function aoExcluir(item: Faq) {
-    if (window.confirm(`Excluir a pergunta "${item.pergunta}"? Essa ação não pode ser desfeita.`)) {
-      excluirFaq.mutate(item.id)
-    }
+    setFaqExcluindo(item)
   }
 
   if (isError) {
@@ -88,6 +88,18 @@ function PaginaDuvidas() {
 
       {modalAberto && (
         <ModalFaq key={faqEditando?.id ?? 'novo'} aoFechar={fecharModal} faqEditando={faqEditando} setores={setores} />
+      )}
+
+      {faqExcluindo && (
+        <ModalConfirmacao
+          titulo="Excluir pergunta"
+          pergunta="Tem certeza que deseja excluir esta pergunta?"
+          destaque={faqExcluindo.pergunta}
+          rotuloConfirmar="Excluir pergunta"
+          processando={excluirFaq.isPending}
+          aoConfirmar={() => excluirFaq.mutate(faqExcluindo.id, { onSuccess: () => setFaqExcluindo(null) })}
+          aoFechar={() => setFaqExcluindo(null)}
+        />
       )}
     </div>
   )

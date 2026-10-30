@@ -21,14 +21,14 @@ router = APIRouter(prefix="/murais", tags=["murais"])
 
 
 @router.get(
-  "/avisos", response_model=list[AvisoResposta], dependencies=[Depends(usuario_atual)]
+  "/avisos", response_model=list[AvisoResposta]
 )
 def listar_avisos(sessao: Session = Depends(obter_sessao)):
   return service.listar_avisos(sessao)
 
 
 @router.get(
-  "/eventos", response_model=list[AvisoResposta], dependencies=[Depends(usuario_atual)]
+  "/eventos", response_model=list[AvisoResposta]
 )
 def listar_eventos(
   de: date | None = None,
@@ -42,7 +42,6 @@ def listar_eventos(
 @router.get(
   "/aniversariantes",
   response_model=list[AniversarianteResposta],
-  dependencies=[Depends(usuario_atual)],
 )
 def listar_aniversariantes(
   mes: int | None = Query(default=None, ge=1, le=12),
@@ -52,7 +51,7 @@ def listar_aniversariantes(
 
 
 @router.get(
-  "/avisos/{aviso_id}", response_model=AvisoResposta, dependencies=[Depends(usuario_atual)]
+  "/avisos/{aviso_id}", response_model=AvisoResposta
 )
 def buscar_aviso(aviso_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
   return service.buscar_aviso(sessao, aviso_id)

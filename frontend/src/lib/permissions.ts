@@ -39,6 +39,11 @@ export function canAcessarAdministracao(usuario: UsuarioOuNada): boolean {
   return !!usuario && PAPEIS_ADMINISTRACAO.includes(usuario.role)
 }
 
+// O visitante (sem login) só vê: baixar e abrir arquivos exige sessão, como no backend (AUT-10).
+export function canBaixarArquivos(usuario: UsuarioOuNada): boolean {
+  return !!usuario
+}
+
 // Atalhos do acesso rápido são globais: só o superadmin mantém.
 export function canGerenciarAtalhos(usuario: UsuarioOuNada): boolean {
   return isSuperadmin(usuario)

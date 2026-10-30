@@ -19,7 +19,7 @@ from app.modules.documentos.schemas import (
 router = APIRouter(prefix="/documentos", tags=["documentos"])
 
 
-@router.get("", response_model=list[DocumentoResposta], dependencies=[Depends(usuario_atual)])
+@router.get("", response_model=list[DocumentoResposta])
 def listar_documentos(
   filtro: Annotated[FiltroDocumentos, Query()], sessao: Session = Depends(obter_sessao)
 ):
@@ -27,7 +27,7 @@ def listar_documentos(
 
 
 @router.get(
-  "/{documento_id}", response_model=DocumentoResposta, dependencies=[Depends(usuario_atual)]
+  "/{documento_id}", response_model=DocumentoResposta
 )
 def buscar_documento(documento_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
   return service.buscar_documento(sessao, documento_id)

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { canAdministrarSetores, canGerenciarSetor } from '../../../lib/permissions'
+import ModalConfirmacao from '../../../shared/components/ModalConfirmacao'
 import { useOrdenacaoClique } from '../../../shared/hooks/useOrdenacaoClique'
 import { useExcluirSetor } from '../hooks/useExcluirSetor'
 import { useSetores } from '../hooks/useSetores'
@@ -26,6 +27,7 @@ function PaginaSetores() {
   const { coluna: ordem, direcao, aoClicarColuna } = useOrdenacaoClique<OrdemSetores>('nome')
   const [modalAberto, setModalAberto] = useState(false)
   const [setorEditando, setSetorEditando] = useState<SetorComRamais | null>(null)
+  const [setorExcluindo, setSetorExcluindo] = useState<SetorComRamais | null>(null)
 
   const canAdministrar = canAdministrarSetores(usuario)
 
@@ -63,10 +65,7 @@ function PaginaSetores() {
   }
 
   function aoExcluir(setor: SetorComRamais) {
-    const mensagem = `Excluir o setor "${setor.nome}" e todos os seus ramais? Essa ação não pode ser desfeita.`
-    if (window.confirm(mensagem)) {
-      excluirSetor.mutate(setor.id)
-    }
+    setSetorExcluindo(setor)
   }
 
   if (isError) {
@@ -104,6 +103,19 @@ function PaginaSetores() {
           aoFechar={fecharModal}
           setorEditando={setorEditando}
           podeRenomear={canAdministrar}
+        />
+      )}
+
+      {setorExcluindo && (
+        <ModalConfirmacao
+          titulo="Excluir setor"
+          pergunta="Tem certeza que deseja excluir este setor?"
+          destaque={setorExcluindo.nome}
+          alerta="Os ramais do setor também serão excluídos. Essa ação não pode ser desfeita."
+          rotuloConfirmar="Excluir setor"
+          processando={excluirSetor.isPending}
+          aoConfirmar={() => excluirSetor.mutate(setorExcluindo.id, { onSuccess: () => setSetorExcluindo(null) })}
+          aoFechar={() => setSetorExcluindo(null)}
         />
       )}
     </div>

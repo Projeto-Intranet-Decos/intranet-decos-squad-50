@@ -21,14 +21,14 @@ nem fluxo de ticket `[CTX]`.
 ### DUV-01 — Listar perguntas
 Origem: [ESP] [ENT H4] · Back ✅ · Front 🟡 · Teste ⬜
 
-`GET /duvidas/faq` — qualquer autenticado, sem papel admin; perguntas de todos os setores, em
+`GET /duvidas/faq` — público, sem login (AUT-10); perguntas de todos os setores, em
 ordem de criação. Cada item traz `pergunta`, `resposta`, setor e autor com nome, `criado_em`,
 `atualizado_em`.
 
 ### DUV-02 — Consultar uma pergunta
 Origem: [ENT] · Back ✅ · Front — · Teste ⬜
 
-`GET /duvidas/faq/{id}` — qualquer autenticado; `404 "Pergunta não encontrada"`.
+`GET /duvidas/faq/{id}` — público, sem login (AUT-10); `404 "Pergunta não encontrada"`.
 
 ### DUV-03 — Cadastrar pergunta e resposta
 Origem: [ENT H4] · Back ✅ · Front 🟡 · Teste ⬜
@@ -36,7 +36,7 @@ Origem: [ENT H4] · Back ✅ · Front 🟡 · Teste ⬜
 `POST /duvidas/faq` (JSON) — `admin_setor` ou `superadmin`; setor por GER-04.
 
 - `pergunta` obrigatória, 1–500; `resposta` obrigatória, não vazia → senão `422`.
-- **Dado** FAQ criada por admin de um setor, **então** ela fica visível para qualquer autenticado.
+- **Dado** FAQ criada por admin de um setor, **então** ela fica visível para qualquer pessoa (AUT-10).
 - **Dado** um `comum`, **então** `403`.
 
 ### DUV-04 — Editar pergunta e resposta

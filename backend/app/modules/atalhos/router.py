@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import obter_sessao
-from app.core.permissions import UsuarioAutenticado, requer_superadmin, usuario_atual
+from app.core.permissions import UsuarioAutenticado, requer_superadmin
 from app.modules.atalhos import service
 from app.modules.atalhos.schemas import AtalhoAtualizar, AtalhoCriar, AtalhoResposta
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/atalhos", tags=["atalhos"])
 # não pertencem a setor.
 
 
-@router.get("", response_model=list[AtalhoResposta], dependencies=[Depends(usuario_atual)])
+@router.get("", response_model=list[AtalhoResposta])
 def listar_atalhos(sessao: Session = Depends(obter_sessao)):
     return service.listar_atalhos(sessao)
 

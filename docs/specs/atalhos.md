@@ -15,7 +15,7 @@ para todo mundo. Não pertencem a setor: são configuração **sistêmica**, man
 ### ATA-01 — Listar atalhos
 Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅
 
-`GET /atalhos` — qualquer autenticado. Devolve todos os atalhos em ordem de criação, cada um com
+`GET /atalhos` — público, sem login (AUT-10). Devolve todos os atalhos em ordem de criação, cada um com
 `id`, `titulo`, `url`, `criado_em`, `atualizado_em`.
 
 - **Dado** um `comum`, **quando** lista, **então** `200` com os atalhos cadastrados.

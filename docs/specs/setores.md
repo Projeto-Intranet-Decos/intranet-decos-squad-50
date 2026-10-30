@@ -20,13 +20,13 @@ setor e andar" `[ESP]`.
 ### SET-01 — Listar setores com ramais
 Origem: [ENT H5] · Back ✅ · Front ✅ · Teste ⬜
 
-`GET /setores` — qualquer usuário autenticado. Setores em ordem alfabética, cada um com a lista de
+`GET /setores` — público, sem login (AUT-10). Setores em ordem alfabética, cada um com a lista de
 `ramais` ordenada numericamente (mais curtos primeiro: "20" antes de "100").
 
 ### SET-02 — Consultar um setor
 Origem: [ENT] · Back ✅ · Front — · Teste ⬜
 
-`GET /setores/{id}` — qualquer autenticado; `404 "Setor não encontrado"` se não existe.
+`GET /setores/{id}` — público, sem login (AUT-10); `404 "Setor não encontrado"` se não existe.
 
 ### SET-03 — Criar setor
 Origem: [ENT H5] [CTX] · Back ✅ · Front ✅ · Teste ⬜
@@ -56,7 +56,7 @@ Origem: [ENT H5] [COD] · Back ✅ · Front ✅ · Teste ⬜
 ### SET-06 — Listar ramais de um setor
 Origem: [ENT] · Back ✅ · Front — · Teste ⬜
 
-`GET /setores/{id}/ramais` — qualquer autenticado; `404` se o setor não existe.
+`GET /setores/{id}/ramais` — público, sem login (AUT-10); `404` se o setor não existe.
 
 ### SET-07 — Cadastrar ramal
 Origem: [ENT H5] · Back ✅ · Front ✅ · Teste ⬜

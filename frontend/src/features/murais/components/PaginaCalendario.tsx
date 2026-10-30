@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { canEditar } from '../../../lib/permissions'
+import { canBaixarArquivos, canEditar } from '../../../lib/permissions'
+import ModalConfirmacao from '../../../shared/components/ModalConfirmacao'
 import { IconeAlerta } from '../../../shared/components/icones'
 import Skeleton from '../../../shared/components/Skeleton'
 import {
@@ -50,6 +51,7 @@ function PaginaCalendario() {
   const [modalAberto, setModalAberto] = useState(false)
   const [avisoEditando, setAvisoEditando] = useState<Aviso | null>(null)
   const [detalhe, setDetalhe] = useState<Aviso | null>(null)
+  const [exclusao, setExclusao] = useState<{ aviso: Aviso; voltarAoDetalhe: boolean } | null>(null)
 
   // O botão também funciona com o calendário já aberto: cada navegação nova aplica a data uma vez.
   if (navegacaoAplicada !== chaveDaNavegacao) {
@@ -111,10 +113,16 @@ function PaginaCalendario() {
     setAvisoEditando(null)
   }
 
+  // O detalhe fecha enquanto a confirmação está aberta (dois modais empilhados brigariam pelo Esc e
+  // pelo foco) e volta se a pessoa cancelar.
   function aoExcluir(aviso: Aviso) {
-    if (window.confirm(`Excluir o evento "${aviso.titulo}"? Essa ação não pode ser desfeita.`)) {
-      excluirAviso.mutate(aviso.id, { onSuccess: () => setDetalhe(null) })
-    }
+    setExclusao({ aviso, voltarAoDetalhe: detalhe?.id === aviso.id })
+    setDetalhe(null)
+  }
+
+  function cancelarExclusao() {
+    if (exclusao?.voltarAoDetalhe) setDetalhe(exclusao.aviso)
+    setExclusao(null)
   }
 
   return (
@@ -202,7 +210,19 @@ function PaginaCalendario() {
         aoFechar={() => setDetalhe(null)}
         aoEditar={detalhe && podeGerenciarEsteAviso(detalhe) ? abrirEdicao : undefined}
         aoExcluir={detalhe && podeGerenciarEsteAviso(detalhe) ? aoExcluir : undefined}
+        podeBaixarAnexos={canBaixarArquivos(usuario)}
       />
+      {exclusao && (
+        <ModalConfirmacao
+          titulo="Excluir evento"
+          pergunta="Tem certeza que deseja excluir este evento?"
+          destaque={exclusao.aviso.titulo}
+          rotuloConfirmar="Excluir evento"
+          processando={excluirAviso.isPending}
+          aoConfirmar={() => excluirAviso.mutate(exclusao.aviso.id, { onSuccess: () => setExclusao(null) })}
+          aoFechar={cancelarExclusao}
+        />
+      )}
     </div>
   )
 }
