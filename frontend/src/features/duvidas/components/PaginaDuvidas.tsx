@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { canEditar, canGerenciarConteudo } from '../../../lib/permissions'
+import { canEditar, canEscolherSetor, canGerenciarConteudo } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import { IconeMais } from '../../../shared/components/icones'
 import ModalConfirmacao from '../../../shared/components/ModalConfirmacao'
@@ -14,7 +14,8 @@ import PainelFaq from './PainelFaq'
 function PaginaDuvidas() {
   const { usuario } = useAuth()
   const { data: faq = [], isLoading, isError } = useFaq()
-  const { data: setores = [] } = useSetoresDuvidas()
+  const escolheSetor = canEscolherSetor(usuario)
+  const { data: setores = [] } = useSetoresDuvidas(escolheSetor)
   const excluirFaq = useExcluirFaq()
 
   const [busca, setBusca] = useState('')
@@ -87,7 +88,13 @@ function PaginaDuvidas() {
       />
 
       {modalAberto && (
-        <ModalFaq key={faqEditando?.id ?? 'novo'} aoFechar={fecharModal} faqEditando={faqEditando} setores={setores} />
+        <ModalFaq
+          key={faqEditando?.id ?? 'novo'}
+          aoFechar={fecharModal}
+          faqEditando={faqEditando}
+          setores={setores}
+          escolheSetor={escolheSetor}
+        />
       )}
 
       {faqExcluindo && (

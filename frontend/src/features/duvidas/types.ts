@@ -1,11 +1,4 @@
-/**
- * Modelo mockado — o contrato real (FAQ curada por admin vs. sistema de
- * ticket) ainda está em decisão com o time (ver backend/app/modules/duvidas
- * vs. CONTEXT.md). Esta tela não assume nenhum contrato de API ainda:
- * `api.ts` simula os dois fluxos que o protótipo mostra lado a lado —
- * FAQ com edição/exclusão por admin, e envio livre de pergunta por
- * qualquer colaborador — sem se comprometer com uma tabela/endpoint real.
- */
+/** Contrato espelhado de backend/app/modules/duvidas/schemas.py. */
 export interface Setor {
   id: string
   nome: string
@@ -17,6 +10,8 @@ export interface Faq {
   resposta: string
   setorId: string
   setorNome: string
+  autorId: string
+  autorNome: string
   criadoEm: string
   atualizadoEm: string | null
 }
@@ -24,10 +19,15 @@ export interface Faq {
 export interface NovaFaq {
   pergunta: string
   resposta: string
-  setorId: string
+  /** Opcional: o backend usa o setor do próprio usuário quando não vem. */
+  setorId?: string
 }
 
-export type EdicaoFaq = Partial<NovaFaq>
+/** O setor não muda depois de criada (o PUT não recebe `setor_id`). */
+export interface EdicaoFaq {
+  pergunta?: string
+  resposta?: string
+}
 
 /** Contrato de erro de validação de campo vindo do backend, conforme
  * docs/arquitetura-frontend.md. */
