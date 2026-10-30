@@ -1,129 +1,85 @@
 # Auditoria OWASP Top 10 (2025)
 
-Levantamento de 2026-10-30, sobre a `main` em `ba1f43b` (já com o modo visitante, AUT-10).
-As sondagens dinâmicas estão em [`backend/tests/test_sondagem_owasp.py`](../backend/tests/test_sondagem_owasp.py):
-cada teste afirma o comportamento seguro; os que falham hoje estão marcados `xfail(strict=True)` e
-ficam como lista viva de pendências. Quem corrigir uma delas vê o `XPASS`, tira a marca e cria o
-requisito no spec do domínio (fluxo spec → teste → código do `CLAUDE.md`).
+Levantamento de 2026-10-30 sobre a `main` em `ba1f43b`, e correção das pendências na branch
+`feature/geral/seguranca-owasp-top10` (plano em
+[`superpowers/plans/2026-10-30-endurecimento-owasp.md`](./superpowers/plans/2026-10-30-endurecimento-owasp.md)).
+
+As sondagens ficam em [`backend/tests/test_sondagem_owasp.py`](../backend/tests/test_sondagem_owasp.py):
+cada teste afirma o comportamento seguro. Pendência aberta fica marcada `xfail(strict=True)`; quando
+alguém corrigir, o `XPASS` avisa para tirar a marca. Hoje só resta uma marca, a do risco aceito do
+AUT-10. Os critérios novos têm ID e teste no módulo, como manda o fluxo do `CLAUDE.md`.
 
 Rodar: `docker compose up -d banco` e, em `backend/`, `.venv/bin/pytest tests/test_sondagem_owasp.py -rx`.
 
-Legenda: ✅ controle presente · ⚠️ pendência · 🟡 risco aceito/decisão do time.
+Legenda: ✅ controle presente · 🟡 risco aceito/decisão registrada.
 
-## A01 — Broken Access Control
+## Por categoria
 
-| | Item | Como foi verificado |
+| Categoria | Situação | Onde está a regra |
 |---|---|---|
-| ✅ | `comum` não escreve; `admin_setor` não acessa `/usuarios` e `/logs` | teste |
-| ✅ | `admin_setor` não cria/edita/exclui documento de outro setor | teste |
-| ✅ | Visitante não baixa documento/anexo (`401`) | teste |
-| ⚠️ | Superadmin consegue desativar a si mesmo (e o último superadmin) — USU-04 ❓ | teste |
-| 🟡 | Aniversariantes (nome, dia, setor) e metadados de documentos legíveis sem login — risco aceito no AUT-10 | teste |
+| **A01** Controle de acesso | ✅ papéis e escopo por setor; ✅ superadmin não se desativa nem se rebaixa; 🟡 aniversariantes e metadados legíveis por visitante | GER-03, GER-04, USU-03, USU-04, AUT-10 |
+| **A02** Configuração | ✅ `/docs` só com `API_DOCS=true`; ✅ headers na API e no nginx (CSP, HSTS, XFO, nosniff, Referrer-Policy, Permissions-Policy), `server_tokens off`; ✅ `JWT_SECRET` fraco impede a subida; ✅ compose expõe só o nginx | GER-13, GER-23, GER-24 |
+| **A03** Cadeia de suprimentos | ✅ `pip-audit` e `npm audit` limpos; ✅ CI com auditoria; ✅ Dependabot; ✅ imagens e Actions fixadas | GER-26 |
+| **A04** Criptografia | ✅ argon2; ✅ tokens só como hash; ✅ JWT com algoritmo fixo; ✅ refresh token em cookie HttpOnly, access token só em memória | AUT-03, AUT-07 |
+| **A05** Injeção | ✅ só ORM; ✅ tipo servido pela extensão + `nosniff`; ✅ atalhos só `http(s)`; ✅ e-mails escapados; ✅ log técnico não deixa quebrar a linha | GER-06, ATA, GER-22, GER-25 |
+| **A06** Design inseguro | ✅ limite de tentativas no login e na redefinição (por e-mail); ✅ lista de senhas comuns; ✅ upload confere a assinatura do arquivo | AUT-11, USU-07, USU-09, GER-06 |
+| **A07** Autenticação | ✅ tempo do login igual com ou sem conta; ✅ logout revoga a sessão inteira; ✅ rotação com detecção de reuso; ✅ e-mail sem diferença de maiúsculas | AUT-01, AUT-02, AUT-06, USU-02 |
+| **A08** Integridade | ✅ CI obrigatório antes do merge (falta ligar a proteção de branch, abaixo); ✅ imagens por digest | GER-26 |
+| **A09** Log e alerta | ✅ auditoria de escrita; ✅ log técnico de login, bloqueio, redefinição, 403 e reuso de refresh | GER-10, GER-25 |
+| **A10** Condições excepcionais | ✅ falha fechada no token; ✅ `500` no contrato `{mensagem}`, sem detalhe | GER-02, GER-05 |
 
-## A02 — Security Misconfiguration
+## As 17 pendências
 
-| | Item | Como foi verificado |
-|---|---|---|
-| ✅ | CORS só com a lista de `CORS_ORIGINS`; origem qualquer não é refletida | teste |
-| ⚠️ | `/docs`, `/redoc` e `/openapi.json` abertos: mapa completo da API para qualquer um | teste |
-| ⚠️ | API sem `X-Frame-Options`, `Referrer-Policy`, `Cache-Control: no-store` nas respostas com dados | teste |
-| ⚠️ | nginx sem `Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`; `server_tokens` ligado | leitura do `frontend/nginx.conf.template` |
-| ⚠️ | `JWT_SECRET=troque-este-segredo` (o do `.env.example`) é aceito sem reclamar | teste |
-| ⚠️ | Compose publica Postgres (5432) e MinIO (9000/9001) em todas as interfaces do host | leitura do `docker-compose.yml` |
-| ⚠️ | `uvicorn --forwarded-allow-ips='*'`: qualquer cliente que alcance a porta 8000 forja `X-Forwarded-For` (vira problema quando houver rate limit por IP) | leitura do `backend/Dockerfile` |
+| # | Pendência | Feito | Commit |
+|---|---|---|---|
+| 1 | Dependências com CVE | pyjwt, urllib3, certifi, dnspython; `npm audit fix` | `61391f2` |
+| 2 | `/docs` aberto | só com `API_DOCS=true` | `b363401` |
+| 3 | `JWT_SECRET` fraco | ≥ 32 bytes e ≠ exemplo, senão a API não sobe | `b363401` |
+| 4 | Headers de segurança | middleware na API + snippet no nginx | `b363401` |
+| 5 | Enumeração pelo tempo do login | hash fictício quando não há conta | `fe5a876` |
+| 6 | Sem logout | `POST /auth/logout` revoga a sessão inteira | `5dea2a5` |
+| 7 | E-mail com maiúsculas | minúsculas no schema + migration + `CHECK` | `fe5a876` |
+| 8 | Sem rate limit | login 5/15 min e redefinição 1/5 min, por e-mail | `fe5a876` |
+| 9 | Sem log de segurança | logger `app.seguranca` | `fe5a876` |
+| 10 | `500` fora do contrato | handler de `Exception` | `b363401` |
+| 11 | Superadmin se desativa | `409` ao desativar ou rebaixar a si mesmo | `fe5a876` |
+| 12 | Senhas triviais | lista de senhas comuns + caractere único | `fe5a876` |
+| 13 | Sem CI | workflow + Dependabot | `f241bb0` |
+| 14 | Portas do compose | banco, MinIO e API em `127.0.0.1` | `b363401` |
+| 15 | Refresh sem rotação | rotação + detecção de reuso (30 s) | `5dea2a5` |
+| 16 | Upload só pela extensão | assinatura do formato | `5e99d66` |
+| 17 | Tokens no `localStorage` | cookie HttpOnly + access token em memória | `5dea2a5` |
 
-## A03 — Software Supply Chain Failures
+## Decisões tomadas no caminho
 
-| | Item | Como foi verificado |
-|---|---|---|
-| ✅ | Backend com versões fixas; frontend com `package-lock.json` e `npm ci` | leitura |
-| ⚠️ | `pip-audit`: 8 CVEs em `certifi 2026.7.22`, `dnspython 2.8.0`, `pyjwt 2.14.0` (só JWKS/OKP, que o app não usa), `urllib3 2.7.0` — todas com correção | `pip-audit -r requirements.txt` |
-| ⚠️ | `npm audit`: 6 altas, 1 delas em dependência de produção (`follow-redirects`, via axios); as outras são de build (`vite`, `brace-expansion`, `source-map-js`, `undici`, `zod`) | `npm audit` / `npm audit --omit=dev` |
-| ⚠️ | Sem CI nem Dependabot/Renovate: nada roda testes, lint ou auditoria de dependências antes do merge | não existe `.github/` |
-| ⚠️ | Imagens base por tag (`python:3.14-slim`, `nginx:1.29-alpine`, `node:24-alpine`), não por digest | leitura dos Dockerfiles |
+- **Limite por e-mail, não por IP.** No hospital todos os postos saem pelo mesmo NAT; um limite por
+  IP bloquearia todo mundo por causa de uma pessoa. Por isso o `--forwarded-allow-ips='*'` do
+  uvicorn ficou: o IP só aparece no log, nenhuma regra depende dele.
+- **Contador em memória.** A API roda com um worker; reiniciar zera os contadores. Se um dia houver
+  mais de um processo, o contador precisa ir para o banco.
+- **`COOKIE_SECURE`.** Ligado por padrão. Se a intranet for servida em HTTP puro por IP da rede
+  interna, o navegador não guarda cookie `Secure`: nesse caso, `COOKIE_SECURE=false` (e o ideal é
+  pôr HTTPS).
+- **Duas regras que estavam `❓`** foram decididas aqui, a pedido: limite da redefinição (USU-07)
+  e autodesativação do superadmin (USU-04). Vale revisar com o time.
 
-## A04 — Cryptographic Failures
+## Verificação
 
-| | Item | Como foi verificado |
-|---|---|---|
-| ✅ | Senha com argon2 (`pwdlib`); refresh token e magic link só como SHA-256 | teste + leitura |
-| ✅ | JWT com algoritmo fixo: `alg: none` e assinatura com outra chave → `401` | teste |
-| 🟡 | Tokens no `localStorage` (dívida já registrada no AUT-07): um XSS leva a sessão. A ausência de CSP (A02) agrava | leitura |
-| ⚠️ | HTTPS/HSTS dependem só da plataforma; nada no app ou no nginx força | leitura |
+- Backend: 321 testes passando + 1 `xfail` (o risco aceito). Frontend: 153 testes, lint, type-check
+  e build.
+- Ponta a ponta, num Chromium de verdade contra nginx + API: visitante não chama a renovação;
+  login com e-mail em maiúsculas; `localStorage` só com o marcador; cookie `HttpOnly`/`Secure`/
+  `SameSite=Strict` invisível ao JS; F5 e segunda aba logadas, com rotação; sair numa aba derruba a
+  outra; cookie revogado responde `401`; bloqueio de tentativas aparece no login; pré-visualização
+  por `blob:` (PDF, texto, imagem) sem violação de CSP; nenhum erro no console. Esse teste achou
+  um bug real (o logout deixava renovar um token trocado há menos de 30 s), corrigido no `5dea2a5`.
 
-## A05 — Injection
+## O que fica para o time
 
-| | Item | Como foi verificado |
-|---|---|---|
-| ✅ | Só ORM, nenhum SQL montado com texto do usuário; busca com payloads de SQLi responde normal | teste + grep |
-| ✅ | Upload de `.html` recusado (`415`); tipo servido vem da extensão, com `nosniff` | teste |
-| ✅ | Sem `dangerouslySetInnerHTML`; atalhos só aceitam `http(s)://` (bloqueia `javascript:`) | grep + leitura |
-| ✅ | E-mails escapam o HTML (`modelo_email.py`) | leitura |
-
-## A06 — Insecure Design
-
-| | Item | Como foi verificado |
-|---|---|---|
-| ⚠️ | Login sem rate limit nem bloqueio: 20 senhas erradas seguidas, nenhuma barrada | teste |
-| ⚠️ | `POST /auth/redefinicao-senha` sem limite (USU-07 ❓): dá para encher a caixa de alguém | teste |
-| ⚠️ | Política de senha só exige 8 caracteres: `12345678`, `password`, `senha123` aceitas | teste |
-| ⚠️ | Upload confere só a extensão: HTML com nome `.pdf` é aceito (servido como PDF + `nosniff`, então o risco é baixo; conferir assinatura do arquivo fecha a porta) | teste |
-
-## A07 — Authentication Failures
-
-| | Item | Como foi verificado |
-|---|---|---|
-| ✅ | Desativar usuário corta o refresh; troca de senha revoga as outras sessões | teste + leitura |
-| ✅ | Mensagem única de erro no login e nos magic links; redefinição responde antes de tocar o banco | leitura |
-| ⚠️ | Enumeração de contas pelo tempo: senha errada em conta existente ~38 ms, e-mail inexistente ~3 ms (o argon2 só roda quando a conta existe) | teste |
-| ⚠️ | Sem logout no backend (AUT-06 ⬜): "Sair" só apaga o `localStorage`, o refresh vale 7 dias | teste |
-| ⚠️ | Refresh token sem rotação nem detecção de reuso | teste |
-| ⚠️ | Login diferencia maiúsculas no e-mail (`Fulano@x` ≠ `fulano@x`), o que também permite contas duplicadas | teste |
-
-## A08 — Software or Data Integrity Failures
-
-| | Item | Como foi verificado |
-|---|---|---|
-| ✅ | Sem desserialização insegura; JWT assinado; front sem script de CDN (tudo no bundle) | leitura |
-| ⚠️ | Mesmos pontos de A03: sem CI que garanta o que vai para `homolog`, imagens sem digest | leitura |
-
-## A09 — Security Logging & Alerting Failures
-
-| | Item | Como foi verificado |
-|---|---|---|
-| ✅ | Toda escrita gera auditoria na mesma transação (LOG-02) | teste |
-| ⚠️ | Login falho, login com sucesso, pedido de redefinição e `403` não geram nenhum registro (nem log técnico) | teste |
-| ⚠️ | Sem alerta algum (ex: muitas falhas de login, muitos `403`) | leitura |
-
-## A10 — Mishandling of Exceptional Conditions
-
-| | Item | Como foi verificado |
-|---|---|---|
-| ✅ | Token com claims inválidos falha fechado (`401`); JSON malformado vira `422`; MinIO fora vira `503` | teste |
-| ✅ | Erro inesperado não vaza detalhe interno | teste |
-| ⚠️ | O `500` sai como `text/plain` "Internal Server Error", fora do contrato `{mensagem}` do frontend | teste |
-
-## Pendências priorizadas
-
-Ordem sugerida: impacto × esforço. As marcadas ❓ precisam de decisão do time antes (regra do
-`docs/specs/README.md`).
-
-| # | Pendência | OWASP | Esforço | Onde |
-|---|---|---|---|---|
-| 1 | Atualizar `pyjwt`, `urllib3`, `certifi`, `dnspython` e `npm audit fix` | A03 | baixo | `requirements.txt`, `package-lock.json` |
-| 2 | Desligar `/docs`/`/redoc`/`/openapi.json` fora do dev (flag de ambiente) | A02 | baixo | `main.py`, `config.py` |
-| 3 | Validar `JWT_SECRET` na subida (≥ 32 bytes e diferente do exemplo) | A02 | baixo | `config.py` |
-| 4 | Headers de segurança no nginx (CSP, HSTS, XFO, nosniff, Referrer-Policy) e `server_tokens off` | A02/A04 | baixo | `nginx.conf.template` |
-| 5 | Igualar o tempo do login rodando o hash contra um hash fixo quando a conta não existe | A07 | baixo | `autenticacao/service.py` |
-| 6 | `POST /auth/logout` revogando o refresh (AUT-06 já especificado) | A07 | baixo | módulo `autenticacao` |
-| 7 | Normalizar e-mail para minúsculas no cadastro e no login (+ migration com índice em `lower(email)`) | A07 | médio | `usuarios` |
-| 8 | Rate limit em `/auth/login` e `/auth/redefinicao-senha` (por e-mail e IP) — ❓ USU-07 | A06 | médio | `autenticacao` (+ ajustar `forwarded-allow-ips`) |
-| 9 | Log técnico de login falho/sucesso, redefinição pedida e `403` | A09 | baixo | `autenticacao/service.py`, `permissions.py` |
-| 10 | Handler de `Exception` devolvendo `500 {mensagem}` e logando o traceback | A10 | baixo | `core/erros.py` |
-| 11 | Impedir o superadmin de desativar a si mesmo / o último superadmin — ❓ USU-04 | A01 | baixo | `usuarios/service.py` |
-| 12 | Lista de senhas comuns na validação de `Senha` | A06 | baixo | `usuarios/schemas.py` |
-| 13 | CI no GitHub com pytest, vitest, lint, `pip-audit`, `npm audit` + Dependabot | A03/A08 | médio | `.github/` |
-| 14 | Compose: publicar Postgres/MinIO só em `127.0.0.1` (ou não publicar) | A02 | baixo | `docker-compose.yml` |
-| 15 | Rotação de refresh token com detecção de reuso | A07 | médio | `autenticacao` |
-| 16 | Conferir assinatura (magic bytes) dos uploads | A06 | médio | `core/arquivos.py` |
-| 17 | Tirar os tokens do `localStorage` (refresh em cookie `HttpOnly; Secure; SameSite=Strict`) — AUT-07 | A04 | alto | backend + frontend |
+- **Proteção de branch** na `main` e na `homolog` exigindo o CI verde: é configuração do GitHub,
+  não código.
+- **Risco aceito do AUT-10**: aniversariantes e metadados de documentos legíveis sem login. Rever
+  se a API sair da rede interna.
+- **Alerta**: os eventos já saem no log com `evento=…`; falta a regra na plataforma (ex: alertar
+  com muitos `login_bloqueado` ou qualquer `refresh_reutilizado`).
+- **Credencial root do MinIO** no backend (dívida já registrada na arquitetura).

@@ -5,20 +5,20 @@ banco. Ativação de conta e redefinição de senha por magic link enviado por e
 
 | ID | Requisito | Back | Front | Teste |
 |---|---|---|---|---|
-| AUT-01 | Login com e-mail e senha | ✅ | ✅ | 🟡 |
-| AUT-02 | Renovação do access token | ✅ | ✅ | ⬜ |
+| AUT-01 | Login com e-mail e senha | ✅ | ✅ | ✅ |
+| AUT-02 | Renovação do access token | ✅ | ✅ | ✅ |
 | AUT-03 | Conteúdo e validade do access token | ✅ | ✅ | 🟡 |
-| AUT-04 | Renovação automática no frontend | — | ✅ | ⬜ |
+| AUT-04 | Renovação automática no frontend | — | ✅ | 🟡 |
 | AUT-05 | Rotas protegidas no frontend | — | ✅ | ⬜ |
-| AUT-06 | Logout com revogação do refresh token | ⬜ | 🟡 | ⬜ |
-| AUT-07 | Armazenamento seguro de credenciais | ✅ | — | ⬜ |
+| AUT-06 | Logout com revogação do refresh token | ✅ | ✅ | ✅ |
+| AUT-07 | Armazenamento seguro de credenciais | ✅ | ✅ | ✅ |
 | AUT-08 | Magic link (token de uso único por e-mail) | ✅ | ✅ | ✅ |
 | AUT-09 | Ativação de conta pelo convite | ✅ | ✅ | ✅ |
 | AUT-10 | Modo visitante (somente leitura) | 🟡 | ✅ | 🟡 |
 | AUT-11 | Limite de tentativas de login | ✅ | ✅ | ✅ |
 
 ### AUT-01 — Login com e-mail e senha
-Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste 🟡
+Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste ✅
 
 `POST /auth/login` com `{email, senha}`.
 
@@ -38,7 +38,7 @@ Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste 🟡
 - Frontend: formulário de login; em sucesso guarda os tokens e vai para `/mural`.
 
 ### AUT-02 — Renovação do access token
-Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
+Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ✅
 
 `POST /auth/refresh`, sem corpo: o refresh token vem do cookie `intranet_refresh` (AUT-07).
 
@@ -74,7 +74,7 @@ Origem: [COD] · Back ✅ · Front ✅ · Teste 🟡
   renova a sessão uma vez, na hora, e o indicador mostra o nome. 🐞 corrigido: ficava vazio.
 
 ### AUT-04 — Renovação automática no frontend
-Origem: [COD] · Back — · Front ✅ · Teste ⬜
+Origem: [COD] · Back — · Front ✅ · Teste 🟡
 
 - **Dado** uma requisição que volta `401`, **quando** não é `/auth/login` nem `/auth/refresh` e
   ainda não foi repetida, **então** o interceptor chama `/auth/refresh` e repete a requisição com o
@@ -117,7 +117,7 @@ também tem que conseguir sair).
   desativado (AUT-02), então o efeito é o mesmo.
 
 ### AUT-07 — Armazenamento seguro de credenciais
-Origem: [ESP] [COD] · Back ✅ · Front — · Teste ⬜
+Origem: [ESP] [COD] · Back ✅ · Front ✅ · Teste ✅
 
 - Senha guardada só como hash (`pwdlib`, algoritmo recomendado — argon2).
 - Refresh token guardado só como hash SHA-256; o valor em claro existe apenas no cookie.

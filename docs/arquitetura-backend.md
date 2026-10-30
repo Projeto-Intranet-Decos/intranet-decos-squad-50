@@ -110,10 +110,21 @@ restrita ao bucket) e não há rotina de limpeza de objetos órfãos.
 
 ## Autenticação (JWT)
 
-- **Access token**: expira em 15-30 min.
-- **Refresh token**: expira em 7 dias, usado só para obter um novo access token via endpoint `/auth/refresh` (não acessa a API diretamente).
-- Refresh token deve ser rastreável no banco (permite revogação/logout remoto).
+- **Access token**: expira em 15-30 min. Vai no corpo das respostas e, nas requisições, no header
+  `Authorization`.
+- **Refresh token**: opaco, guardado no banco só como hash, e trafega **só** no cookie
+  `intranet_refresh` (`HttpOnly`, `SameSite=Strict`, `Secure` salvo `COOKIE_SECURE=false`), nunca no
+  corpo (AUT-07). Expira 7 dias após o login.
+- **Rotação** (AUT-02): cada `/auth/refresh` troca o token e marca o anterior com `substituido_em`.
+  O anterior reapresentado em até 30 s é concorrência entre abas (devolve access token sem trocar
+  o cookie); depois disso é roubo, e todas as sessões do usuário são revogadas.
+- **Sessão** (`sessao_id`): um por login, herdado nas rotações. O `POST /auth/logout` revoga a
+  sessão inteira, inclusive os tokens já trocados (AUT-06); as de outros dispositivos seguem.
 - Frontend intercepta 401 do access token expirado, chama `/auth/refresh` automaticamente e repete a requisição original (via interceptor do axios).
+- **Login** (AUT-01, AUT-11): o hash da senha é sempre calculado (contra um hash fictício quando a
+  conta não existe), e 5 falhas em 15 min bloqueiam aquele e-mail (`429`). O contador é em memória
+  (`core/limite_tentativas.py`), por e-mail e não por IP. Eventos de segurança vão para o logger
+  `app.seguranca` (GER-25).
 
 ### Magic link (convite e redefinição de senha)
 
