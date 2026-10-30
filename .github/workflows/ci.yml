@@ -1,0 +1,84 @@
+# CI (GER-26): roda em todo PR e em push na main/homolog. O que o CLAUDE.md pede para rodar antes de
+# abrir PR — testes, lint, type-check, build — mais a auditoria de dependências.
+# Actions fixadas por SHA (com a versão no comentário): uma tag pode ser movida por quem controla o
+# repositório da action, um SHA não. O Dependabot atualiza as duas coisas juntas.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, homolog]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      banco:
+        image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+        env:
+          POSTGRES_USER: intranet
+          POSTGRES_PASSWORD: senha-so-do-ci
+          POSTGRES_DB: intranet
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U intranet" --health-interval 5s --health-timeout 3s
+          --health-retries 10
+    env:
+      # O conftest recria este banco a cada execução; o nome precisa terminar em _teste.
+      TEST_DATABASE_URL: postgresql://intranet:senha-so-do-ci@localhost:5432/intranet_teste
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest
+      - name: Auditoria de dependências (pip-audit)
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Auditoria de dependências (npm audit, só o que vai para o bundle)
+        run: npm audit --omit=dev --audit-level=high
+
+  imagens:
+    # Só confere que as duas imagens constroem; o deploy continua sendo do Railway.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: docker build backend
+      - run: docker build frontend

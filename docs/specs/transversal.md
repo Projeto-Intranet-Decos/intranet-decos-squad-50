@@ -461,6 +461,17 @@ aparecem; o IP é o que o proxy informa (só informativo, nenhuma regra depende 
 
 - O nível `INFO` do logger `app` aparece no log mesmo com a configuração padrão do uvicorn.
 
+### GER-26 — Integração contínua e dependências
+Origem: [COD] (auditoria OWASP, A03/A08) · Back ✅ · Front ✅ · Teste —
+
+- Todo PR e todo push na `main`/`homolog` rodam o CI (`.github/workflows/ci.yml`): pytest com
+  Postgres, `pip-audit`; `npm ci`, lint, vitest, build e `npm audit --omit=dev --audit-level=high`;
+  e o build das duas imagens Docker. Vulnerabilidade conhecida em dependência de produção reprova.
+- O CI roda com permissão só de leitura e as Actions fixadas por SHA.
+- As imagens base (Dockerfiles e compose) são fixadas por digest, com a tag ao lado para leitura.
+- O Dependabot (`.github/dependabot.yml`) abre PRs semanais agrupados para pip, npm, Docker,
+  compose e Actions; correção de segurança vem na hora.
+
 ### GER-24 — Segredo do JWT
 Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
 
