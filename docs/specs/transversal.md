@@ -18,11 +18,11 @@ Personas `[ENT]`:
 ## Requisitos
 
 ### GER-01 — Plataforma e público
-Origem: [ESP] · Back — · Front ✅ · Teste —
+Origem: [ESP] · Back — · Front ✅ · Teste 🟡
 
 Aplicação web de uso interno, pensada para o desktop. Público: colaboradores administrativos e
 assistenciais, exceto o corpo médico. Abaixo de 1024px o layout se adapta (menu lateral vira
-drawer aberto por uma barra superior), sem rolagem horizontal da página a partir de 360px; o
+um painel de tela cheia aberto por uma barra superior), sem rolagem horizontal da página a partir de 360px; o
 desktop não muda por causa disso. Há dois estilos visuais, escolhidos em Configurações (GER-14):
 **Vidro líquido** (padrão), com referência em [`docs/DESIGN_VIDRO_LIQUIDO.md`](../DESIGN_VIDRO_LIQUIDO.md), e
 **Vidro clínico**, com referência em [`docs/DESIGN_PROMPT.md`](../DESIGN_PROMPT.md). Os dois mudam
@@ -31,6 +31,10 @@ só a aparência: as telas, os textos e a posição das coisas no desktop são o
 normal e aparecem assim no Vidro líquido; no Vidro clínico ficam em caixa alta, só por CSS. O fundo da
 aplicação tem um gradiente suave (ajustável, ver GER-14) e a rolagem tem efeito elástico no
 desktop (GER-15).
+
+- **Dado** uma tela abaixo de 1024px, **quando** o usuário abre o menu pela barra superior, **então**
+  o menu cobre a tela toda (sem margem nem cantos arredondados) e tem um botão "Fechar menu", que o
+  fecha e devolve o foco ao botão que o abriu. `Esc` e escolher um item também fecham.
 
 ### GER-02 — Autenticação obrigatória
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
@@ -306,7 +310,7 @@ Origem: [CTX] · Back — · Front ✅ · Teste ✅
 
 O menu lateral, a barra superior (abaixo de 1024px) e os dropdowns usam o vidro estrutural
 (`glass`), com o mesmo branco do painel dos modais (GER-16). No celular a página passa por trás
-deles: o conteúdo rola sob a barra superior e o menu abre por cima da página escurecida.
+deles: o conteúdo rola sob a barra superior e o menu abre em tela cheia por cima da página escurecida.
 
 - **Dado** a barra superior ou o menu lateral, **então** o texto deles fica legível com qualquer
   conteúdo atrás: o fundo do vidro é tão branco quanto o do modal e segue as preferências de

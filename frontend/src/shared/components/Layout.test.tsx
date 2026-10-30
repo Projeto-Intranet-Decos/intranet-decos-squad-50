@@ -176,6 +176,38 @@ describe('GER-19 — seções colapsáveis do menu lateral', () => {
   })
 })
 
+describe('GER-01 — menu em tela cheia abaixo de 1024px', () => {
+  beforeEach(() => {
+    const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
+    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    simularConsultasDeMidia(() => false)
+    iniciarPreferencias()
+  })
+
+  // O jsdom não aplica o Tailwind: confere as classes que posicionam o menu fora do desktop.
+  it('o menu cobre a tela toda, sem margem nem cantos arredondados', () => {
+    render(<Aplicacao />)
+
+    const classes = screen.getByRole('complementary', { hidden: true }).className.split(' ')
+    const semVariante = classes.filter((classe) => !classe.includes(':'))
+    expect(semVariante).toContain('inset-0')
+    expect(semVariante).toContain('w-full')
+    expect(semVariante.some((classe) => classe.startsWith('rounded') || classe.startsWith('max-w'))).toBe(false)
+  })
+
+  it('o botão "Fechar menu" fecha o menu e devolve o foco ao botão que o abriu', () => {
+    render(<Aplicacao />)
+    const abrir = screen.getByRole('button', { name: 'Abrir menu' })
+
+    fireEvent.click(abrir)
+    expect(abrir.getAttribute('aria-expanded')).toBe('true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar menu' }))
+    expect(abrir.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(abrir)
+  })
+})
+
 describe('GER-18 — vidro do menu e da barra superior', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
