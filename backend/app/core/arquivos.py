@@ -38,6 +38,30 @@ TIPOS_DOCUMENTO: dict[str, str] = {
 
 TAMANHO_MAXIMO_NOME = 100
 
+# GER-06: os primeiros bytes de cada formato. A extensão decide o tipo servido; a assinatura impede
+# que um HTML (ou executável) entre com nome de PDF.
+_ZIP = (b"PK\x03\x04",)  # docx/xlsx/pptx e os formatos do LibreOffice são zip
+_OLE = (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",)  # doc/xls/ppt antigos
+ASSINATURAS: dict[str, tuple[bytes, ...]] = {
+    ".pdf": (b"%PDF-",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".docx": _ZIP, ".xlsx": _ZIP, ".pptx": _ZIP, ".odt": _ZIP, ".ods": _ZIP, ".odp": _ZIP,
+    ".doc": _OLE, ".xls": _OLE, ".ppt": _OLE,
+}
+BYTES_CONFERIDOS = 8192
+
+
+def _conteudo_bate_com_a_extensao(extensao: str, inicio: bytes) -> bool:
+    if extensao == ".webp":
+        return inicio[:4] == b"RIFF" and inicio[8:12] == b"WEBP"
+    if extensao == ".txt":
+        # Texto em qualquer codificação (o Bloco de Notas antigo grava em Windows-1252), mas não
+        # binário.
+        return b"\x00" not in inicio
+    return inicio.startswith(ASSINATURAS[extensao])
+
 
 def erro_arquivo(codigo: int, mensagem: str, campo: str = "arquivo") -> HTTPException:
     return HTTPException(codigo, {"campo": campo, "mensagem": mensagem})
@@ -50,7 +74,8 @@ def validar_arquivo(
     nome = (arquivo.filename or "").strip()
     if not nome:
         raise erro_arquivo(status.HTTP_422_UNPROCESSABLE_CONTENT, "Envie um arquivo", campo)
-    tipo_conteudo = tipos.get(os.path.splitext(nome)[1].lower())
+    extensao = os.path.splitext(nome)[1].lower()
+    tipo_conteudo = tipos.get(extensao)
     if tipo_conteudo is None:
         raise erro_arquivo(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Tipo de arquivo não permitido", campo
@@ -68,6 +93,16 @@ def validar_arquivo(
             f"Arquivo maior que o limite de {limite_mb} MB",
             campo,
         )
+    inicio = arquivo.file.read(BYTES_CONFERIDOS)
+    arquivo.file.seek(0)
+    if not _conteudo_bate_com_a_extensao(extensao, inicio):
+        # Na capa vale a mensagem do MUR-04, a mesma de quando a imagem não decodifica.
+        mensagem = (
+            "Arquivo não é uma imagem válida"
+            if tipos is TIPOS_IMAGEM
+            else "O conteúdo do arquivo não corresponde à extensão"
+        )
+        raise erro_arquivo(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, mensagem, campo)
     return nome[:255], tipo_conteudo, tamanho
 
 

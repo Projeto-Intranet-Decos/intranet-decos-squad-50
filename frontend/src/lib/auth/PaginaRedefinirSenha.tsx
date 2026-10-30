@@ -81,7 +81,7 @@ function FormularioNovaSenha({ token, email, aoRecusarLink }: PropriedadesFormul
     onSuccess: (sessao) => {
       // Computador compartilhado: a sessão de quem estava logado sai antes de a nova entrar.
       limparTokens()
-      entrar(sessao.accessToken, sessao.refreshToken)
+      entrar(sessao.accessToken)
       navegar('/mural', { replace: true })
     },
     onError: (erro: unknown) => {

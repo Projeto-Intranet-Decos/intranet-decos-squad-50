@@ -2,7 +2,7 @@ name: intranet-hospital
 
 services:
   banco:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-intranet}
@@ -10,8 +10,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
     volumes:
       - dados_banco:/var/lib/postgresql/data
+    # Só o frontend (nginx) é publicado para a rede; banco, MinIO e API ficam no 127.0.0.1 do host,
+    # acessíveis para desenvolvimento e testes, mas não de outra máquina (GER-13).
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -19,7 +21,7 @@ services:
       retries: 10
 
   armazenamento:
-    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z@sha256:b6bfe7239bfc83fb90d31612d9704d86039dd714f7904b3f1ad68f211e602372
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -28,8 +30,8 @@ services:
     volumes:
       - dados_armazenamento:/data
     ports:
-      - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "127.0.0.1:${MINIO_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -60,13 +62,15 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       INVITE_HOURS: ${INVITE_HOURS:-72}
       PASSWORD_RESET_MINUTES: ${PASSWORD_RESET_MINUTES:-60}
+      API_DOCS: ${API_DOCS:-false}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
     depends_on:
       banco:
         condition: service_healthy
       armazenamento:
         condition: service_healthy
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
 
   frontend:
     build: ./frontend

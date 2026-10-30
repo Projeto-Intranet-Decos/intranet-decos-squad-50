@@ -12,12 +12,13 @@ def criar_token(sessao: Session, token: TokenAtualizacao) -> TokenAtualizacao:
   return token
 
 
-def buscar_por_hash(sessao: Session, token_hash: str) -> TokenAtualizacao | None:
-  return (
-    sessao.query(TokenAtualizacao)
-    .filter(TokenAtualizacao.token_hash == token_hash)
-    .first()
-  )
+def buscar_por_hash(
+  sessao: Session, token_hash: str, *, travar: bool = False
+) -> TokenAtualizacao | None:
+  consulta = select(TokenAtualizacao).where(TokenAtualizacao.token_hash == token_hash)
+  if travar:
+    consulta = consulta.with_for_update()
+  return sessao.scalars(consulta).first()
 
 
 def revogar_tokens_do_usuario(sessao: Session, usuario_id: uuid.UUID) -> None:
@@ -25,6 +26,15 @@ def revogar_tokens_do_usuario(sessao: Session, usuario_id: uuid.UUID) -> None:
   sessao.execute(
     update(TokenAtualizacao)
     .where(TokenAtualizacao.usuario_id == usuario_id, TokenAtualizacao.revogado.is_(False))
+    .values(revogado=True)
+  )
+
+
+def revogar_sessao(sessao: Session, sessao_id: uuid.UUID) -> None:
+  """Logout (AUT-06): o token atual e todos os que ele substituiu. Sem commit."""
+  sessao.execute(
+    update(TokenAtualizacao)
+    .where(TokenAtualizacao.sessao_id == sessao_id, TokenAtualizacao.revogado.is_(False))
     .values(revogado=True)
   )
 

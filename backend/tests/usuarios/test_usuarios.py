@@ -8,7 +8,7 @@ from tests.apoio import autenticar
 from app.core.security import hash_token
 from app.modules.autenticacao.models import FinalidadeToken, TokenUsoUnico
 from app.modules.logs.models import AcaoLog, Log, ModuloLog
-from app.modules.usuarios.models import Usuario
+from app.modules.usuarios.models import Papel, Usuario
 
 DADOS = {"nome": "Pessoa Teste", "email": "pessoa@example.com"}
 
@@ -138,6 +138,46 @@ def test_usu04_desativar_invalida_os_links(cliente, fabrica, superadmin):
     assert cliente.delete(f'/usuarios/{pendente.id}', headers=autenticar(superadmin)).status_code == 200
     assert cliente.put(f'/usuarios/{pendente.id}', json={'ativo':True}, headers=autenticar(superadmin)).status_code == 200
     assert not link_valido(cliente, token)
+
+
+def test_usu02_email_gravado_em_minusculas_e_unico_sem_diferenca_de_maiusculas(cliente, fabrica, superadmin):
+    resposta = cliente.post('/usuarios', json={**DADOS, 'email':'Pessoa.Nova@Example.com'}, headers=autenticar(superadmin))
+    assert resposta.status_code == 201
+    assert resposta.json()['email'] == 'pessoa.nova@example.com'
+    duplicado = cliente.post('/usuarios', json={**DADOS, 'email':'PESSOA.NOVA@example.com'}, headers=autenticar(superadmin))
+    assert duplicado.status_code == 409
+    assert duplicado.json()['campo'] == 'email'
+
+
+def test_usu03_email_editado_tambem_vai_em_minusculas(cliente, comum, superadmin):
+    resposta = cliente.put(f'/usuarios/{comum.id}', json={'email':'Novo.Email@Example.com'}, headers=autenticar(superadmin))
+    assert resposta.status_code == 200
+    assert resposta.json()['email'] == 'novo.email@example.com'
+
+
+def test_usu04_superadmin_nao_desativa_a_si_mesmo(cliente, sessao, superadmin):
+    resposta = cliente.delete(f'/usuarios/{superadmin.id}', headers=autenticar(superadmin))
+    assert resposta.status_code == 409
+    assert resposta.json() == {'mensagem': 'Você não pode desativar a própria conta'}
+    sessao.expire_all()
+    assert sessao.get(Usuario, superadmin.id).ativo is True
+
+
+@pytest.mark.parametrize('mudanca', [{'ativo': False}, {'role': 'admin_setor'}, {'role': 'comum'}])
+def test_usu03_superadmin_nao_se_desativa_nem_se_rebaixa(cliente, sessao, superadmin, mudanca):
+    resposta = cliente.put(f'/usuarios/{superadmin.id}', json=mudanca, headers=autenticar(superadmin))
+    assert resposta.status_code == 409
+    assert resposta.json() == {'mensagem': 'Você não pode desativar nem rebaixar a própria conta'}
+    sessao.expire_all()
+    assert sessao.get(Usuario, superadmin.id).ativo is True
+    assert sessao.get(Usuario, superadmin.id).role == 'superadmin'
+
+
+def test_usu03_superadmin_edita_o_proprio_nome_e_rebaixa_outro_superadmin(cliente, fabrica, superadmin):
+    assert cliente.put(f'/usuarios/{superadmin.id}', json={'nome':'Novo Nome', 'role':'superadmin', 'ativo':True}, headers=autenticar(superadmin)).status_code == 200
+    outro = fabrica.usuario(Papel.superadmin)
+    assert cliente.put(f'/usuarios/{outro.id}', json={'role':'comum'}, headers=autenticar(superadmin)).status_code == 200
+    assert cliente.delete(f'/usuarios/{outro.id}', headers=autenticar(superadmin)).status_code == 200
 
 
 def test_usu08_reenvia_convite_e_invalida_o_anterior(cliente, fabrica, correio_falso, superadmin):

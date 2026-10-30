@@ -103,6 +103,8 @@ Todo erro da API tem corpo `{ "campo"?: string, "mensagem": string }`.
   bucket → `404 {"mensagem": "Arquivo não encontrado no armazenamento"}`.
 - Frontend: erro com `campo` é atrelado ao campo do formulário (`setError`) **e** mostrado em toast;
   erro sem `campo` (rede, 500) vai só para o toast.
+- **Dado** um erro inesperado (exceção não tratada), **então** `500 {"mensagem": "Erro interno do
+  servidor"}` em JSON, sem detalhe da exceção; o traceback vai só para o log técnico.
 
 ### GER-06 — Upload e download de arquivos
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
@@ -113,6 +115,13 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   - Imagens (capa): png, jpg, jpeg, webp.
 - Extensão fora da lista → `415`; acima do limite → `413`; sem nome ou vazio → `422`. Todos com
   `campo` apontando o campo do formulário.
+- Os primeiros bytes têm que bater com a extensão (assinatura do formato): pdf `%PDF-`; png
+  `\x89PNG`; jpg/jpeg `\xFF\xD8\xFF`; webp `RIFF…WEBP`; docx/xlsx/pptx/odt/ods/odp são zip
+  (`PK\x03\x04`); doc/xls/ppt são OLE (`\xD0\xCF\x11\xE0…`); txt não pode ter byte nulo (texto,
+  em qualquer codificação). **Dado** um arquivo cujo conteúdo não bate (ex: HTML com nome `.pdf`),
+  **então** `415 {"campo": <campo>, "mensagem": "O conteúdo do arquivo não corresponde à
+  extensão"}` e nada é gravado. Na capa do aviso a mensagem é a do MUR-04, "Arquivo não é uma
+  imagem válida". (Auditoria OWASP, A06.)
 - Limite geral `MAX_UPLOAD_SIZE_MB` (padrão 50 MB), igual ao `client_max_body_size` do
   nginx. O frontend valida tipo e tamanho antes de enviar (só UX).
 - Download passa pelo backend em stream (MinIO não é exposto ao navegador), com
@@ -210,6 +219,11 @@ com Postgres e armazenamento à parte. O nginx remove o prefixo `/api` e repassa
     próprio atrás de um domínio, que só aceita path style).
 - Segredos (senha do banco, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, `RESEND_API_KEY`) nunca aparecem na
   representação da configuração, que vai parar em tracebacks e erros de validação.
+- No compose, só o frontend (nginx) é publicado para a rede. Postgres, MinIO e a API ficam em
+  `127.0.0.1` do host: de fora, tudo passa pelo nginx (e pelos headers de GER-23).
+- O nginx responde com `server_tokens off` e, em toda resposta (inclusive as de erro), os headers
+  de GER-23 mais `Content-Security-Policy` (só recursos da própria origem; `frame-ancestors 'none'`),
+  `Strict-Transport-Security` e `Permissions-Policy`.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
 
@@ -416,3 +430,52 @@ Critérios:
   configuração no startup).
 - ❓ Remetente: o Resend só envia de um domínio verificado (SPF e DKIM). Domínio do hospital ×
   domínio próprio do projeto — a combinar com a TI do hospital.
+
+### GER-23 — Superfície HTTP da API
+Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
+
+- **Dado** a configuração padrão, **quando** alguém abre `/docs`, `/redoc` ou `/openapi.json`,
+  **então** `404`. Com `API_DOCS=true` (só desenvolvimento) as três voltam.
+- **Dado** qualquer resposta da API, **então** ela traz `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY` e `Referrer-Policy: no-referrer`.
+- **Dado** uma resposta que não define o próprio cache, **então** `Cache-Control: no-store` (dado de
+  colaborador não fica no cache do navegador do posto). A capa do aviso (MUR-09) mantém o
+  `Cache-Control` dela.
+
+### GER-25 — Log técnico de segurança
+Origem: [COD] (auditoria OWASP, A09) · Back ✅ · Front — · Teste ✅
+
+Eventos de segurança vão para o log do container (logger `app.seguranca`), uma linha por evento no
+formato `evento=<nome> chave=valor…`, para dar para filtrar e alertar na plataforma. Não vão para o
+Registro de atividades (LOG), que é a auditoria de escrita de conteúdo. Senha e token nunca
+aparecem; o IP é o que o proxy informa (só informativo, nenhuma regra depende dele).
+
+| Evento | Nível | Campos |
+|---|---|---|
+| `login_ok` | INFO | `usuario_id`, `ip` |
+| `login_falhou` | WARNING | `email`, `ip` |
+| `login_bloqueado` (AUT-11) | WARNING | `email`, `ip` |
+| `redefinicao_pedida` (USU-07) | INFO | `email`, `ip` |
+| `redefinicao_bloqueada` (USU-07) | WARNING | `email`, `ip` |
+| `acesso_negado` (`403`, GER-03/GER-04) | WARNING | `usuario_id`, `papel`, `metodo`, `caminho` |
+| `refresh_reutilizado` (AUT-02) | WARNING | `usuario_id`, `ip` |
+
+- O nível `INFO` do logger `app` aparece no log mesmo com a configuração padrão do uvicorn.
+
+### GER-26 — Integração contínua e dependências
+Origem: [COD] (auditoria OWASP, A03/A08) · Back ✅ · Front ✅ · Teste —
+
+- Todo PR e todo push na `main`/`homolog` rodam o CI (`.github/workflows/ci.yml`): pytest com
+  Postgres, `pip-audit`; `npm ci`, lint, vitest, build e `npm audit --omit=dev --audit-level=high`;
+  e o build das duas imagens Docker. Vulnerabilidade conhecida em dependência de produção reprova.
+- O CI roda com permissão só de leitura e as Actions fixadas por SHA.
+- As imagens base (Dockerfiles e compose) são fixadas por digest, com a tag ao lado para leitura.
+- O Dependabot (`.github/dependabot.yml`) abre PRs semanais agrupados para pip, npm, Docker,
+  compose e Actions; correção de segurança vem na hora.
+
+### GER-24 — Segredo do JWT
+Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
+
+- **Dado** `JWT_SECRET` com menos de 32 bytes ou igual ao valor de exemplo do `.env.example`
+  (`troque-este-segredo`), **então** a API não sobe (erro de configuração no startup, sem mostrar o
+  valor).

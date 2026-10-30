@@ -1,23 +1,20 @@
 from datetime import date
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, StringConstraints
+from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
 
-from app.modules.usuarios.schemas import Senha, UsuarioResposta
+from app.modules.usuarios.schemas import Email, Senha, UsuarioResposta
 
 
 class LoginEntrada(BaseModel):
-  email: str
+  # Texto livre (e-mail malformado é só mais um 401), mas comparado como é gravado (USU-02).
+  email: Annotated[str, AfterValidator(lambda email: email.strip().lower())]
   senha: str
 
 
-class RefreshEntrada(BaseModel):
-  refresh_token: str
-
-
 class TokenResposta(BaseModel):
+  # O refresh token vai só no cookie HttpOnly (AUT-07), nunca no corpo.
   access_token: str
-  refresh_token: str
   token_type: str = "bearer"
   usuario: UsuarioResposta
 
@@ -54,7 +51,7 @@ class MensagemResposta(BaseModel):
 
 
 class PedidoRedefinicao(BaseModel):
-  email: EmailStr
+  email: Email
 
 
 class RedefinicaoResposta(BaseModel):

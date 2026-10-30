@@ -1,5 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
-import { limparTokens, obterRefreshToken, obterToken, salvarAccessToken } from './auth/useAuth'
+import { limparTokens, obterToken, salvarAccessToken, temMarcadorDeSessao } from './auth/useAuth'
 
 export const api = axios.create({ baseURL: '/api' })
 
@@ -17,14 +17,14 @@ interface RequisicaoComRetentativa extends InternalAxiosRequestConfig {
 
 let promessaRenovacao: Promise<string> | null = null
 
-/** Troca o refresh token por um access token novo; pedidos simultâneos compartilham uma renovação. */
+/** Troca o refresh token (cookie HttpOnly, AUT-07) por um access token novo; pedidos simultâneos
+ * compartilham uma renovação. */
 export function renovarAccessToken(): Promise<string> {
   if (!promessaRenovacao) {
-    const refreshToken = obterRefreshToken()
     promessaRenovacao = (
-      refreshToken
-        ? api.post<{ access_token: string }>('/auth/refresh', { refresh_token: refreshToken })
-        : Promise.reject(new Error('Sem refresh token'))
+      temMarcadorDeSessao()
+        ? api.post<{ access_token: string }>('/auth/refresh')
+        : Promise.reject(new Error('Sem sessão'))
     )
       .then((resposta) => {
         salvarAccessToken(resposta.data.access_token)
@@ -49,7 +49,7 @@ api.interceptors.response.use(
     }
 
     // Visitante (sem sessão guardada) não tem o que renovar nem para onde ser expulso.
-    if (!obterToken() && !obterRefreshToken()) return Promise.reject(erro)
+    if (!obterToken() && !temMarcadorDeSessao()) return Promise.reject(erro)
 
     config._tentouRenovar = true
     try {

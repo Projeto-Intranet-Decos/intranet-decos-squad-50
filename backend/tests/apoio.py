@@ -11,7 +11,9 @@ from datetime import UTC, date, datetime, timedelta
 from functools import cache
 from typing import BinaryIO
 
+import httpx2 as httpx
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.core import armazenamento, correio
@@ -26,6 +28,35 @@ SENHA_PADRAO = "senha-de-teste"
 def autenticar(usuario: Usuario) -> dict[str, str]:
     """Cabeçalho `Authorization` com um access token válido para o usuário."""
     return {"Authorization": f"Bearer {criar_access_token(usuario)}"}
+
+
+# Refresh token em cookie (AUT-07)
+
+COOKIE_REFRESH = "intranet_refresh"
+
+
+def cookie_gravado(resposta: httpx.Response) -> str:
+    """O `Set-Cookie` do refresh token, com os atributos."""
+    [cabecalho] = [
+        c for c in resposta.headers.get_list("set-cookie") if c.startswith(f"{COOKIE_REFRESH}=")
+    ]
+    return cabecalho
+
+
+def refresh_do_cookie(resposta: httpx.Response) -> str:
+    """O refresh token que a resposta gravou no cookie."""
+    return cookie_gravado(resposta).split(";")[0].split("=", 1)[1]
+
+
+def renovar(cliente: TestClient, refresh_token: str | None) -> httpx.Response:
+    """`/auth/refresh` com exatamente este cookie (ou nenhum), ignorando o que o cliente guardou."""
+    cliente.cookies.clear()
+    cabecalhos = {"Cookie": f"{COOKIE_REFRESH}={refresh_token}"} if refresh_token else {}
+    return cliente.post("/auth/refresh", headers=cabecalhos)
+
+
+def refresh_vale(cliente: TestClient, refresh_token: str) -> bool:
+    return renovar(cliente, refresh_token).status_code == 200
 
 
 @cache
