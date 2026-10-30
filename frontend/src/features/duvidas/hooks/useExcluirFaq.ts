@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { lerErroDaApi } from '../../../shared/erros'
 import { excluirFaq } from '../api'
 
 export function useExcluirFaq() {
@@ -11,6 +12,6 @@ export function useExcluirFaq() {
       queryClient.invalidateQueries({ queryKey: ['faq'] })
       toast.success('Pergunta excluída.')
     },
-    onError: () => toast.error('Erro ao excluir a pergunta. Tente novamente.'),
+    onError: (erro) => toast.error(lerErroDaApi(erro, 'Erro ao excluir a pergunta. Tente novamente.').mensagem),
   })
 }

@@ -6,7 +6,7 @@ import Modal from '../../../shared/components/Modal'
 import Select from '../../../shared/components/Select'
 import Textarea from '../../../shared/components/Textarea'
 import { useSalvarFaq } from '../hooks/useSalvarFaq'
-import type { Faq, NovaFaq, Setor } from '../types'
+import type { Faq, Setor } from '../types'
 
 interface ValoresFormularioFaq {
   pergunta: string
@@ -18,12 +18,14 @@ interface PropriedadesModalFaq {
   aoFechar: () => void
   faqEditando: Faq | null
   setores: Setor[]
+  /** superadmin escolhe o setor; admin_setor publica sempre no próprio. */
+  escolheSetor: boolean
 }
 
 // Remontado do zero a cada abertura (key trocada pelo pai), como em
 // features/murais/components/ModalAviso.tsx — evita resetar o formulário
 // via setState em efeito.
-function ModalFaq({ aoFechar, faqEditando, setores }: PropriedadesModalFaq) {
+function ModalFaq({ aoFechar, faqEditando, setores, escolheSetor }: PropriedadesModalFaq) {
   const editando = !!faqEditando
   const salvarFaq = useSalvarFaq()
 
@@ -44,12 +46,16 @@ function ModalFaq({ aoFechar, faqEditando, setores }: PropriedadesModalFaq) {
   const valido = !!pergunta?.trim() && !!resposta?.trim()
 
   function aoSubmeter(valores: ValoresFormularioFaq) {
-    const dados: NovaFaq = {
-      pergunta: valores.pergunta.trim(),
-      resposta: valores.resposta.trim(),
-      setorId: valores.setorId,
+    const pergunta = valores.pergunta.trim()
+    const resposta = valores.resposta.trim()
+    if (faqEditando) {
+      salvarFaq.mutate({ id: faqEditando.id, dados: { pergunta, resposta } }, { onSuccess: aoFechar })
+    } else {
+      salvarFaq.mutate(
+        { dados: { pergunta, resposta, ...(escolheSetor ? { setorId: valores.setorId } : {}) } },
+        { onSuccess: aoFechar },
+      )
     }
-    salvarFaq.mutate({ id: faqEditando?.id, dados }, { onSuccess: aoFechar })
   }
 
   return (
@@ -62,15 +68,17 @@ function ModalFaq({ aoFechar, faqEditando, setores }: PropriedadesModalFaq) {
           />
         </Campo>
 
-        <Campo rotulo="Setor">
-          <Select {...register('setorId')}>
-            {setores.map((setor) => (
-              <option key={setor.id} value={setor.id}>
-                {setor.nome}
-              </option>
-            ))}
-          </Select>
-        </Campo>
+        {!editando && escolheSetor && (
+          <Campo rotulo="Setor">
+            <Select {...register('setorId')}>
+              {setores.map((setor) => (
+                <option key={setor.id} value={setor.id}>
+                  {setor.nome}
+                </option>
+              ))}
+            </Select>
+          </Campo>
+        )}
 
         <Campo rotulo="Resposta" erro={errors.resposta?.message}>
           <Textarea

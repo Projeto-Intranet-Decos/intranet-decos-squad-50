@@ -11,6 +11,8 @@ const faq: Faq = {
   resposta: 'Pelo portal do RH, com 30 dias de antecedência.',
   setorId: 's1',
   setorNome: 'RH',
+  autorId: 'u1',
+  autorNome: 'Marina Alencar',
   criadoEm: '2026-10-01T10:00:00Z',
   atualizadoEm: null,
 }
