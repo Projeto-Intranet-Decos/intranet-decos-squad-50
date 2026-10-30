@@ -6,8 +6,8 @@ Levantamento de 2026-10-30 sobre a `main` em `ba1f43b`, e correção das pendên
 
 As sondagens ficam em [`backend/tests/test_sondagem_owasp.py`](../backend/tests/test_sondagem_owasp.py):
 cada teste afirma o comportamento seguro. Pendência aberta fica marcada `xfail(strict=True)`; quando
-alguém corrigir, o `XPASS` avisa para tirar a marca. Hoje só resta uma marca, a do risco aceito do
-AUT-10. Os critérios novos têm ID e teste no módulo, como manda o fluxo do `CLAUDE.md`.
+alguém corrigir, o `XPASS` avisa para tirar a marca. Hoje não resta nenhuma. Os critérios novos têm ID
+e teste no módulo, como manda o fluxo do `CLAUDE.md`.
 
 Rodar: `docker compose up -d banco` e, em `backend/`, `.venv/bin/pytest tests/test_sondagem_owasp.py -rx`.
 
@@ -17,7 +17,7 @@ Legenda: ✅ controle presente · 🟡 risco aceito/decisão registrada.
 
 | Categoria | Situação | Onde está a regra |
 |---|---|---|
-| **A01** Controle de acesso | ✅ papéis e escopo por setor; ✅ superadmin não se desativa nem se rebaixa; 🟡 aniversariantes e metadados legíveis por visitante | GER-03, GER-04, USU-03, USU-04, AUT-10 |
+| **A01** Controle de acesso | ✅ papéis e escopo por setor; ✅ superadmin não se desativa nem se rebaixa; ✅ aniversariantes visíveis ao visitante por decisão do time; 🟡 metadados de documentos legíveis por visitante | GER-03, GER-04, USU-03, USU-04, AUT-10 |
 | **A02** Configuração | ✅ `/docs` só com `API_DOCS=true`; ✅ headers na API e no nginx (CSP, HSTS, XFO, nosniff, Referrer-Policy, Permissions-Policy), `server_tokens off`; ✅ `JWT_SECRET` fraco impede a subida; ✅ compose expõe só o nginx | GER-13, GER-23, GER-24 |
 | **A03** Cadeia de suprimentos | ✅ `pip-audit` e `npm audit` limpos; ✅ CI com auditoria; ✅ Dependabot; ✅ imagens e Actions fixadas | GER-26 |
 | **A04** Criptografia | ✅ argon2; ✅ tokens só como hash; ✅ JWT com algoritmo fixo; ✅ refresh token em cookie HttpOnly, access token só em memória | AUT-03, AUT-07 |
@@ -65,8 +65,7 @@ Legenda: ✅ controle presente · 🟡 risco aceito/decisão registrada.
 
 ## Verificação
 
-- Backend: 321 testes passando + 1 `xfail` (o risco aceito). Frontend: 153 testes, lint, type-check
-  e build.
+- Backend: 321 testes passando. Frontend: 153 testes, lint, type-check e build.
 - Ponta a ponta, num Chromium de verdade contra nginx + API: visitante não chama a renovação;
   login com e-mail em maiúsculas; `localStorage` só com o marcador; cookie `HttpOnly`/`Secure`/
   `SameSite=Strict` invisível ao JS; F5 e segunda aba logadas, com rotação; sair numa aba derruba a
@@ -78,8 +77,8 @@ Legenda: ✅ controle presente · 🟡 risco aceito/decisão registrada.
 
 - **Proteção de branch** na `main` e na `homolog` exigindo o CI verde: é configuração do GitHub,
   não código.
-- **Risco aceito do AUT-10**: aniversariantes e metadados de documentos legíveis sem login. Rever
-  se a API sair da rede interna.
+- **Risco aceito do AUT-10**: metadados de documentos legíveis sem login. Rever se a API sair da
+  rede interna. Os aniversariantes não entram aqui: o visitante vê a lista por decisão do time.
 - **Alerta**: os eventos já saem no log com `evento=…`; falta a regra na plataforma (ex: alertar
   com muitos `login_bloqueado` ou qualquer `refresh_reutilizado`).
 - **Credencial root do MinIO** no backend (dívida já registrada na arquitetura).

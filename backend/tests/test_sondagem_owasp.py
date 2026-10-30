@@ -1,7 +1,7 @@
 """Sondagem OWASP Top 10 (2025). Cada teste afirma o comportamento seguro esperado.
 
-Passa = controle presente. `xfail` = pendência levantada em docs/seguranca-owasp-top10.md: são
-estritos, então quem corrigir vê o XPASS e tira a marca (e cria o ID no spec do domínio).
+Passa = controle presente. Pendência nova entra como `xfail(strict=True)` e é registrada em
+docs/seguranca-owasp-top10.md: quem corrigir vê o XPASS e tira a marca (e cria o ID no spec do domínio).
 """
 
 import statistics
@@ -19,10 +19,6 @@ from app.core.config import Configuracoes, configuracoes
 from app.modules.autenticacao.models import TokenAtualizacao
 from app.modules.logs.models import Log
 from tests.apoio import SENHA_PADRAO, autenticar, refresh_do_cookie, renovar
-
-
-def pendencia(motivo: str):
-    return pytest.mark.xfail(reason=f"OWASP {motivo}", strict=True)
 
 
 def _login(cliente: TestClient, email: str, senha: str):
@@ -77,14 +73,6 @@ def test_a01_superadmin_nao_desativa_a_si_mesmo(cliente, superadmin):
     """USU-04 ❓: o único superadmin pode se trancar fora do sistema."""
     r = cliente.delete(f"/usuarios/{superadmin.id}", headers=autenticar(superadmin))
     assert r.status_code in (400, 409, 422)
-
-
-@pendencia("A01: risco aceito em AUT-10 enquanto a API ficar só na rede interna")
-def test_a01_aniversariantes_exigem_login(cliente, fabrica, setor):
-    """AUT-10 marca como risco aceito; vira pendência se a API ficar exposta fora da rede."""
-    fabrica.usuario(setor=setor, data_nascimento=datetime.now().date())
-    r = cliente.get("/murais/aniversariantes")
-    assert r.status_code == 401, f"visitante leu {len(r.json())} aniversariante(s)"
 
 
 # ---------- A02 Security Misconfiguration ----------

@@ -227,9 +227,9 @@ Frontend:
   em "Entrar" ou abre uma tela de administração. Sair da conta volta para `/mural`.
 - Um `401` de visitante (sem token salvo) não muda de página.
 
-- Risco aceito: a lista de aniversariantes (nome, dia, setor) e os metadados de documentos ficam
-  legíveis por qualquer pessoa que alcance a API. Se o servidor for exposto fora da rede do
-  hospital, rever.
+- Os aniversariantes (nome, dia, setor) são para o visitante ver: decisão do time, não risco.
+- Risco aceito: os metadados de documentos ficam legíveis por qualquer pessoa que alcance a API. Se
+  o servidor for exposto fora da rede do hospital, rever.
 
 ### AUT-11 — Limite de tentativas de login
 Origem: [COD] (auditoria OWASP, A06/A07) · Back ✅ · Front ✅ · Teste ✅
