@@ -30,6 +30,7 @@ import {
   IconeTelefone,
   IconeUsuario,
   IconeUsuarios,
+  IconeX,
 } from './icones'
 
 const NAV_PRINCIPAL = [
@@ -46,7 +47,7 @@ const NAV_ADMIN = [
 ]
 
 
-// Abaixo de lg o menu lateral vira drawer, aberto pelo botão da barra superior.
+// Abaixo de lg o menu lateral vira painel de tela cheia, aberto pelo botão da barra superior.
 const CONSULTA_DESKTOP = '(min-width: 1024px)'
 
 interface PropriedadesItemMenu {
@@ -130,10 +131,7 @@ function Layout({ children }: PropriedadesLayout) {
     menuRef.current?.querySelector<HTMLElement>('a, button')?.focus()
 
     function aoTeclar(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setMenuAberto(false)
-        botaoMenuRef.current?.focus()
-      }
+      if (e.key === 'Escape') fecharMenuDevolvendoFoco()
     }
     document.addEventListener('keydown', aoTeclar)
     return () => document.removeEventListener('keydown', aoTeclar)
@@ -141,6 +139,11 @@ function Layout({ children }: PropriedadesLayout) {
 
   function fecharMenu() {
     setMenuAberto(false)
+  }
+
+  function fecharMenuDevolvendoFoco() {
+    setMenuAberto(false)
+    botaoMenuRef.current?.focus()
   }
 
   function aoSair() {
@@ -197,11 +200,21 @@ function Layout({ children }: PropriedadesLayout) {
         id="menu-lateral"
         ref={menuRef}
         inert={!desktop && !menuAberto}
-        className={`glass fixed inset-y-3 left-3 z-50 flex w-[262px] max-w-[calc(100vw-1.5rem)] flex-none flex-col overflow-hidden rounded-2xl transition-[translate,width] duration-200 lg:sticky lg:top-3 lg:z-auto lg:my-3 lg:ml-3 lg:h-[calc(100dvh-1.5rem)] lg:max-w-none lg:translate-x-0 liquido:rounded-panel ${
-          menuAberto ? 'translate-x-0' : '-translate-x-[calc(100%+1.5rem)]'
+        className={`glass fixed inset-0 z-50 flex w-full flex-none flex-col overflow-hidden transition-[translate,width] duration-200 lg:sticky lg:top-3 lg:z-auto lg:my-3 lg:ml-3 lg:h-[calc(100dvh-1.5rem)] lg:translate-x-0 lg:rounded-2xl lg:liquido:rounded-panel ${
+          menuAberto ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={desktop ? { width: compacto ? '82px' : '262px', padding: compacto ? '24px 11px' : '24px 17px' } : { padding: '24px 17px' }}
       >
+        {/* Em tela cheia o fundo escurecido fica coberto, então o menu precisa do próprio botão de fechar. */}
+        <button
+          type="button"
+          onClick={fecharMenuDevolvendoFoco}
+          aria-label="Fechar menu"
+          className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-white/60 lg:hidden liquido:btn-icon"
+        >
+          <IconeX tamanho={20} />
+        </button>
+
         <div className="flex flex-none flex-col items-center gap-2 px-3 pb-5">
           {!compacto && (
             <>
