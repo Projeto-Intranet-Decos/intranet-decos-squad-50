@@ -208,6 +208,22 @@ describe('GER-01 — menu em tela cheia abaixo de 1024px', () => {
   })
 })
 
+describe('GER-01 🐞 — menu sem botão de fechar no desktop', () => {
+  beforeEach(() => {
+    const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
+    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+  })
+
+  // O btn-icon do Vidro líquido define display e derrubava o lg:hidden: o botão nem é montado.
+  it('o menu lateral não tem o botão "Fechar menu"', () => {
+    render(<Aplicacao />)
+
+    expect(screen.queryByRole('button', { name: 'Fechar menu' })).toBeNull()
+  })
+})
+
 describe('GER-18 — vidro do menu e da barra superior', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))

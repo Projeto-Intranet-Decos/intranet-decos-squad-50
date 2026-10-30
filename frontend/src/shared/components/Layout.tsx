@@ -205,15 +205,18 @@ function Layout({ children }: PropriedadesLayout) {
         }`}
         style={desktop ? { width: compacto ? '82px' : '262px', padding: compacto ? '24px 11px' : '24px 17px' } : { padding: '24px 17px' }}
       >
-        {/* Em tela cheia o fundo escurecido fica coberto, então o menu precisa do próprio botão de fechar. */}
-        <button
-          type="button"
-          onClick={fecharMenuDevolvendoFoco}
-          aria-label="Fechar menu"
-          className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-white/60 lg:hidden liquido:btn-icon"
-        >
-          <IconeX tamanho={20} />
-        </button>
+        {/* Em tela cheia o fundo escurecido fica coberto, então o menu precisa do próprio botão de fechar.
+            No desktop ele nem é montado: o display do btn-icon passaria por cima de um lg:hidden. */}
+        {!desktop && (
+          <button
+            type="button"
+            onClick={fecharMenuDevolvendoFoco}
+            aria-label="Fechar menu"
+            className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-white/60 liquido:btn-icon"
+          >
+            <IconeX tamanho={20} />
+          </button>
+        )}
 
         <div className="flex flex-none flex-col items-center gap-2 px-3 pb-5">
           {!compacto && (
