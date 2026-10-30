@@ -1,3 +1,4 @@
+import io
 import os
 import uuid
 from collections.abc import Iterator
@@ -14,6 +15,7 @@ from app.core.permissions import UsuarioAutenticado, garantir_escopo, resolver_s
 from app.modules.logs.models import AcaoLog, ModuloLog
 from app.modules.logs.service import registrar
 from app.modules.murais import repository
+from app.modules.murais.capa import reduzir_capa
 from app.modules.murais.models import AnexoAviso, Aviso, CategoriaAviso
 from app.modules.murais.schemas import AniversarianteResposta, AvisoAtualizar, AvisoCriar
 from app.modules.murais.storage import montar_chave_anexo, montar_chave_capa
@@ -54,8 +56,10 @@ def _validar_aviso(
     raise _erro_campo("conteudo", "Conteúdo é obrigatório")
 
 
-def _validar_imagem(arquivo: UploadFile, campo: str) -> ArquivoValidado:
-  return (arquivo, *validar_arquivo(arquivo, TIPOS_IMAGEM, LIMITE_IMAGEM_MB, campo))
+def _validar_imagem(arquivo: UploadFile, campo: str) -> bytes:
+  """Valida extensão e tamanho e já devolve a versão menor em WebP que vai para o bucket."""
+  validar_arquivo(arquivo, TIPOS_IMAGEM, LIMITE_IMAGEM_MB, campo)
+  return reduzir_capa(arquivo.file, campo)
 
 
 def _validar_anexos(
@@ -79,10 +83,9 @@ def _remover_objetos(chaves: list[str]) -> None:
     armazenamento.remover_arquivo(chave)
 
 
-def _enviar_capa(aviso_id: uuid.UUID, imagem: ArquivoValidado, enviados: list[str]) -> str:
-  arquivo, nome_arquivo, tipo_conteudo, tamanho = imagem
-  chave = montar_chave_capa(aviso_id, nome_arquivo)
-  armazenamento.enviar_arquivo(chave, arquivo.file, tamanho, tipo_conteudo)
+def _enviar_capa(aviso_id: uuid.UUID, capa: bytes, enviados: list[str]) -> str:
+  chave = montar_chave_capa(aviso_id)
+  armazenamento.enviar_arquivo(chave, io.BytesIO(capa), len(capa), TIPOS_IMAGEM[".webp"])
   enviados.append(chave)
   return chave
 

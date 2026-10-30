@@ -1,12 +1,27 @@
 """Mural de avisos — docs/specs/murais.md."""
 
+import io
+
 from fastapi.testclient import TestClient
+from PIL import Image, ImageCms
 
 from app.modules.usuarios.models import Usuario
 from tests.apoio import ArmazenamentoFalso, autenticar
 
-# Assinatura de PNG: o backend decide o tipo pela extensão, o conteúdo só precisa não ser vazio.
-PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+
+def _imagem(
+    largura: int, altura: int, formato: str = "PNG", modo: str = "RGB", cor="teal", **opcoes
+) -> bytes:
+    saida = io.BytesIO()
+    Image.new(modo, (largura, altura), cor).save(saida, formato, **opcoes)
+    return saida.getvalue()
+
+
+def _abrir(conteudo: bytes) -> Image.Image:
+    return Image.open(io.BytesIO(conteudo))
+
+
+PNG = _imagem(40, 20)
 
 
 def test_mur03_admin_publica_aviso_com_capa(
@@ -25,9 +40,11 @@ def test_mur03_admin_publica_aviso_com_capa(
     assert aviso["possui_imagem"] is True
     assert aviso["setor_id"] == str(admin_setor.setor_id)
     assert aviso["autor_nome"] == admin_setor.nome
-    [objeto] = armazenamento_falso.objetos.values()
-    assert objeto.conteudo == PNG
-    assert objeto.tipo_conteudo == "image/png"
+    [(chave, objeto)] = armazenamento_falso.objetos.items()
+    # Guarda a versão reduzida em WebP (MUR-04), não o arquivo enviado.
+    assert chave.endswith(".webp")
+    assert objeto.tipo_conteudo == "image/webp"
+    assert _abrir(objeto.conteudo).format == "WEBP"
 
 
 def test_mur03_aviso_aparece_para_outros_colaboradores(
@@ -71,6 +88,126 @@ def test_mur04_capa_de_tipo_nao_permitido_retorna_415_e_nao_cria_aviso(
     assert resposta.json() == {"campo": "imagem", "mensagem": "Tipo de arquivo não permitido"}
     assert cliente.get("/murais/avisos", headers=autenticar(admin_setor)).json() == []
     assert armazenamento_falso.objetos == {}
+
+
+def _publicar_com_capa(cliente: TestClient, autor: Usuario, nome: str, conteudo: bytes):
+    return cliente.post(
+        "/murais/avisos",
+        data={"titulo": "Nova escala", "conteudo": "Texto"},
+        files={"imagem": (nome, conteudo, "application/octet-stream")},
+        headers=autenticar(autor),
+    )
+
+
+def _capa_salva(armazenamento_falso: ArmazenamentoFalso) -> Image.Image:
+    [objeto] = armazenamento_falso.objetos.values()
+    return _abrir(objeto.conteudo)
+
+
+def test_mur04_capa_grande_e_reduzida_a_1920px_no_lado_maior(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso
+):
+    resposta = _publicar_com_capa(cliente, admin_setor, "banner.png", _imagem(3840, 2160))
+
+    assert resposta.status_code == 201
+    assert _capa_salva(armazenamento_falso).size == (1920, 1080)
+
+
+def test_mur04_capa_vertical_e_reduzida_pela_altura(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso
+):
+    resposta = _publicar_com_capa(cliente, admin_setor, "story.jpg", _imagem(1500, 3000, "JPEG"))
+
+    assert resposta.status_code == 201
+    assert _capa_salva(armazenamento_falso).size == (960, 1920)
+
+
+def test_mur04_capa_pequena_nao_e_ampliada(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso
+):
+    resposta = _publicar_com_capa(cliente, admin_setor, "quadrada.webp", _imagem(800, 800, "WEBP"))
+
+    assert resposta.status_code == 201
+    assert _capa_salva(armazenamento_falso).size == (800, 800)
+
+
+def test_mur04_capa_aplica_orientacao_e_descarta_metadados(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso
+):
+    # Foto de celular deitada: pixels 400x200, EXIF manda girar 90° (orientação 6).
+    exif = Image.Exif()
+    exif[0x0112] = 6
+    exif[0x010F] = "Fabricante do celular"
+    foto = _imagem(400, 200, "JPEG", exif=exif.tobytes())
+
+    resposta = _publicar_com_capa(cliente, admin_setor, "foto.jpg", foto)
+
+    assert resposta.status_code == 201
+    capa = _capa_salva(armazenamento_falso)
+    assert capa.size == (200, 400)
+    assert len(capa.getexif()) == 0
+
+
+def test_mur04_capa_mantem_perfil_de_cor_e_transparencia(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso
+):
+    srgb = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+    # Meio transparente: o WebP descarta o canal alfa de imagem totalmente opaca.
+    logo = _imagem(300, 300, modo="RGBA", cor=(0, 128, 128, 128), icc_profile=srgb)
+
+    resposta = _publicar_com_capa(cliente, admin_setor, "logo.png", logo)
+
+    assert resposta.status_code == 201
+    capa = _capa_salva(armazenamento_falso)
+    assert capa.mode == "RGBA"
+    assert capa.info.get("icc_profile") == srgb
+
+
+def test_mur04_arquivo_que_nao_e_imagem_retorna_415_e_nao_cria_aviso(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso
+):
+    resposta = _publicar_com_capa(cliente, admin_setor, "capa.png", b"<html>nao sou png</html>")
+
+    assert resposta.status_code == 415
+    assert resposta.json() == {"campo": "imagem", "mensagem": "Arquivo não é uma imagem válida"}
+    assert cliente.get("/murais/avisos", headers=autenticar(admin_setor)).json() == []
+    assert armazenamento_falso.objetos == {}
+
+
+def test_mur04_imagem_acima_de_50_megapixels_retorna_413(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso
+):
+    # 8000x7000 = 56 MP em poucos KB: o tamanho do arquivo sozinho não barraria.
+    resposta = _publicar_com_capa(cliente, admin_setor, "enorme.png", _imagem(8000, 7000, modo="1"))
+
+    assert resposta.status_code == 413
+    assert resposta.json()["campo"] == "imagem"
+    assert armazenamento_falso.objetos == {}
+
+
+def test_mur07_troca_de_capa_tambem_guarda_a_versao_reduzida(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso
+):
+    aviso = _publicar_com_capa(cliente, admin_setor, "capa.png", PNG).json()
+
+    resposta = cliente.put(
+        f"/murais/avisos/{aviso['id']}/imagem",
+        files={"arquivo": ("nova.jpg", _imagem(4000, 3000, "JPEG"), "image/jpeg")},
+        headers=autenticar(admin_setor),
+    )
+
+    assert resposta.status_code == 200
+    assert _capa_salva(armazenamento_falso).size == (1920, 1440)
+
+
+def test_mur09_capa_e_servida_como_webp(cliente: TestClient, admin_setor: Usuario):
+    aviso = _publicar_com_capa(cliente, admin_setor, "capa.png", PNG).json()
+
+    resposta = cliente.get(f"/murais/avisos/{aviso['id']}/imagem")
+
+    assert resposta.status_code == 200
+    assert resposta.headers["content-type"] == "image/webp"
+    assert _abrir(resposta.content).format == "WEBP"
 
 
 # Eventos (aviso de categoria `evento`)
