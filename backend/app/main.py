@@ -1,8 +1,8 @@
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, status
+from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -46,7 +46,34 @@ async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="Intranet do Hospital", lifespan=ciclo_de_vida)
+documentacao = configuracoes.documentacao_api
+app = FastAPI(
+    title="Intranet do Hospital",
+    lifespan=ciclo_de_vida,
+    # GER-23: o mapa da API só fica aberto em desenvolvimento.
+    docs_url="/docs" if documentacao else None,
+    redoc_url="/redoc" if documentacao else None,
+    openapi_url="/openapi.json" if documentacao else None,
+)
+
+# GER-23. setdefault: a rota que define o próprio header (o cache da capa, MUR-09) vence.
+CABECALHOS_DE_SEGURANCA = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Cache-Control": "no-store",
+}
+
+
+@app.middleware("http")
+async def adicionar_cabecalhos_de_seguranca(
+    request: Request, seguinte: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    resposta = await seguinte(request)
+    for nome, valor in CABECALHOS_DE_SEGURANCA.items():
+        resposta.headers.setdefault(nome, valor)
+    return resposta
+
 
 if configuracoes.origens_cors:
     app.add_middleware(

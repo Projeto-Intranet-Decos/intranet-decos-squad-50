@@ -91,13 +91,11 @@ def test_a01_aniversariantes_exigem_login(cliente, fabrica, setor):
 # ---------- A02 Security Misconfiguration ----------
 
 
-@pendencia("A02: /docs, /redoc e /openapi.json abertos")
 @pytest.mark.parametrize("rota", ["/docs", "/redoc", "/openapi.json"])
 def test_a02_documentacao_interativa_desligada(cliente, rota):
     assert cliente.get(rota).status_code == 404
 
 
-@pendencia("A02: API sem headers de segurança")
 def test_a02_headers_de_seguranca_na_api(cliente):
     r = cliente.get("/setores")
     faltando = [
@@ -107,7 +105,6 @@ def test_a02_headers_de_seguranca_na_api(cliente):
     assert not faltando, f"faltando: {faltando}"
 
 
-@pendencia("A02: config aceita JWT_SECRET fraco")
 def test_a02_jwt_secret_fraco_e_recusado():
     with pytest.raises(ValueError):
         Configuracoes(
@@ -281,7 +278,6 @@ def test_a09_escrita_gera_auditoria(cliente, sessao: Session, superadmin, setor)
 # ---------- A10 Mishandling of Exceptional Conditions ----------
 
 
-@pendencia("A10: 500 sai em text/plain, fora do contrato {mensagem}")
 def test_a10_erro_inesperado_segue_contrato_e_nao_vaza(cliente, monkeypatch):
     from app.modules.setores import service
 

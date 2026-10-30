@@ -1,10 +1,14 @@
 """Regras transversais — docs/specs/transversal.md."""
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.modules.setores import service as setores_service
 from app.modules.setores.models import Setor
 from app.modules.usuarios.models import Papel, Usuario
 from tests.apoio import ArmazenamentoFalso, Fabrica, autenticar
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
 
 
 def test_ger02_rota_protegida_sem_token_retorna_401(cliente: TestClient):
@@ -92,3 +96,46 @@ def test_ger09_saude_503_com_armazenamento_fora(
 
     assert resposta.status_code == 503
     assert resposta.json()["armazenamento"] == "indisponivel"
+
+
+def test_ger05_erro_inesperado_vira_500_no_contrato_sem_detalhe(
+    cliente: TestClient, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    def quebrar(*args: object) -> None:
+        raise RuntimeError("detalhe interno: postgres://usuario:senha@host")
+
+    monkeypatch.setattr(setores_service, "listar_setores", quebrar)
+    sem_repasse = TestClient(cliente.app, raise_server_exceptions=False)
+
+    resposta = sem_repasse.get("/setores")
+
+    assert resposta.status_code == 500
+    assert resposta.json() == {"mensagem": "Erro interno do servidor"}
+    assert "detalhe interno" in caplog.text
+
+
+@pytest.mark.parametrize("rota", ["/docs", "/redoc", "/openapi.json"])
+def test_ger23_documentacao_interativa_fora_do_ar(cliente: TestClient, rota: str):
+    assert cliente.get(rota).status_code == 404
+
+
+def test_ger23_headers_de_seguranca_em_toda_resposta(cliente: TestClient):
+    for resposta in (cliente.get("/setores"), cliente.get("/usuarios"), cliente.get("/nao-existe")):
+        assert resposta.headers["X-Content-Type-Options"] == "nosniff"
+        assert resposta.headers["X-Frame-Options"] == "DENY"
+        assert resposta.headers["Referrer-Policy"] == "no-referrer"
+        assert resposta.headers["Cache-Control"] == "no-store"
+
+
+def test_ger23_capa_do_aviso_mantem_o_proprio_cache(cliente: TestClient, admin_setor: Usuario):
+    aviso = cliente.post(
+        "/murais/avisos",
+        data={"titulo": "Aviso", "conteudo": "Texto"},
+        files={"imagem": ("capa.png", PNG, "application/octet-stream")},
+        headers=autenticar(admin_setor),
+    ).json()
+
+    resposta = cliente.get(f"/murais/avisos/{aviso['id']}/imagem")
+
+    assert resposta.headers["Cache-Control"] == "public, max-age=31536000, immutable"
+    assert resposta.headers["X-Content-Type-Options"] == "nosniff"

@@ -41,6 +41,15 @@ def registrar_tratadores_de_erro(app: FastAPI) -> None:
             status_code=status.HTTP_404_NOT_FOUND,
         )
 
+    @app.exception_handler(Exception)
+    async def tratar_inesperado(request: Request, erro: Exception) -> JSONResponse:
+        # GER-05: o detalhe da exceção fica só no log técnico, nunca na resposta.
+        logger.error("Erro inesperado em %s %s", request.method, request.url.path, exc_info=erro)
+        return JSONResponse(
+            {"mensagem": "Erro interno do servidor"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
     @app.exception_handler(ErroArmazenamento)
     async def tratar_armazenamento(request: Request, erro: ErroArmazenamento) -> JSONResponse:
         # Log técnico: vai pro console, não pro banco.

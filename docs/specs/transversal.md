@@ -103,6 +103,8 @@ Todo erro da API tem corpo `{ "campo"?: string, "mensagem": string }`.
   bucket → `404 {"mensagem": "Arquivo não encontrado no armazenamento"}`.
 - Frontend: erro com `campo` é atrelado ao campo do formulário (`setError`) **e** mostrado em toast;
   erro sem `campo` (rede, 500) vai só para o toast.
+- **Dado** um erro inesperado (exceção não tratada), **então** `500 {"mensagem": "Erro interno do
+  servidor"}` em JSON, sem detalhe da exceção; o traceback vai só para o log técnico.
 
 ### GER-06 — Upload e download de arquivos
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
@@ -210,6 +212,11 @@ com Postgres e armazenamento à parte. O nginx remove o prefixo `/api` e repassa
     próprio atrás de um domínio, que só aceita path style).
 - Segredos (senha do banco, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, `RESEND_API_KEY`) nunca aparecem na
   representação da configuração, que vai parar em tracebacks e erros de validação.
+- No compose, só o frontend (nginx) é publicado para a rede. Postgres, MinIO e a API ficam em
+  `127.0.0.1` do host: de fora, tudo passa pelo nginx (e pelos headers de GER-23).
+- O nginx responde com `server_tokens off` e, em toda resposta (inclusive as de erro), os headers
+  de GER-23 mais `Content-Security-Policy` (só recursos da própria origem; `frame-ancestors 'none'`),
+  `Strict-Transport-Security` e `Permissions-Policy`.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
 
@@ -416,3 +423,21 @@ Critérios:
   configuração no startup).
 - ❓ Remetente: o Resend só envia de um domínio verificado (SPF e DKIM). Domínio do hospital ×
   domínio próprio do projeto — a combinar com a TI do hospital.
+
+### GER-23 — Superfície HTTP da API
+Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
+
+- **Dado** a configuração padrão, **quando** alguém abre `/docs`, `/redoc` ou `/openapi.json`,
+  **então** `404`. Com `API_DOCS=true` (só desenvolvimento) as três voltam.
+- **Dado** qualquer resposta da API, **então** ela traz `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY` e `Referrer-Policy: no-referrer`.
+- **Dado** uma resposta que não define o próprio cache, **então** `Cache-Control: no-store` (dado de
+  colaborador não fica no cache do navegador do posto). A capa do aviso (MUR-09) mantém o
+  `Cache-Control` dela.
+
+### GER-24 — Segredo do JWT
+Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
+
+- **Dado** `JWT_SECRET` com menos de 32 bytes ou igual ao valor de exemplo do `.env.example`
+  (`troque-este-segredo`), **então** a API não sobe (erro de configuração no startup, sem mostrar o
+  valor).

@@ -14,6 +14,7 @@ FROM nginx:1.29-alpine
 # A imagem gera o conf.d/default.conf a partir do template ao subir. O filtro limita a troca a
 # estas variáveis, para o envsubst não tocar nas do nginx ($host, $uri...).
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY cabecalhos-seguranca.conf /etc/nginx/snippets/cabecalhos-seguranca.conf
 # Os .envsh de /docker-entrypoint.d rodam em ordem antes do envsubst (o 20-), e só se executáveis.
 COPY --chmod=755 api-url-sem-barra.envsh /docker-entrypoint.d/16-api-url-sem-barra.envsh
 ENV PORT=80 \
