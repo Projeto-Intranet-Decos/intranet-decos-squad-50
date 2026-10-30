@@ -1,5 +1,6 @@
 """Regras transversais — docs/specs/transversal.md."""
 
+import base64
 import logging
 
 import pytest
@@ -10,7 +11,10 @@ from app.modules.setores.models import Setor
 from app.modules.usuarios.models import Papel, Usuario
 from tests.apoio import ArmazenamentoFalso, Fabrica, autenticar
 
-PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+# PNG 1x1 de verdade: a capa é decodificada (MUR-04), então só o cabeçalho não basta.
+PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+)
 
 
 def test_ger02_rota_protegida_sem_token_retorna_401(cliente: TestClient):
@@ -196,7 +200,7 @@ def test_ger06_capa_do_aviso_tambem_confere_a_assinatura(cliente: TestClient, ad
     )
 
     assert resposta.status_code == 415
-    assert resposta.json()["campo"] == "imagem"
+    assert resposta.json() == {"campo": "imagem", "mensagem": "Arquivo não é uma imagem válida"}
 
 
 @pytest.mark.parametrize("rota", ["/docs", "/redoc", "/openapi.json"])

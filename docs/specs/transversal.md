@@ -120,7 +120,8 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   (`PK\x03\x04`); doc/xls/ppt são OLE (`\xD0\xCF\x11\xE0…`); txt não pode ter byte nulo (texto,
   em qualquer codificação). **Dado** um arquivo cujo conteúdo não bate (ex: HTML com nome `.pdf`),
   **então** `415 {"campo": <campo>, "mensagem": "O conteúdo do arquivo não corresponde à
-  extensão"}` e nada é gravado. (Auditoria OWASP, A06.)
+  extensão"}` e nada é gravado. Na capa do aviso a mensagem é a do MUR-04, "Arquivo não é uma
+  imagem válida". (Auditoria OWASP, A06.)
 - Limite geral `MAX_UPLOAD_SIZE_MB` (padrão 50 MB), igual ao `client_max_body_size` do
   nginx. O frontend valida tipo e tamanho antes de enviar (só UX).
 - Download passa pelo backend em stream (MinIO não é exposto ao navegador), com

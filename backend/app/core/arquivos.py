@@ -96,11 +96,13 @@ def validar_arquivo(
     inicio = arquivo.file.read(BYTES_CONFERIDOS)
     arquivo.file.seek(0)
     if not _conteudo_bate_com_a_extensao(extensao, inicio):
-        raise erro_arquivo(
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            "O conteúdo do arquivo não corresponde à extensão",
-            campo,
+        # Na capa vale a mensagem do MUR-04, a mesma de quando a imagem não decodifica.
+        mensagem = (
+            "Arquivo não é uma imagem válida"
+            if tipos is TIPOS_IMAGEM
+            else "O conteúdo do arquivo não corresponde à extensão"
         )
+        raise erro_arquivo(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, mensagem, campo)
     return nome[:255], tipo_conteudo, tamanho
 
 
