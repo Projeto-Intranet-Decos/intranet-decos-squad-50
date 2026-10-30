@@ -197,7 +197,6 @@ def test_a06_senha_trivial_recusada(cliente, comum, senha):
     assert r.status_code == 422
 
 
-@pendencia("A06: upload confere só a extensão")
 def test_a06_upload_confere_conteudo_e_nao_so_extensao(cliente, superadmin, setor):
     r = _documento(cliente, superadmin, nome="falso.pdf",
                    conteudo=b"<html><script>alert(1)</script></html>", setor_id=setor.id)

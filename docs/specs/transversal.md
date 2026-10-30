@@ -115,6 +115,12 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   - Imagens (capa): png, jpg, jpeg, webp.
 - Extensão fora da lista → `415`; acima do limite → `413`; sem nome ou vazio → `422`. Todos com
   `campo` apontando o campo do formulário.
+- Os primeiros bytes têm que bater com a extensão (assinatura do formato): pdf `%PDF-`; png
+  `\x89PNG`; jpg/jpeg `\xFF\xD8\xFF`; webp `RIFF…WEBP`; docx/xlsx/pptx/odt/ods/odp são zip
+  (`PK\x03\x04`); doc/xls/ppt são OLE (`\xD0\xCF\x11\xE0…`); txt não pode ter byte nulo (texto,
+  em qualquer codificação). **Dado** um arquivo cujo conteúdo não bate (ex: HTML com nome `.pdf`),
+  **então** `415 {"campo": <campo>, "mensagem": "O conteúdo do arquivo não corresponde à
+  extensão"}` e nada é gravado. (Auditoria OWASP, A06.)
 - Limite geral `MAX_UPLOAD_SIZE_MB` (padrão 50 MB), igual ao `client_max_body_size` do
   nginx. O frontend valida tipo e tamanho antes de enviar (só UX).
 - Download passa pelo backend em stream (MinIO não é exposto ao navegador), com

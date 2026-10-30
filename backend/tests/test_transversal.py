@@ -138,6 +138,67 @@ def test_ger25_acesso_negado_vai_para_o_log(
     ]
 
 
+ASSINATURAS_VALIDAS = {
+    "pop.pdf": b"%PDF-1.7\n",
+    "foto.png": PNG,
+    "foto.jpg": b"\xff\xd8\xff\xe0" + b"\x00" * 16,
+    "planilha.xlsx": b"PK\x03\x04" + b"\x00" * 16,
+    "antigo.doc": b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\x00" * 16,
+    "notas.txt": "Plantão: café às 7h\n".encode("latin-1"),
+}
+
+
+def enviar_documento(cliente: TestClient, usuario: Usuario, nome: str, conteudo: bytes):
+    return cliente.post(
+        "/documentos",
+        data={"titulo": "POP", "categoria": "outro"},
+        files={"arquivo": (nome, conteudo, "application/octet-stream")},
+        headers=autenticar(usuario),
+    )
+
+
+@pytest.mark.parametrize("nome", ASSINATURAS_VALIDAS)
+def test_ger06_aceita_arquivo_com_a_assinatura_da_extensao(
+    cliente: TestClient, admin_setor: Usuario, nome: str
+):
+    assert enviar_documento(cliente, admin_setor, nome, ASSINATURAS_VALIDAS[nome]).status_code == 201
+
+
+@pytest.mark.parametrize(
+    ("nome", "conteudo"),
+    [
+        ("falso.pdf", b"<html><script>alert(1)</script></html>"),
+        ("falso.png", b"GIF89a" + b"\x00" * 16),
+        ("falso.docx", b"%PDF-1.7\n"),
+        ("falso.doc", b"PK\x03\x04" + b"\x00" * 16),
+        ("binario.txt", b"MZ\x90\x00\x03\x00\x00\x00"),
+    ],
+)
+def test_ger06_recusa_conteudo_que_nao_bate_com_a_extensao(
+    cliente: TestClient, admin_setor: Usuario, armazenamento_falso: ArmazenamentoFalso,
+    nome: str, conteudo: bytes,
+):
+    resposta = enviar_documento(cliente, admin_setor, nome, conteudo)
+
+    assert resposta.status_code == 415
+    assert resposta.json() == {
+        "campo": "arquivo", "mensagem": "O conteúdo do arquivo não corresponde à extensão"
+    }
+    assert cliente.get("/documentos").json() == []
+
+
+def test_ger06_capa_do_aviso_tambem_confere_a_assinatura(cliente: TestClient, admin_setor: Usuario):
+    resposta = cliente.post(
+        "/murais/avisos",
+        data={"titulo": "Aviso", "conteudo": "Texto"},
+        files={"imagem": ("capa.webp", b"<svg onload=alert(1)>", "image/webp")},
+        headers=autenticar(admin_setor),
+    )
+
+    assert resposta.status_code == 415
+    assert resposta.json()["campo"] == "imagem"
+
+
 @pytest.mark.parametrize("rota", ["/docs", "/redoc", "/openapi.json"])
 def test_ger23_documentacao_interativa_fora_do_ar(cliente: TestClient, rota: str):
     assert cliente.get(rota).status_code == 404
