@@ -23,8 +23,8 @@ Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste 🟡
 `POST /auth/login` com `{email, senha}`.
 
 - **Dado** credenciais corretas de um usuário ativo, **então** `200` com `access_token`,
-  `refresh_token`, `token_type: "bearer"` e `usuario` (mesmo formato de `UsuarioResposta`), e um
-  refresh token é gravado no banco.
+  `token_type: "bearer"` e `usuario` (mesmo formato de `UsuarioResposta`), e o refresh token vai
+  só no cookie `intranet_refresh` (AUT-07), nunca no corpo; o hash dele é gravado no banco.
 - **Dado** e-mail inexistente, senha errada **ou** usuário desativado, **então** `401`
   `"Email ou senha invalidos"` — a mesma mensagem nos três casos, pra não revelar qual falhou.
 - **Dado** um usuário pendente (convidado que ainda não ativou a conta, USU-02), **então** `401`
@@ -40,11 +40,18 @@ Origem: [ESP] [ENT] · Back ✅ · Front ✅ · Teste 🟡
 ### AUT-02 — Renovação do access token
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
 
-`POST /auth/refresh` com `{refresh_token}`.
+`POST /auth/refresh`, sem corpo: o refresh token vem do cookie `intranet_refresh` (AUT-07).
 
 - **Dado** refresh token existente, não revogado, não expirado e de usuário ativo, **então** `200`
-  com novo `access_token` (o refresh token não é rotacionado).
-- **Dado** refresh token desconhecido, revogado ou expirado, **então** `401`.
+  com novo `access_token`, e o refresh token é **rotacionado**: o cookie recebe um token novo e o
+  apresentado fica marcado como substituído. O token novo herda a expiração do anterior: a sessão
+  dura `REFRESH_TOKEN_DAYS` a partir do login, renovando ou não.
+- **Dado** um token substituído há até 30 s, **então** `200` com novo `access_token`, sem trocar o
+  cookie de novo — duas abas abrindo juntas mandam o mesmo cookie, e a segunda não pode derrubar a
+  sessão.
+- **Dado** um token substituído há mais de 30 s, **então** é tratado como roubado: todas as sessões
+  do usuário são revogadas, `401`, e o evento `refresh_reutilizado` vai para o log (GER-25).
+- **Dado** cookie ausente, token desconhecido, revogado ou expirado, **então** `401`.
 - **Dado** usuário desativado depois do login, **então** `401` — é isso que encerra o acesso dele
   no fim do access token atual.
 
@@ -75,6 +82,12 @@ Origem: [COD] · Back — · Front ✅ · Teste ⬜
 - Várias requisições com `401` ao mesmo tempo compartilham **uma** renovação.
 - **Dado** que a renovação falha, **então** os tokens são apagados e a página atual recarrega como
   visitante (AUT-10); só as telas de administração levam ao `/login`.
+- O access token fica só na memória da aba (AUT-07). **Dado** que a página abre com o marcador de
+  sessão no `localStorage`, **então** o frontend renova pelo cookie antes de mostrar a primeira
+  tela; se a renovação falha, apaga o marcador e abre como visitante. Sem o marcador, não chama a
+  API (visitante).
+- **Dado** que outra aba sai da conta (o marcador some), **então** esta aba também esquece o access
+  token e volta a visitante. **Dado** que outra aba entra, **então** esta renova e entra também.
 
 ### AUT-05 — Rotas protegidas no frontend
 Origem: [ENT] [CTX] · Back — · Front ✅ · Teste ⬜
@@ -85,21 +98,39 @@ Origem: [ENT] [CTX] · Back — · Front ✅ · Teste ⬜
 - `/` redireciona para `/mural`.
 
 ### AUT-06 — Logout com revogação do refresh token
-Origem: [COD] (coluna `revogado` já existe) · Back ⬜ · Front 🟡 · Teste ⬜
+Origem: [COD] (coluna `revogado` já existe) · Back ✅ · Front ✅ · Teste ✅
 
-Hoje o "sair" do frontend só apaga os tokens do `localStorage`; o refresh token continua válido no
-banco até expirar.
+`POST /auth/logout`, sem corpo e sem exigir access token (quem sai com o access token vencido
+também tem que conseguir sair).
 
-- ⬜ **Dado** um refresh token válido, **quando** o usuário sai, **então** o token é marcado como
-  `revogado` e um `/auth/refresh` posterior com ele responde `401`.
-- ❓ Revogar todos os refresh tokens do usuário ao desativá-lo (USU-04) — a decidir.
+- **Dado** o cookie de um refresh token válido, **então** `204`, o token é marcado como
+  `revogado`, o cookie é apagado e um `/auth/refresh` posterior com ele responde `401`.
+- O logout revoga a **sessão inteira** daquele login: o token atual e os que ele substituiu nas
+  rotações (AUT-02). 🐞 corrigido (achado no teste ponta a ponta): um token trocado há menos de
+  30 s ainda renovava pela janela de concorrência depois do logout. Sessões de outros
+  dispositivos (outros logins) continuam valendo.
+- **Dado** cookie ausente ou de token desconhecido, **então** `204` do mesmo jeito (sair é
+  idempotente).
+- Frontend: "Sair" chama o logout e, mesmo se a chamada falhar, esquece o access token e o
+  marcador de sessão.
+- Desativar o usuário (USU-04) não revoga os refresh tokens: o `/auth/refresh` já recusa usuário
+  desativado (AUT-02), então o efeito é o mesmo.
 
 ### AUT-07 — Armazenamento seguro de credenciais
 Origem: [ESP] [COD] · Back ✅ · Front — · Teste ⬜
 
 - Senha guardada só como hash (`pwdlib`, algoritmo recomendado — argon2).
-- Refresh token guardado só como hash SHA-256; o valor em claro existe apenas na resposta do login.
-- Dívida técnica registrada: tokens no `localStorage` (vulnerável a XSS) — rever antes de produção.
+- Refresh token guardado só como hash SHA-256; o valor em claro existe apenas no cookie.
+- O refresh token viaja só no cookie `intranet_refresh`: `HttpOnly` (o JavaScript não lê, então um
+  XSS não leva a sessão de 7 dias), `SameSite=Strict`, `Path=/`, `Max-Age` igual ao tempo que falta
+  para ele expirar, e `Secure` — que pode ser desligado com `COOKIE_SECURE=false` para quem serve a
+  intranet em HTTP puro (sem isso, o navegador não guarda o cookie e a sessão cai junto com o
+  access token).
+- Toda resposta que abre sessão (login, convite aceito, redefinição confirmada, troca de senha)
+  grava o cookie; nenhuma traz o refresh token no corpo.
+- Frontend: o access token fica só na memória da aba. O `localStorage` guarda apenas o marcador
+  `intranet:sessao` (sem segredo), que diz se vale renovar ao abrir a página (AUT-04). As chaves
+  antigas (`intranet:token`, `intranet:refresh_token`) são apagadas ao abrir.
 
 ### AUT-08 — Magic link (token de uso único por e-mail)
 Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅

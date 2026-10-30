@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 import uuid
@@ -45,7 +46,26 @@ def _muitas_tentativas(mensagem: str, segundos: int) -> HTTPException:
   )
 
 
-def autenticar(sessao: Session, email: str, senha: str, ip: str) -> tuple[str, str, Usuario]:
+@dataclass(frozen=True)
+class SessaoAberta:
+  """O que o router precisa para responder e gravar o cookie do refresh token (AUT-07)."""
+
+  access_token: str
+  refresh_token: str
+  refresh_expira_em: datetime
+  usuario: Usuario
+
+
+@dataclass(frozen=True)
+class Renovacao:
+  """`refresh_token` nulo: o cookie fica como está (token trocado há pouco por outra aba, AUT-02)."""
+
+  access_token: str
+  refresh_token: str | None
+  refresh_expira_em: datetime
+
+
+def autenticar(sessao: Session, email: str, senha: str, ip: str) -> SessaoAberta:
   espera = LIMITE_LOGIN.segundos_de_espera(email)
   if espera:
     registrar_evento("login_bloqueado", logging.WARNING, email=email, ip=ip)
@@ -61,34 +81,79 @@ def autenticar(sessao: Session, email: str, senha: str, ip: str) -> tuple[str, s
 
   LIMITE_LOGIN.esquecer(email)
   registrar_evento("login_ok", usuario_id=usuario.id, ip=ip)
-  access_token, refresh_token = _abrir_sessao(sessao, usuario)
-  return access_token, refresh_token, usuario
+  return _abrir_sessao(sessao, usuario)
 
 
-def _abrir_sessao(sessao: Session, usuario: Usuario) -> tuple[str, str]:
-  """Grava um refresh token novo (com commit) e devolve `(access_token, refresh_token)`."""
+def _gravar_refresh(
+  sessao: Session,
+  usuario_id: uuid.UUID,
+  expira_em: datetime,
+  sessao_id: uuid.UUID | None = None,
+) -> str:
+  """Grava um refresh token novo (com commit) e devolve o valor em claro, que só vai no cookie.
+
+  Sem `sessao_id` é um login: o banco gera uma sessão nova. Na rotação, o token herda a sessão.
+  """
   refresh_token = gerar_token()
   token = TokenAtualizacao(
-    usuario_id=usuario.id,
-    token_hash=hash_token(refresh_token),
-    expira_em=datetime.now(timezone.utc) + timedelta(days=configuracoes.refresh_token_dias),
+    usuario_id=usuario_id, token_hash=hash_token(refresh_token), expira_em=expira_em
   )
+  if sessao_id is not None:
+    token.sessao_id = sessao_id
   repository.criar_token(sessao, token)
-  return criar_access_token(usuario), refresh_token
+  return refresh_token
 
 
-def renovar(sessao: Session, refresh_token: str) -> str:
-  token_hash = hash_token(refresh_token)
-  token = repository.buscar_por_hash(sessao, token_hash)
+def _abrir_sessao(sessao: Session, usuario: Usuario) -> SessaoAberta:
+  expira_em = datetime.now(timezone.utc) + timedelta(days=configuracoes.refresh_token_dias)
+  refresh_token = _gravar_refresh(sessao, usuario.id, expira_em)
+  return SessaoAberta(criar_access_token(usuario), refresh_token, expira_em, usuario)
 
-  if not token or token.revogado or token.expira_em < datetime.now(timezone.utc):
-    raise HTTPException(401, "Refresh token invalido ou expirado")
+
+REFRESH_INVALIDO = "Refresh token invalido ou expirado"
+# Duas abas abrindo juntas mandam o mesmo cookie: a segunda chega com o token que a primeira acabou
+# de trocar. Dentro desta janela isso é concorrência; depois dela, é reuso de token roubado (AUT-02).
+JANELA_DE_CONCORRENCIA = timedelta(seconds=30)
+
+
+def renovar(sessao: Session, refresh_token: str | None, ip: str) -> Renovacao:
+  if not refresh_token:
+    raise HTTPException(401, REFRESH_INVALIDO)
+  # Travado até o commit: duas renovações do mesmo token não trocam o token duas vezes.
+  token = repository.buscar_por_hash(sessao, hash_token(refresh_token), travar=True)
+  agora = datetime.now(timezone.utc)
+  if not token or token.revogado or token.expira_em < agora:
+    raise HTTPException(401, REFRESH_INVALIDO)
+
+  if token.substituido_em is not None and agora - token.substituido_em > JANELA_DE_CONCORRENCIA:
+    # Token já trocado voltando depois da janela: alguém tem uma cópia. Derruba todas as sessões.
+    repository.revogar_tokens_do_usuario(sessao, token.usuario_id)
+    sessao.commit()
+    registrar_evento("refresh_reutilizado", logging.WARNING, usuario_id=token.usuario_id, ip=ip)
+    raise HTTPException(401, REFRESH_INVALIDO)
 
   usuario = usuarios_repository.buscar_por_id(sessao, token.usuario_id)
   if not usuario or not usuario.ativo:
     raise HTTPException(401, "Usuario nao encontrado ou inativo")
 
-  return criar_access_token(usuario)
+  if token.substituido_em is not None:
+    # Outra aba acabou de trocar: o cookie novo já está no navegador.
+    return Renovacao(criar_access_token(usuario), None, token.expira_em)
+
+  token.substituido_em = agora
+  # O novo herda a expiração: a sessão dura REFRESH_TOKEN_DAYS a partir do login.
+  novo = _gravar_refresh(sessao, usuario.id, token.expira_em, token.sessao_id)
+  return Renovacao(criar_access_token(usuario), novo, token.expira_em)
+
+
+def encerrar(sessao: Session, refresh_token: str | None) -> None:
+  """Logout (AUT-06): revoga a sessão do cookie inteira, se ela existir. Idempotente."""
+  if not refresh_token:
+    return
+  token = repository.buscar_por_hash(sessao, hash_token(refresh_token))
+  if token:
+    repository.revogar_sessao(sessao, token.sessao_id)
+    sessao.commit()
 
 
 # Magic link (AUT-08)
@@ -154,9 +219,7 @@ def verificar_convite(sessao: Session, token: str) -> Usuario:
   return usuario
 
 
-def aceitar_convite(
-  sessao: Session, dados: schemas.ConviteAceitar
-) -> tuple[str, str, Usuario]:
+def aceitar_convite(sessao: Session, dados: schemas.ConviteAceitar) -> SessaoAberta:
   link, usuario = _link_valido(sessao, dados.token, FinalidadeToken.convite, travar=True)
   usuario.nome = dados.nome
   if "data_nascimento" in dados.model_fields_set:
@@ -164,14 +227,13 @@ def aceitar_convite(
   usuario.senha_hash = gerar_hash_senha(dados.senha)
   link.usado_em = datetime.now(timezone.utc)
   # O commit do refresh token grava tudo junto: senha, dados e link usado.
-  access_token, refresh_token = _abrir_sessao(sessao, usuario)
-  return access_token, refresh_token, usuario
+  return _abrir_sessao(sessao, usuario)
 
 
 # Troca e redefinição de senha (USU-07)
 
 
-def _definir_senha(sessao: Session, usuario: Usuario, senha: str) -> tuple[str, str]:
+def _definir_senha(sessao: Session, usuario: Usuario, senha: str) -> SessaoAberta:
   """Grava a senha, encerra as outras sessões, invalida os links pendentes e abre uma sessão nova,
   tudo num commit só."""
   usuario.senha_hash = gerar_hash_senha(senha)
@@ -213,27 +275,23 @@ def verificar_redefinicao(sessao: Session, token: str) -> Usuario:
   return usuario
 
 
-def confirmar_redefinicao(
-  sessao: Session, dados: schemas.RedefinicaoConfirmar
-) -> tuple[str, str, Usuario]:
+def confirmar_redefinicao(sessao: Session, dados: schemas.RedefinicaoConfirmar) -> SessaoAberta:
   link, usuario = _link_valido(
     sessao, dados.token, FinalidadeToken.redefinicao_senha, travar=True
   )
   link.usado_em = datetime.now(timezone.utc)
   # Grava o uso já: `_definir_senha` apaga os links ainda não usados, e este fica como histórico.
   sessao.flush()
-  access_token, refresh_token = _definir_senha(sessao, usuario, dados.senha)
-  return access_token, refresh_token, usuario
+  return _definir_senha(sessao, usuario, dados.senha)
 
 
 def trocar_senha(
   sessao: Session, usuario_id: uuid.UUID, dados: schemas.TrocaSenha
-) -> tuple[str, str, Usuario]:
+) -> SessaoAberta:
   usuario = usuarios_repository.buscar_por_id(sessao, usuario_id)
   # O access token ainda vale até expirar; a troca, não (AUT-03).
   if not usuario or not usuario.ativo or usuario.senha_hash is None:
     raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Usuario nao encontrado ou inativo")
   if not verificar_senha(dados.senha_atual, usuario.senha_hash):
     raise HTTPException(status.HTTP_400_BAD_REQUEST, SENHA_ATUAL_INCORRETA)
-  access_token, refresh_token = _definir_senha(sessao, usuario, dados.senha_nova)
-  return access_token, refresh_token, usuario
+  return _definir_senha(sessao, usuario, dados.senha_nova)

@@ -149,7 +149,8 @@ def cliente(conexao: Connection) -> Iterator[TestClient]:
     app.main.app.dependency_overrides[obter_fabrica_de_sessoes] = lambda: lambda: _nova_sessao(conexao)
     try:
         # Sem `with`: não roda o lifespan, que tentaria criar o bucket no MinIO real.
-        yield TestClient(app.main.app)
+        # https: o cookie do refresh token é Secure (AUT-07), e o cliente só o devolve em https.
+        yield TestClient(app.main.app, base_url="https://testserver")
     finally:
         app.main.app.dependency_overrides.clear()
 

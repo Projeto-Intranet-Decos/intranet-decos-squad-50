@@ -14,7 +14,7 @@ from app.core.security import hash_token
 from app.modules.autenticacao.models import FinalidadeToken, TokenUsoUnico
 from app.modules.setores.models import Setor
 from app.modules.usuarios.models import Papel, Usuario
-from tests.apoio import SENHA_PADRAO, CorreioFalso, Fabrica, autenticar
+from tests.apoio import SENHA_PADRAO, CorreioFalso, Fabrica, autenticar, refresh_do_cookie, refresh_vale
 
 MENSAGEM_NEUTRA = {"mensagem": "Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha."}
 LINK_INVALIDO = {"mensagem": "Link inválido ou expirado"}
@@ -31,10 +31,6 @@ def confirmar(cliente: TestClient, token: str, senha: str = SENHA_NOVA):
 
 def login(cliente: TestClient, email: str, senha: str):
     return cliente.post("/auth/login", json={"email": email, "senha": senha})
-
-
-def refresh_vale(cliente: TestClient, refresh_token: str) -> bool:
-    return cliente.post("/auth/refresh", json={"refresh_token": refresh_token}).status_code == 200
 
 
 # Esqueci minha senha
@@ -156,7 +152,7 @@ def test_usu07_verificar_com_link_de_convite_responde_400(cliente: TestClient, f
 def test_usu07_confirmar_troca_a_senha_encerra_sessoes_e_entra(
     cliente: TestClient, fabrica: Fabrica, comum: Usuario
 ):
-    sessao_antiga = login(cliente, comum.email, SENHA_PADRAO).json()["refresh_token"]
+    sessao_antiga = refresh_do_cookie(login(cliente, comum.email, SENHA_PADRAO))
     token = fabrica.link(comum, FinalidadeToken.redefinicao_senha)
 
     resposta = confirmar(cliente, token)
@@ -164,7 +160,7 @@ def test_usu07_confirmar_troca_a_senha_encerra_sessoes_e_entra(
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["usuario"]["id"] == str(comum.id)
-    assert refresh_vale(cliente, corpo["refresh_token"])
+    assert refresh_vale(cliente, refresh_do_cookie(resposta))
     assert not refresh_vale(cliente, sessao_antiga)
     assert login(cliente, comum.email, SENHA_PADRAO).status_code == 401
     assert login(cliente, comum.email, SENHA_NOVA).status_code == 200
@@ -202,14 +198,14 @@ def trocar(cliente: TestClient, usuario: Usuario, senha_atual: str, senha_nova: 
 def test_usu07_trocar_senha_logado_revoga_sessoes_e_devolve_tokens_novos(
     cliente: TestClient, comum: Usuario
 ):
-    sessao_antiga = login(cliente, comum.email, SENHA_PADRAO).json()["refresh_token"]
+    sessao_antiga = refresh_do_cookie(login(cliente, comum.email, SENHA_PADRAO))
 
     resposta = trocar(cliente, comum, SENHA_PADRAO)
 
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["usuario"]["id"] == str(comum.id)
-    assert refresh_vale(cliente, corpo["refresh_token"])
+    assert refresh_vale(cliente, refresh_do_cookie(resposta))
     assert not refresh_vale(cliente, sessao_antiga)
     assert login(cliente, comum.email, SENHA_NOVA).status_code == 200
 

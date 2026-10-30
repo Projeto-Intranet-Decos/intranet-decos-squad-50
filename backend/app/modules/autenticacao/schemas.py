@@ -12,13 +12,9 @@ class LoginEntrada(BaseModel):
   senha: str
 
 
-class RefreshEntrada(BaseModel):
-  refresh_token: str
-
-
 class TokenResposta(BaseModel):
+  # O refresh token vai só no cookie HttpOnly (AUT-07), nunca no corpo.
   access_token: str
-  refresh_token: str
   token_type: str = "bearer"
   usuario: UsuarioResposta
 

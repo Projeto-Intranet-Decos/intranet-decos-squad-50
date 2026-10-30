@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Configuracoes, configuracoes
 from app.modules.autenticacao.models import TokenAtualizacao
 from app.modules.logs.models import Log
-from tests.apoio import SENHA_PADRAO, autenticar
+from tests.apoio import SENHA_PADRAO, autenticar, refresh_do_cookie, renovar
 
 
 def pendencia(motivo: str):
@@ -140,7 +140,7 @@ def test_a04_jwt_com_role_adulterado_recusado(cliente, comum):
 
 
 def test_a04_refresh_token_guardado_so_como_hash(cliente, sessao: Session, comum):
-    refresh = _login(cliente, comum.email, SENHA_PADRAO).json()["refresh_token"]
+    refresh = refresh_do_cookie(_login(cliente, comum.email, SENHA_PADRAO))
     hashes = sessao.scalars(select(TokenAtualizacao.token_hash)).all()
     assert refresh not in hashes
 
@@ -207,13 +207,11 @@ def test_a06_upload_confere_conteudo_e_nao_so_extensao(cliente, superadmin, seto
 # ---------- A07 Authentication Failures ----------
 
 
-@pendencia("A07: sem logout no backend (AUT-06 ⬜)")
 def test_a07_existe_logout_que_revoga_refresh(cliente, comum):
-    tokens = _login(cliente, comum.email, SENHA_PADRAO).json()
-    r = cliente.post("/auth/logout", json={"refresh_token": tokens["refresh_token"]},
-                     headers={"Authorization": f"Bearer {tokens['access_token']}"})
+    refresh = refresh_do_cookie(_login(cliente, comum.email, SENHA_PADRAO))
+    r = cliente.post("/auth/logout")
     assert r.status_code in (200, 204), f"/auth/logout respondeu {r.status_code}"
-    assert cliente.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]}).status_code == 401
+    assert renovar(cliente, refresh).status_code == 401
 
 
 def test_a07_login_nao_revela_conta_pelo_tempo(cliente, comum):
@@ -232,16 +230,15 @@ def test_a07_login_nao_revela_conta_pelo_tempo(cliente, comum):
 
 
 def test_a07_desativar_usuario_corta_refresh(cliente, comum, superadmin):
-    tokens = _login(cliente, comum.email, SENHA_PADRAO).json()
+    refresh = refresh_do_cookie(_login(cliente, comum.email, SENHA_PADRAO))
     cliente.delete(f"/usuarios/{comum.id}", headers=autenticar(superadmin))
-    assert cliente.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]}).status_code == 401
+    assert renovar(cliente, refresh).status_code == 401
 
 
-@pendencia("A07: refresh token sem rotação (AUT-02)")
 def test_a07_refresh_token_rotaciona(cliente, comum):
-    tokens = _login(cliente, comum.email, SENHA_PADRAO).json()
-    r = cliente.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
-    assert "refresh_token" in r.json(), "refresh token reutilizável por 7 dias, sem rotação"
+    refresh = refresh_do_cookie(_login(cliente, comum.email, SENHA_PADRAO))
+    r = renovar(cliente, refresh)
+    assert refresh_do_cookie(r) != refresh, "refresh token reutilizável por 7 dias, sem rotação"
 
 
 def test_a07_email_do_login_ignora_maiusculas(cliente, comum):

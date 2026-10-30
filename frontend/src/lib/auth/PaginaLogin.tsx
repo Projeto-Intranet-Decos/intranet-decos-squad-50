@@ -27,7 +27,7 @@ function PaginaLogin() {
   const { mutate, isPending } = useMutation({
     mutationFn: entrarComSenha,
     onSuccess: (sessao) => {
-      entrar(sessao.accessToken, sessao.refreshToken)
+      entrar(sessao.accessToken)
       navegar(origem ?? '/mural')
     },
     onError: (erro: unknown) => {

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import RotaProtegida from './RotaProtegida'
+import { entrarComToken } from './useAuth'
 
 function tokenDe(role: string): string {
   const carga = btoa(JSON.stringify({ sub: 'u1', role, setor_id: null }))
@@ -39,14 +40,14 @@ describe('AUT-10 — administração segue protegida no modo visitante', () => {
   })
 
   it('comum em /usuarios vai para não autorizado', () => {
-    localStorage.setItem('intranet:token', tokenDe('comum'))
+    entrarComToken(tokenDe('comum'))
     montar()
 
     expect(screen.getByText('nao autorizado')).toBeTruthy()
   })
 
   it('superadmin em /usuarios entra', () => {
-    localStorage.setItem('intranet:token', tokenDe('superadmin'))
+    entrarComToken(tokenDe('superadmin'))
     montar()
 
     expect(screen.getByText('administração')).toBeTruthy()

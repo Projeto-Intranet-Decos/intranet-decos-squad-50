@@ -63,6 +63,7 @@ services:
       INVITE_HOURS: ${INVITE_HOURS:-72}
       PASSWORD_RESET_MINUTES: ${PASSWORD_RESET_MINUTES:-60}
       API_DOCS: ${API_DOCS:-false}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
     depends_on:
       banco:
         condition: service_healthy

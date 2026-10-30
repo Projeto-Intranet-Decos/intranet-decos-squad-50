@@ -7,13 +7,13 @@ import { toast } from 'sonner'
 import { erroDaApi, tokenDeAcessoFalso } from '../../testes/apoio'
 import * as authApi from './api'
 import PaginaRedefinirSenha from './PaginaRedefinirSenha'
+import { entrarComToken, obterToken } from './useAuth'
 
 vi.mock('./api')
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const SESSAO: authApi.SessaoNova = {
   accessToken: tokenDeAcessoFalso({ sub: 'maria', role: 'comum', setor_id: null }),
-  refreshToken: 'refresh-novo',
 }
 
 function Endereco() {
@@ -87,8 +87,7 @@ describe('USU-07 — redefinir senha pelo link', () => {
   })
 
   it('salva a senha, troca a sessão do navegador e entra no mural', async () => {
-    localStorage.setItem('intranet:token', tokenDeAcessoFalso({ sub: 'outra-pessoa', role: 'superadmin', setor_id: null }))
-    localStorage.setItem('intranet:refresh_token', 'refresh-antigo')
+    entrarComToken(tokenDeAcessoFalso({ sub: 'outra-pessoa', role: 'superadmin', setor_id: null }))
     vi.mocked(authApi.verificarRedefinicao).mockResolvedValue('maria@example.com')
     vi.mocked(authApi.confirmarRedefinicao).mockResolvedValue(SESSAO)
     const interagir = montar()
@@ -98,8 +97,8 @@ describe('USU-07 — redefinir senha pelo link', () => {
 
     expect(await screen.findByText('Mural')).toBeTruthy()
     expect(authApi.confirmarRedefinicao).toHaveBeenCalledWith({ token: 'abc', senha: 'senha-nova-123' })
-    expect(localStorage.getItem('intranet:token')).toBe(SESSAO.accessToken)
-    expect(localStorage.getItem('intranet:refresh_token')).toBe('refresh-novo')
+    expect(obterToken()).toBe(SESSAO.accessToken)
+    expect(localStorage.getItem('intranet:sessao')).not.toBeNull()
   })
 
   it('link que expirou antes do envio mostra o aviso', async () => {

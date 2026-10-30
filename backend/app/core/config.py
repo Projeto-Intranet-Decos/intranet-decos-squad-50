@@ -39,6 +39,9 @@ class Configuracoes(BaseSettings):
     jwt_secret: str = Field(repr=False)
     access_token_minutos: int = Field(default=30, validation_alias="ACCESS_TOKEN_MINUTES")
     refresh_token_dias: int = Field(default=7, validation_alias="REFRESH_TOKEN_DAYS")
+    # Atributo Secure do cookie do refresh token (AUT-07). Só desligue servindo a intranet em HTTP
+    # puro: sem ele o navegador não guarda o cookie fora de https/localhost.
+    cookie_seguro: bool = Field(default=True, validation_alias="COOKIE_SECURE")
 
     # Só necessário em dev, quando frontend e backend rodam em portas diferentes.
     origens_cors: list[str] = Field(default=[], validation_alias="CORS_ORIGINS")

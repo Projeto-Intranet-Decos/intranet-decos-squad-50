@@ -13,18 +13,17 @@ export interface AceiteConvite {
   dataNascimento: string | null
 }
 
+/** O refresh token vem só no cookie HttpOnly, que o navegador guarda sozinho (AUT-07). */
 export interface SessaoNova {
   accessToken: string
-  refreshToken: string
 }
 
 interface SessaoApi {
   access_token: string
-  refresh_token: string
 }
 
 function paraSessao(dados: SessaoApi): SessaoNova {
-  return { accessToken: dados.access_token, refreshToken: dados.refresh_token }
+  return { accessToken: dados.access_token }
 }
 
 export async function entrarComSenha(dados: { email: string; senha: string }): Promise<SessaoNova> {
