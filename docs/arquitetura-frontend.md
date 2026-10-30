@@ -8,6 +8,7 @@
 - **TanStack Query** para data fetching, cache e mutations
 - **React Hook Form** para formulários
 - **Sonner** para notificações (toast)
+- **Lucide** (`lucide-react`) para ícones — única biblioteca de ícones, sempre via `shared/components/icones.tsx`
 
 ## Organização de pastas
 
@@ -21,10 +22,10 @@ src/
       hooks/
       types.ts
       api.ts
-    calendario/
     documentos/       # inclui upload de arquivos
     setores/
     duvidas/
+    atalhos/          # links de acesso rápido da barra lateral
     usuarios/          # rota exclusiva superadmin
     logs/               # rota exclusiva superadmin
   shared/
@@ -38,6 +39,10 @@ src/
       useAuth.ts
       types.ts
     permissions.ts        # lógica de RBAC + escopo por setor
+    preferencias/          # preferências de interface (GER-14): só frontend, sem módulo no backend
+      preferencias.ts
+      usePreferencias.ts
+      PaginaConfiguracoes.tsx
   App.tsx
 ```
 
@@ -95,6 +100,10 @@ Usada nas rotas de `/usuarios` e `/logs`, restritas a `superadmin`.
 ## Autenticação e token
 
 - Token guardado em **localStorage** (decisão consciente para o MVP).
+- Rotas públicas (fora de `RotaProtegida`): `/login`, `/esqueci-senha` e as páginas de magic link
+  `/ativar-conta` e `/redefinir-senha`. Essas duas leem o token do fragmento (`#token=`), tiram-no da
+  URL e, ao confirmar, apagam a sessão anterior antes de chamar `entrar()` com os tokens que a API
+  devolve (AUT-08). Moram em `lib/auth/`, junto da `PaginaLogin`.
 - **Trade-off registrado como dívida técnica**: localStorage é acessível via JS, então é vulnerável a XSS. Se o módulo de documentos vier a renderizar conteúdo não sanitizado no futuro, isso deve ser revisto (migrar para cookie httpOnly) antes de ir para produção definitiva com a equipe de TI do hospital.
 
 ## HTTP (axios)
@@ -193,7 +202,7 @@ Usado para feedback de sucesso/erro em criações, edições e exclusões em tod
 ## Pontos em aberto (não bloqueiam o MVP, mas precisam de decisão)
 
 - **Tipos compartilhados** entre features (`Setor`, `User`) — definir onde moram (ex: `shared/types.ts`).
-- **Testes** — decidir conscientemente se entram no escopo do MVP ou ficam para depois.
+- ~~**Testes**~~ — decidido: entram no MVP, guiados pelos specs (vitest + Testing Library + MSW). Ver [`specs/README.md`](./specs/README.md).
 - **Variáveis de ambiente** — onde/como configurar a URL da API entre dev e produção.
 - **Framework do backend** (Python, Django descartado) — ainda não definido.
 - **Módulo de dúvidas** — ainda não definido se é FAQ estático ou sistema de tickets com fluxo de status.
