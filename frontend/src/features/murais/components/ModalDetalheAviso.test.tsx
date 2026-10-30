@@ -43,6 +43,18 @@ function montar(detalhe: Aviso) {
   return aoFechar
 }
 
+describe('MUR-11 — capa no detalhe do aviso', () => {
+  it('mostra a capa inteira, com a própria imagem desfocada de fundo', () => {
+    montar(aviso({ urlImagem: '/murais/avisos/a1/imagem?v=1' }))
+
+    const capa = screen.getByRole('img', { name: 'Treinamento de exemplo' })
+    expect(capa.className).toContain('object-contain')
+    const fundo = document.querySelector('img[aria-hidden="true"]')
+    expect(fundo?.getAttribute('src')).toBe('/murais/avisos/a1/imagem?v=1')
+    expect(fundo?.className).toContain('blur')
+  })
+})
+
 describe('MUR-15 — "Ver no calendário" no detalhe do evento', () => {
   it('fecha o detalhe e abre o calendário na data de início do evento', () => {
     const aoFechar = montar(aviso())

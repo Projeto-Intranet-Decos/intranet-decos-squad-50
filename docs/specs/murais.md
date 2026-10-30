@@ -190,6 +190,11 @@ Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste 🟡
   no campo (GER-05); lista, carrossel, painéis e calendário atualizam sozinhos depois de
   publicar/editar/excluir (invalidação de cache).
 - Detalhe do aviso em modal, com capa e anexos baixáveis.
+- Capa no card do feed: quadro de proporção fixa 16:9, o mesmo em todos os cards. A imagem aparece
+  **inteira**, sem corte, seja 16:9, 9:16 ou 1:1, e a sobra do quadro é preenchida pela própria
+  imagem ampliada e desfocada. No detalhe a capa também aparece inteira, com o mesmo fundo, limitada
+  em altura. O título do card fica em até 2 linhas e o conteúdo em até 3, para a altura do card não
+  depender do tamanho do texto.
 
 ### MUR-12 — Listar eventos por período
 Origem: [ESP] [ENT H3] [CTX] · Back ✅ · Front ✅ · Teste ✅
