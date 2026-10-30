@@ -35,6 +35,8 @@ desktop (GER-15).
 - **Dado** uma tela abaixo de 1024px, **quando** o usuário abre o menu pela barra superior, **então**
   o menu cobre a tela toda (sem margem nem cantos arredondados) e tem um botão "Fechar menu", que o
   fecha e devolve o foco ao botão que o abriu. `Esc` e escolher um item também fecham.
+- 🐞 **Dado** uma tela a partir de 1024px, em qualquer estilo visual, **quando** o menu lateral
+  aparece, **então** ele não tem botão "Fechar menu" (no desktop o menu fica sempre à vista).
 
 ### GER-02 — Autenticação obrigatória
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
