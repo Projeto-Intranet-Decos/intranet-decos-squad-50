@@ -12,6 +12,7 @@ import { baixarAnexoAviso } from '../api'
 import { formatarDiaMes, formatarHora, formatarPeriodoEvento } from '../formatadores'
 import { chaveDiaDeIso } from '../formatadoresCalendario'
 import BadgeCategoria from './BadgeCategoria'
+import CapaAviso from './CapaAviso'
 import type { Aviso } from '../types'
 
 interface PropriedadesModalDetalheAviso {
@@ -75,9 +76,12 @@ function ModalDetalheAviso({ aviso, aoFechar, aoEditar, aoExcluir, podeBaixarAne
       <div className="flex flex-col items-start gap-6 md:flex-row">
         {aviso.urlImagem && (
           <div className="w-full flex-none rounded-[10px] liquido:rounded-inner bg-white/55 p-2 ring-1 ring-white/80 md:w-[400px]">
-            <div
-              className="h-[220px] w-full rounded-md bg-cover bg-center sm:h-[300px] liquido:rounded-lg"
-              style={{ backgroundImage: `url(${aviso.urlImagem})` }}
+            {/* Sem altura fixa: o quadro acompanha a imagem até 60vh, para a vertical aparecer grande. */}
+            <CapaAviso
+              url={aviso.urlImagem}
+              alt={aviso.titulo}
+              classeQuadro="w-full rounded-md liquido:rounded-lg"
+              classeImagem="block h-auto max-h-[60vh] w-full"
             />
           </div>
         )}

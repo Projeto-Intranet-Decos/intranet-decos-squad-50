@@ -23,9 +23,9 @@ Aniversariante **não é registro próprio**: é derivado de `usuarios.data_nasc
 | MUR-04 | Capa do aviso no envio | ✅ | ✅ | 🟡 |
 | MUR-05 | Anexos do aviso no envio | ✅ | ✅ | ⬜ |
 | MUR-06 | Editar texto do aviso | ✅ | ✅ | 🟡 |
-| MUR-07 | Trocar e remover capa | ✅ | ✅ | ⬜ |
+| MUR-07 | Trocar e remover capa | ✅ | ✅ | 🟡 |
 | MUR-08 | Adicionar, remover e baixar anexos | ✅ | ✅ | ⬜ |
-| MUR-09 | Capa pública com cache | ✅ | ✅ | ⬜ |
+| MUR-09 | Capa pública com cache | ✅ | ✅ | 🟡 |
 | MUR-10 | Excluir aviso | ✅ | ✅ | ⬜ |
 | MUR-11 | Tela do mural | — | ✅ | 🟡 |
 | MUR-12 | Listar eventos por período | ✅ | ✅ | ✅ |
@@ -94,6 +94,15 @@ Uma capa por aviso `[CTX]`: png, jpg, jpeg ou webp, até **5 MB**.
 - **Dado** imagem de tipo não suportado, **então** `415 {"campo": "imagem", ...}` e o aviso **não**
   é criado (nem sem capa).
 - **Dado** imagem acima de 5 MB, **então** `413`.
+- A capa guardada não é o arquivo enviado, e sim uma versão menor: no máximo **1920px** no lado
+  maior (imagem menor não é ampliada), com a orientação da foto (EXIF) aplicada, sem metadados
+  (EXIF, GPS) e em **WebP**. É ela que o card, o carrossel e o detalhe baixam. O perfil de cor é
+  mantido. Capas salvas antes dessa regra continuam como foram enviadas.
+- **Dado** arquivo com extensão de imagem que não é PNG, JPEG ou WebP de verdade, **então**
+  `415 {"campo": "imagem", "mensagem": "Arquivo não é uma imagem válida"}` e o aviso **não** é
+  criado.
+- **Dado** imagem acima de **50 megapixels** (mesmo com poucos MB), **então** `413`: decodificar
+  algo maior gastaria memória demais.
 - Frontend: pré-visualização da imagem escolhida antes de enviar.
 
 ### MUR-05 — Anexos do aviso no envio
@@ -126,7 +135,7 @@ Teste: regras de evento e de `null` cobertas; falta corpo vazio, `atualizado_em`
 - Capa e anexos não mudam por aqui (MUR-07, MUR-08).
 
 ### MUR-07 — Trocar e remover capa
-Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
+Origem: [ENT] · Back ✅ · Front ✅ · Teste 🟡
 
 - `PUT /murais/avisos/{id}/imagem` (campo `arquivo`) — mesmas regras de MUR-04; devolve o aviso
   com nova `versao_imagem`; a capa antiga é removida do bucket depois do commit.
@@ -145,7 +154,7 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   `attachment` com o nome original (GER-06).
 
 ### MUR-09 — Capa pública com cache
-Origem: [ENT H1] [COD] · Back ✅ · Front ✅ · Teste ⬜
+Origem: [ENT H1] [COD] · Back ✅ · Front ✅ · Teste 🟡
 
 `GET /murais/avisos/{id}/imagem` é o **único** arquivo servido sem login (`<img>` não envia o
 Bearer; o id é um UUID não adivinhável).
@@ -191,6 +200,11 @@ Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste 🟡
   no campo (GER-05); lista, carrossel, painéis e calendário atualizam sozinhos depois de
   publicar/editar/excluir (invalidação de cache).
 - Detalhe do aviso em modal, com capa e anexos baixáveis.
+- Capa no card do feed: quadro de proporção fixa 16:9, o mesmo em todos os cards. A imagem aparece
+  **inteira**, sem corte, seja 16:9, 9:16 ou 1:1, e a sobra do quadro é preenchida pela própria
+  imagem ampliada e desfocada. No detalhe a capa também aparece inteira, com o mesmo fundo, limitada
+  em altura. O título do card fica em até 2 linhas e o conteúdo em até 3, para a altura do card não
+  depender do tamanho do texto.
 
 ### MUR-12 — Listar eventos por período
 Origem: [ESP] [ENT H3] [CTX] · Back ✅ · Front ✅ · Teste ✅
