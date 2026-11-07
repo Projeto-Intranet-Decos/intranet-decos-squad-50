@@ -13,6 +13,9 @@
 	// DNS e o certificado. Nenhum dos dois nomes pode ter registro A/CNAME próprio na zona.
 	// Sem isto, ter routes desliga o intranet.davignascimento.workers.dev.
 	"workers_dev": true,
+	// Cada versão ganharia uma URL pública própria, mas todas usam o mesmo container e o banco de
+	// produção; não há o que pré-visualizar.
+	"preview_urls": false,
 	"routes": [
 		{ "pattern": "projetodecos.online", "custom_domain": true },
 		{ "pattern": "www.projetodecos.online", "custom_domain": true }
