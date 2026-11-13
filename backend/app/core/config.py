@@ -12,12 +12,21 @@ RAIZ_BACKEND = Path(__file__).resolve().parents[2]
 # Variável de ambiente (a que o compose passa ao container) vence os dois.
 ARQUIVOS_ENV = (RAIZ_BACKEND.parent / ".env", RAIZ_BACKEND / ".env")
 
+# HS256 com chave menor que o tamanho do hash (32 bytes) fica sujeito a força bruta offline.
+TAMANHO_MINIMO_JWT_SECRET = 32
+JWT_SECRET_DE_EXEMPLO = "troque-este-segredo"
+
 
 class Configuracoes(BaseSettings):
     # Segredos levam repr=False: a configuração aparece em tracebacks e erros de validação.
     # O alias é o nome da variável de ambiente (em inglês); validate_by_name aceita o do campo.
+    # hide_input_in_errors: o erro de validação não repete o valor recebido (que pode ser o segredo).
     model_config = SettingsConfigDict(
-        env_file=ARQUIVOS_ENV, extra="ignore", validate_by_name=True, validate_by_alias=True
+        env_file=ARQUIVOS_ENV,
+        extra="ignore",
+        validate_by_name=True,
+        validate_by_alias=True,
+        hide_input_in_errors=True,
     )
 
     # No compose, host e porta são fixos (banco:5432); estes padrões são para rodar fora do Docker.
@@ -30,9 +39,14 @@ class Configuracoes(BaseSettings):
     jwt_secret: str = Field(repr=False)
     access_token_minutos: int = Field(default=30, validation_alias="ACCESS_TOKEN_MINUTES")
     refresh_token_dias: int = Field(default=7, validation_alias="REFRESH_TOKEN_DAYS")
+    # Atributo Secure do cookie do refresh token (AUT-07). Só desligue servindo a intranet em HTTP
+    # puro: sem ele o navegador não guarda o cookie fora de https/localhost.
+    cookie_seguro: bool = Field(default=True, validation_alias="COOKIE_SECURE")
 
     # Só necessário em dev, quando frontend e backend rodam em portas diferentes.
     origens_cors: list[str] = Field(default=[], validation_alias="CORS_ORIGINS")
+    # /docs, /redoc e /openapi.json (GER-23): só em desenvolvimento.
+    documentacao_api: bool = Field(default=False, validation_alias="API_DOCS")
 
     # Qualquer armazenamento compatível com S3 (o MinIO do compose, AWS S3, Railway Buckets...). Os
     # nomes das variáveis seguem o padrão da AWS, que é o que esses provedores injetam.
@@ -70,6 +84,18 @@ class Configuracoes(BaseSettings):
     def vazio_vale_como_ausente(cls, valor: object) -> object:
         # O compose repassa ${AWS_DEFAULT_REGION:-}, que chega como texto vazio.
         return None if valor == "" else valor
+
+    @field_validator("jwt_secret")
+    @classmethod
+    def exigir_jwt_secret_forte(cls, valor: str) -> str:
+        # GER-24. A mensagem nunca repete o valor.
+        if len(valor.encode()) < TAMANHO_MINIMO_JWT_SECRET or valor == JWT_SECRET_DE_EXEMPLO:
+            raise ValueError(
+                f"JWT_SECRET precisa de pelo menos {TAMANHO_MINIMO_JWT_SECRET} bytes aleatórios e não "
+                'pode ser o do .env.example. Gere com: python -c "import secrets; '
+                'print(secrets.token_urlsafe(64))"'
+            )
+        return valor
 
     @field_validator("armazenamento_url")
     @classmethod

@@ -1,5 +1,6 @@
 """Troca e redefinição de senha (USU-07) — docs/specs/usuarios.md."""
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -7,12 +8,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 import app.main
+from app.core import limite_tentativas
 from app.core.database import obter_sessao
 from app.core.security import hash_token
 from app.modules.autenticacao.models import FinalidadeToken, TokenUsoUnico
 from app.modules.setores.models import Setor
 from app.modules.usuarios.models import Papel, Usuario
-from tests.apoio import SENHA_PADRAO, CorreioFalso, Fabrica, autenticar
+from tests.apoio import SENHA_PADRAO, CorreioFalso, Fabrica, autenticar, refresh_do_cookie, refresh_vale
 
 MENSAGEM_NEUTRA = {"mensagem": "Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha."}
 LINK_INVALIDO = {"mensagem": "Link inválido ou expirado"}
@@ -29,10 +31,6 @@ def confirmar(cliente: TestClient, token: str, senha: str = SENHA_NOVA):
 
 def login(cliente: TestClient, email: str, senha: str):
     return cliente.post("/auth/login", json={"email": email, "senha": senha})
-
-
-def refresh_vale(cliente: TestClient, refresh_token: str) -> bool:
-    return cliente.post("/auth/refresh", json={"refresh_token": refresh_token}).status_code == 200
 
 
 # Esqueci minha senha
@@ -80,10 +78,14 @@ def test_usu07_pedido_sem_conta_valida_responde_igual_e_nao_envia(
 
 
 def test_usu07_pedido_novo_invalida_o_link_anterior(
-    cliente: TestClient, correio_falso: CorreioFalso, colaborador: Usuario
+    cliente: TestClient, correio_falso: CorreioFalso, colaborador: Usuario,
+    monkeypatch: pytest.MonkeyPatch,
 ):
+    agora = 1000.0
+    monkeypatch.setattr(limite_tentativas, "relogio", lambda: agora)
     pedir(cliente, colaborador.email)
     anterior = correio_falso.ultimo_token()
+    agora += 5 * 60 + 1  # passa o limite de um pedido a cada 5 min
     pedir(cliente, colaborador.email)
     atual = correio_falso.ultimo_token()
 
@@ -150,7 +152,7 @@ def test_usu07_verificar_com_link_de_convite_responde_400(cliente: TestClient, f
 def test_usu07_confirmar_troca_a_senha_encerra_sessoes_e_entra(
     cliente: TestClient, fabrica: Fabrica, comum: Usuario
 ):
-    sessao_antiga = login(cliente, comum.email, SENHA_PADRAO).json()["refresh_token"]
+    sessao_antiga = refresh_do_cookie(login(cliente, comum.email, SENHA_PADRAO))
     token = fabrica.link(comum, FinalidadeToken.redefinicao_senha)
 
     resposta = confirmar(cliente, token)
@@ -158,7 +160,7 @@ def test_usu07_confirmar_troca_a_senha_encerra_sessoes_e_entra(
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["usuario"]["id"] == str(comum.id)
-    assert refresh_vale(cliente, corpo["refresh_token"])
+    assert refresh_vale(cliente, refresh_do_cookie(resposta))
     assert not refresh_vale(cliente, sessao_antiga)
     assert login(cliente, comum.email, SENHA_PADRAO).status_code == 401
     assert login(cliente, comum.email, SENHA_NOVA).status_code == 200
@@ -196,14 +198,14 @@ def trocar(cliente: TestClient, usuario: Usuario, senha_atual: str, senha_nova: 
 def test_usu07_trocar_senha_logado_revoga_sessoes_e_devolve_tokens_novos(
     cliente: TestClient, comum: Usuario
 ):
-    sessao_antiga = login(cliente, comum.email, SENHA_PADRAO).json()["refresh_token"]
+    sessao_antiga = refresh_do_cookie(login(cliente, comum.email, SENHA_PADRAO))
 
     resposta = trocar(cliente, comum, SENHA_PADRAO)
 
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["usuario"]["id"] == str(comum.id)
-    assert refresh_vale(cliente, corpo["refresh_token"])
+    assert refresh_vale(cliente, refresh_do_cookie(resposta))
     assert not refresh_vale(cliente, sessao_antiga)
     assert login(cliente, comum.email, SENHA_NOVA).status_code == 200
 
@@ -247,3 +249,89 @@ def test_usu07_desativado_com_token_ainda_valido_nao_troca(cliente: TestClient, 
 
     assert resposta.status_code == 401
     assert login(cliente, desativado.email, SENHA_NOVA).status_code == 401
+
+
+# Limite de pedidos (USU-07)
+
+
+def test_usu07_segundo_pedido_em_5_min_e_barrado_sem_enviar(
+    cliente: TestClient, correio_falso: CorreioFalso, colaborador: Usuario
+):
+    assert pedir(cliente, colaborador.email).status_code == 202
+
+    resposta = pedir(cliente, colaborador.email.upper())
+
+    assert resposta.status_code == 429
+    assert resposta.json() == {"mensagem": "Muitos pedidos. Tente de novo em alguns minutos."}
+    assert 0 < int(resposta.headers["Retry-After"]) <= 5 * 60
+    assert len(correio_falso.enviados) == 1
+
+
+def test_usu07_limite_vale_para_email_sem_conta(cliente: TestClient):
+    assert pedir(cliente, "ninguem@example.com").status_code == 202
+    assert pedir(cliente, "ninguem@example.com").status_code == 429
+
+
+def test_usu07_pedido_volta_a_valer_depois_de_5_min(
+    cliente: TestClient, correio_falso: CorreioFalso, colaborador: Usuario,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    agora = 1000.0
+    monkeypatch.setattr(limite_tentativas, "relogio", lambda: agora)
+    pedir(cliente, colaborador.email)
+
+    agora += 5 * 60 + 1
+
+    assert pedir(cliente, colaborador.email).status_code == 202
+    assert len(correio_falso.enviados) == 2
+
+
+def test_ger25_pedido_e_bloqueio_de_redefinicao_vao_para_o_log(
+    cliente: TestClient, colaborador: Usuario, caplog: pytest.LogCaptureFixture
+):
+    with caplog.at_level(logging.INFO, logger="app.seguranca"):
+        pedir(cliente, colaborador.email)
+        pedir(cliente, colaborador.email)
+
+    assert [r.getMessage() for r in caplog.records if r.name == "app.seguranca"] == [
+        f"evento=redefinicao_pedida email={colaborador.email} ip=testclient",
+        f"evento=redefinicao_bloqueada email={colaborador.email} ip=testclient",
+    ]
+
+
+# Política de senha (USU-09)
+
+SENHA_COMUM = {"mensagem": "Senha muito comum. Escolha outra."}
+
+
+@pytest.mark.parametrize("senha", ["12345678", "Password", "senha123", "aaaaaaaa", "HOSPITAL123"])
+def test_usu09_troca_recusa_senha_comum(cliente: TestClient, comum: Usuario, senha: str):
+    resposta = trocar(cliente, comum, SENHA_PADRAO, senha)
+
+    assert resposta.status_code == 422
+    assert resposta.json() == {"campo": "senha_nova", **SENHA_COMUM}
+    assert login(cliente, comum.email, SENHA_PADRAO).status_code == 200
+
+
+def test_usu09_redefinicao_recusa_senha_comum_sem_gastar_o_link(
+    cliente: TestClient, fabrica: Fabrica, comum: Usuario
+):
+    token = fabrica.link(comum, FinalidadeToken.redefinicao_senha)
+
+    resposta = confirmar(cliente, token, "12345678")
+
+    assert resposta.status_code == 422
+    assert resposta.json() == {"campo": "senha", **SENHA_COMUM}
+    assert confirmar(cliente, token).status_code == 200
+
+
+def test_usu09_ativacao_recusa_senha_comum(cliente: TestClient, fabrica: Fabrica):
+    pendente = fabrica.usuario(pendente=True)
+    token = fabrica.link(pendente, FinalidadeToken.convite)
+
+    resposta = cliente.post(
+        "/auth/convite/aceitar", json={"token": token, "nome": "Maria", "senha": "senha123"}
+    )
+
+    assert resposta.status_code == 422
+    assert resposta.json() == {"campo": "senha", **SENHA_COMUM}

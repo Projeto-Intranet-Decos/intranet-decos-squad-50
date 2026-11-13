@@ -28,7 +28,7 @@ function ModalAlterarSenha({ aoFechar }: { aoFechar: () => void }) {
     mutationFn: (dados: { senhaAtual: string; senhaNova: string }) => trocarSenha(dados),
     onSuccess: (sessao) => {
       // A API encerrou todas as sessões, inclusive esta: segue com os tokens novos.
-      entrar(sessao.accessToken, sessao.refreshToken)
+      entrar(sessao.accessToken)
       toast.success('Senha alterada. As outras sessões foram encerradas.')
       aoFechar()
     },

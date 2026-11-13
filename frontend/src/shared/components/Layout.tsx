@@ -5,6 +5,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
 import { renovarAccessToken } from '../../lib/api'
 import ModalAlterarSenha from '../../lib/auth/ModalAlterarSenha'
+import { sairDaConta } from '../../lib/auth/sessao'
 import { useAuth } from '../../lib/auth/useAuth'
 import { canAcessarAdministracao } from '../../lib/permissions'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
@@ -102,7 +103,7 @@ function Layout({ children }: PropriedadesLayout) {
   const [menuAberto, setMenuAberto] = useState(false)
   const [alterandoSenha, setAlterandoSenha] = useState(false)
   const desktop = useConsultaDeMidia(CONSULTA_DESKTOP)
-  const { usuario, sair } = useAuth()
+  const { usuario } = useAuth()
   const navegar = useNavigate()
   const { pathname } = useLocation()
   const menuRef = useRef<HTMLElement>(null)
@@ -147,7 +148,7 @@ function Layout({ children }: PropriedadesLayout) {
   }
 
   function aoSair() {
-    sair()
+    void sairDaConta()
     navegar('/mural', { replace: true })
   }
 

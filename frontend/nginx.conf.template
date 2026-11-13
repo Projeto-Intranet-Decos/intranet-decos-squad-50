@@ -7,6 +7,12 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Sem a versão do nginx nas respostas e páginas de erro (GER-13).
+    server_tokens off;
+    # Vale para o /api/, que não tem add_header próprio; os outros headers da API vêm do backend
+    # (GER-23). As outras locations incluem o cabecalhos-seguranca.conf completo.
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
     # Upload de documentos e de capa/anexos de aviso passa por aqui. A criação de aviso manda
     # capa e todos os anexos numa requisição só, então o total precisa caber neste limite
     # (o frontend confere antes de enviar). Tem que bater com MAX_UPLOAD_SIZE_MB do backend.
@@ -39,12 +45,14 @@ server {
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
+        include /etc/nginx/snippets/cabecalhos-seguranca.conf;
         try_files $uri =404;
     }
 
     # SPA: qualquer rota desconhecida cai no index.html (react-router resolve).
     location / {
         add_header Cache-Control "no-cache";
+        include /etc/nginx/snippets/cabecalhos-seguranca.conf;
         try_files $uri $uri/ /index.html;
     }
 }

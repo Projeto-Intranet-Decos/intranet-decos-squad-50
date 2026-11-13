@@ -19,6 +19,11 @@ class TokenAtualizacao(Base):
   token_hash: Mapped[str] = mapped_column(String(255), unique=True)
   expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
   revogado: Mapped[bool] = mapped_column(Boolean, default=False)
+  # Quando foi trocado por outro na renovação (AUT-02). Reapresentado depois de 30 s, é roubo.
+  substituido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+  # Um por login; as rotações herdam. O logout revoga a sessão inteira, inclusive os tokens já
+  # trocados, que ainda renovariam pela janela de 30 s (AUT-06).
+  sessao_id: Mapped[uuid.UUID] = mapped_column(Uuid, server_default=text("gen_random_uuid()"))
   criado_em: Mapped[datetime] = mapped_column(
     DateTime(timezone=True), server_default=func.now()
   )

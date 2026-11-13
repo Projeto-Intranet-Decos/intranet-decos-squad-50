@@ -87,14 +87,38 @@ def test_ger13_segredos_nao_aparecem_na_representacao():
     configuracoes = Configuracoes(
         _env_file=None,
         postgres_password="senha-do-banco",
-        jwt_secret="segredo-jwt",
+        jwt_secret="segredo-jwt-com-32-bytes-ou-mais-aqui",
         armazenamento_segredo="segredo-do-s3",
         resend_chave_api="re_chave-resend",
     )
 
     representacao = repr(configuracoes) + str(configuracoes)
-    for segredo in ("senha-do-banco", "segredo-jwt", "segredo-do-s3", "re_chave-resend"):
+    for segredo in (
+        "senha-do-banco", "segredo-jwt-com-32-bytes-ou-mais-aqui", "segredo-do-s3", "re_chave-resend"
+    ):
         assert segredo not in representacao
+
+
+@pytest.mark.parametrize("segredo", ["curto", "x" * 31, "troque-este-segredo"])
+def test_ger24_jwt_secret_fraco_impede_a_subida(segredo: str):
+    with pytest.raises(ValidationError, match="JWT_SECRET") as erro:
+        Configuracoes(_env_file=None, postgres_password="senha", jwt_secret=segredo)
+
+    assert segredo not in str(erro.value)
+
+
+def test_ger24_jwt_secret_com_32_bytes_vale():
+    configuracoes = Configuracoes(_env_file=None, postgres_password="senha", jwt_secret="x" * 32)
+
+    assert configuracoes.jwt_secret == "x" * 32
+
+
+def test_ger23_documentacao_da_api_desligada_por_padrao(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("API_DOCS", raising=False)
+    assert Configuracoes(_env_file=None, postgres_password="senha").documentacao_api is False
+
+    monkeypatch.setenv("API_DOCS", "true")
+    assert Configuracoes(_env_file=None, postgres_password="senha").documentacao_api is True
 
 
 @pytest.mark.parametrize(

@@ -99,12 +99,20 @@ Usada nas rotas de `/usuarios` e `/logs`, restritas a `superadmin`.
 
 ## Autenticação e token
 
-- Token guardado em **localStorage** (decisão consciente para o MVP).
+- O **refresh token** vive num cookie `HttpOnly; SameSite=Strict; Secure` que o JavaScript não lê
+  (AUT-07): um XSS não consegue levar a sessão de 7 dias. O **access token** fica só na memória da
+  aba (`lib/auth/useAuth.ts`).
+- No `localStorage` fica apenas o marcador `intranet:sessao`, sem segredo. Ao abrir a página,
+  `iniciarSessao()` (`lib/auth/sessao.ts`, chamado no `main.tsx` antes do primeiro render) renova
+  pelo cookie se o marcador existe; sem ele, é visitante e nem chama a API. O evento `storage` do
+  marcador sincroniza as abas: saiu numa, sai em todas; entrou numa, as outras renovam (AUT-04).
+- "Sair" é `sairDaConta()`: esquece a sessão na hora e chama `POST /auth/logout` (AUT-06).
 - Rotas públicas (fora de `RotaProtegida`): `/login`, `/esqueci-senha` e as páginas de magic link
   `/ativar-conta` e `/redefinir-senha`. Essas duas leem o token do fragmento (`#token=`), tiram-no da
-  URL e, ao confirmar, apagam a sessão anterior antes de chamar `entrar()` com os tokens que a API
-  devolve (AUT-08). Moram em `lib/auth/`, junto da `PaginaLogin`.
-- **Trade-off registrado como dívida técnica**: localStorage é acessível via JS, então é vulnerável a XSS. Se o módulo de documentos vier a renderizar conteúdo não sanitizado no futuro, isso deve ser revisto (migrar para cookie httpOnly) antes de ir para produção definitiva com a equipe de TI do hospital.
+  URL e, ao confirmar, apagam a sessão anterior antes de chamar `entrar()` com o access token que a
+  API devolve (AUT-08). Moram em `lib/auth/`, junto da `PaginaLogin`.
+- A CSP do nginx (GER-13) só aceita script da própria origem, o que fecha a porta mais comum de XSS;
+  estilo inline é aceito porque o `sonner` injeta um `<style>`.
 
 ## HTTP (axios)
 

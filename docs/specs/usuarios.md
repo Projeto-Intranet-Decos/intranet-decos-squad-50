@@ -13,6 +13,7 @@ Cadastro dos colaboradores com papel de acesso e setor. Área de Administração
 | USU-06 | Cargo do colaborador | ⬜ | ⬜ | ⬜ |
 | USU-07 | Troca e redefinição de senha | ✅ | ✅ | ✅ |
 | USU-08 | Reenviar convite | ✅ | ✅ | ✅ |
+| USU-09 | Política de senha | ✅ | ✅ | ✅ |
 
 ### USU-01 — Listar usuários
 Origem: [ENT H6] · Back ✅ · Front ✅ · Teste ✅
@@ -36,7 +37,7 @@ completar os dados (AUT-09).
 | Campo | Regra |
 |---|---|
 | `nome` | obrigatório, 1–200, espaços nas pontas removidos — provisório, o colaborador confirma na ativação |
-| `email` | obrigatório, e-mail válido, até 200, único |
+| `email` | obrigatório, e-mail válido, até 200, único sem diferença de maiúsculas — gravado em minúsculas |
 | ~~`senha`~~ | removido: quem cria a senha é o próprio colaborador (AUT-09) |
 | `role` | `comum` (padrão), `admin_setor` ou `superadmin` |
 | `setor_id` | opcional, precisa existir |
@@ -49,7 +50,9 @@ completar os dados (AUT-09).
 - **Dado** um usuário pendente, **quando** tenta login, **então** `401` (AUT-01).
 - O e-mail do convite traz o nome do colaborador, o botão/link de ativação, a validade e uma
   versão em texto puro (GER-22).
-- **Dado** e-mail já cadastrado (inclusive de usuário pendente ou desativado), **então** `409
+- **Dado** `Maria@Hospital.com`, **então** o usuário é gravado como `maria@hospital.com`.
+- **Dado** e-mail já cadastrado (inclusive de usuário pendente ou desativado, e com outra
+  combinação de maiúsculas), **então** `409
   {"campo": "email", "mensagem": "Já existe um usuário com esse e-mail"}`, nenhuma conta é criada
   e nenhum e-mail é enviado.
 - **Dado** `setor_id` inexistente, **então** `409 {"campo": "setor_id", "mensagem": "Setor não
@@ -70,7 +73,12 @@ Origem: [ENT] · Back ✅ · Front ✅ · Teste ✅
 
 - **Dado** id inexistente, **então** `404`.
 - 🐞 Campos obrigatórios (`nome`, `email`, `role`, `ativo`) explicitamente nulos retornam `422` com o campo, sem alterar o registro; `setor_id` e `data_nascimento` aceitam nulo.
-- Mesmos conflitos de USU-02 (`409` em e-mail duplicado ou setor inexistente).
+- Mesmos conflitos de USU-02 (`409` em e-mail duplicado ou setor inexistente), e o e-mail novo
+  também é gravado em minúsculas.
+- **Dado** o superadmin editando a si mesmo, **quando** manda `ativo: false` ou um papel diferente
+  de `superadmin`, **então** `409 {"mensagem": "Você não pode desativar nem rebaixar a própria
+  conta"}` e nada muda. Rebaixar ou desativar **outro** superadmin é permitido: quem faz isso
+  continua superadmin, então nunca sobra zero (USU-04).
 - A mudança só chega ao token do usuário afetado quando o access token dele expira (AUT-03).
 - **Dado** uma mudança de `email`, **então** os links pendentes do usuário (convite ou
   redefinição de senha) deixam de valer (AUT-08). Se ele ainda for pendente, o superadmin reenvia
@@ -89,7 +97,10 @@ atualizado; o registro e tudo que ele criou (avisos, documentos, eventos, FAQ) c
 - **Dado** um usuário com links pendentes (convite ou redefinição de senha), **quando** é
   desativado, **então** os links deixam de valer (AUT-08). Desativar um pendente é o jeito de
   cancelar o convite; reativá-lo não reenvia nada automaticamente (USU-08).
-- ❓ Impedir que o superadmin desative a si mesmo / o último superadmin ativo.
+- **Dado** o superadmin, **quando** tenta desativar a si mesmo, **então** `409 {"mensagem": "Você
+  não pode desativar a própria conta"}` e nada muda. Como só um superadmin chama esta rota, isso
+  também garante que sempre sobra pelo menos um superadmin ativo. (Decidido em 2026-10-30, na
+  auditoria OWASP.)
 
 ### USU-05 — Primeiro superadmin
 Origem: [COD] · Back ✅ · Front — · Teste ⬜
@@ -125,7 +136,12 @@ moram em `/auth` (módulo `autenticacao`).
   existe, então a requisição não toca o banco antes de responder.
 - O e-mail traz o nome, o link para `/redefinir-senha` com a validade, e avisa que, se a pessoa não
   pediu, pode ignorar — a senha atual continua valendo.
-- ❓ Limitar pedidos por e-mail/IP (ex: um a cada 5 minutos) — hoje a aplicação não tem rate limit.
+- **Dado** um pedido para um e-mail, **quando** chega outro pedido para o mesmo e-mail (sem
+  diferença de maiúsculas) em menos de 5 minutos, **então** `429 {"mensagem": "Muitos pedidos.
+  Tente de novo em alguns minutos."}` com `Retry-After` (segundos) e nenhum e-mail sai. Vale para
+  qualquer e-mail, cadastrado ou não, então o `429` não revela se a conta existe. O limite é por
+  e-mail e não por IP: no hospital todos saem pelo mesmo NAT. O contador fica na memória da API e
+  zera quando ela reinicia (AUT-11). Frontend: a mensagem do `429` aparece no toast.
 
 `POST /auth/redefinicao-senha/verificar` com `{token}`, sem login:
 
@@ -184,3 +200,16 @@ envia para o e-mail atual do usuário.
 - **Dado** id inexistente, **então** `404`.
 - Frontend: ação "Reenviar convite" na linha de usuário pendente, com toast de sucesso ou de aviso
   conforme `email_enviado`.
+
+### USU-09 — Política de senha
+Origem: [COD] (auditoria OWASP, A06) · Back ✅ · Front ✅ · Teste ✅
+
+Vale em todo lugar onde uma senha é criada: ativação do convite (AUT-09), redefinição e troca
+(USU-07).
+
+- 8–128 caracteres; espaço conta como caractere.
+- **Dado** uma senha da lista de senhas comuns (`core/senhas_comuns.py`: `12345678`, `password`,
+  `senha123`, `hospital123`…, comparada sem diferença de maiúsculas), **então** `422 {"campo":
+  <campo da senha>, "mensagem": "Senha muito comum. Escolha outra."}`.
+- **Dado** uma senha que é um caractere só repetido (`aaaaaaaa`), **então** o mesmo `422`.
+- Frontend: o erro aparece no campo da senha (GER-05).

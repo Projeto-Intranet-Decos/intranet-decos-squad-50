@@ -10,7 +10,7 @@ from app.core.security import hash_token
 from app.modules.autenticacao.models import FinalidadeToken, TokenUsoUnico
 from app.modules.setores.models import Setor
 from app.modules.usuarios.models import Papel, Usuario
-from tests.apoio import CorreioFalso, Fabrica, autenticar
+from tests.apoio import CorreioFalso, Fabrica, autenticar, refresh_do_cookie, refresh_vale
 
 LINK_INVALIDO = {"mensagem": "Link inválido ou expirado"}
 SENHA_NOVA = "senha-nova-123"
@@ -127,7 +127,7 @@ def test_aut09_aceitar_ativa_a_conta_e_ja_entra_logado(
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["token_type"] == "bearer"
-    assert corpo["access_token"] and corpo["refresh_token"]
+    assert corpo["access_token"] and "refresh_token" not in corpo
     assert corpo["usuario"]["nome"] == "Maria Silva"
     assert corpo["usuario"]["data_nascimento"] == "1991-02-03"
     assert corpo["usuario"]["convite_pendente"] is False
@@ -135,7 +135,7 @@ def test_aut09_aceitar_ativa_a_conta_e_ja_entra_logado(
     assert corpo["usuario"]["email"] == pendente.email
     assert corpo["usuario"]["role"] == "comum"
     assert corpo["usuario"]["setor_id"] == str(setor.id)
-    assert cliente.post("/auth/refresh", json={"refresh_token": corpo["refresh_token"]}).status_code == 200
+    assert refresh_vale(cliente, refresh_do_cookie(resposta))
     login = cliente.post("/auth/login", json={"email": pendente.email, "senha": SENHA_NOVA})
     assert login.status_code == 200
 

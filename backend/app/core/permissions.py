@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.security import decodificar_token
@@ -34,6 +34,7 @@ esquema_bearer = HTTPBearer(auto_error=False)
 
 
 def usuario_atual(
+    request: Request,
     credenciais: HTTPAuthorizationCredentials | None = Depends(esquema_bearer),
 ) -> UsuarioAutenticado:
     nao_autenticado = HTTPException(
@@ -46,13 +47,16 @@ def usuario_atual(
     try:
         payload = decodificar_token(credenciais.credentials)
         setor_id = payload.get("setor_id")
-        return UsuarioAutenticado(
+        usuario = UsuarioAutenticado(
             id=uuid.UUID(payload["sub"]),
             role=Papel(payload["role"]),
             setor_id=uuid.UUID(setor_id) if setor_id else None,
         )
     except (jwt.PyJWTError, KeyError, ValueError):
         raise nao_autenticado
+    # Para o log do 403 (GER-25), que sai no tratador de erro, longe das dependências.
+    request.state.usuario = usuario
+    return usuario
 
 
 def requer_roles(*roles: Papel) -> Callable[[UsuarioAutenticado], UsuarioAutenticado]:
