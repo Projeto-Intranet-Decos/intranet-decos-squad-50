@@ -43,6 +43,15 @@ npx wrangler secret put RESEND_API_KEY
 
 ## Deploy
 
+Cada push na `main` dispara o deploy pelo GitHub Actions (`.github/workflows/deploy-cloudflare.yml`). Para refazer sem commit novo, use **Actions → Deploy Cloudflare → Run workflow**.
+
+O workflow precisa de dois segredos no repositório (**Settings → Secrets and variables → Actions**):
+
+- `CLOUDFLARE_API_TOKEN`: em **My Profile → API Tokens → Create Token**, modelo *Edit Cloudflare Workers*, restrito a esta conta e à zona `projetodecos.online` (os custom domains precisam dela).
+- `CLOUDFLARE_ACCOUNT_ID`: o mesmo que aparece em `AWS_ENDPOINT_URL` no `wrangler.jsonc`.
+
+Deploy manual a partir da sua máquina, se precisar:
+
 ```sh
 npm run deploy    # build do frontend + wrangler deploy (build e push da imagem pelo Docker)
 ```
@@ -79,4 +88,4 @@ O e-mail sai pelo Resend em `contato.projetodecos.online`. Estes registros têm 
 
 ## Qual branch vai para produção
 
-`homolog` é a produção (ver `docs/convencao-branches-commits.md`). Faça o deploy a partir dela, depois do PR de release `main → homolog`. Deploy de outra branch publica código que ainda não foi liberado.
+`main` é a produção. Faça o deploy a partir dela, depois que o PR da feature for mesclado. Deploy de outra branch publica código que ainda não foi revisado, no mesmo container e no banco de produção.
