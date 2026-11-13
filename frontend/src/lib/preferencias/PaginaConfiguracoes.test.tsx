@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../App'
 import { simularConsultasDeMidia, simularNavegador } from '../../testes/apoio'
+import { marcarIntroducaoVista } from '../introducao/useIntroducao'
 import PaginaConfiguracoes from './PaginaConfiguracoes'
 import { CHAVE_PREFERENCIAS, PREFERENCIAS_PADRAO, definirPreferencias, iniciarPreferencias, obterPreferencias } from './preferencias'
 
@@ -22,6 +23,8 @@ function tokenDe(role: string) {
 describe('GER-14 — página Configurações', () => {
   beforeEach(() => {
     iniciarPreferencias()
+    marcarIntroducaoVista('1')
+    marcarIntroducaoVista(null)
   })
 
   it('colaborador comum abre /configuracoes e encontra o item no menu lateral', () => {

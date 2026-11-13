@@ -9,16 +9,16 @@ const superadmin: Usuario = { id: 's', nome: 'Super Admin', role: 'superadmin', 
 const ACOES_DE_ESCRITA = /\b(publica|edita|cadastra|cria|exclui|adiciona|remove)\b/i
 
 function alvos(usuario: Usuario | null) {
-  return montarPassos(usuario).map((passo) => passo.alvo)
+  return montarPassos(usuario, true).map((passo) => passo.alvo)
 }
 
 function textoDo(usuario: Usuario | null, alvo: string) {
-  return montarPassos(usuario).find((passo) => passo.alvo === alvo)?.texto ?? ''
+  return montarPassos(usuario, true).find((passo) => passo.alvo === alvo)?.texto ?? ''
 }
 
 describe('GER-23 — passos da introdução por acesso', () => {
   it('começa pelas boas-vindas, sem destaque, com o primeiro nome', () => {
-    const [primeiro] = montarPassos(comum)
+    const [primeiro] = montarPassos(comum, true)
     expect(primeiro.alvo).toBeNull()
     expect(primeiro.titulo).toBe('Olá, Carla!')
   })
@@ -30,9 +30,13 @@ describe('GER-23 — passos da introdução por acesso', () => {
   })
 
   it.each([['visitante', null], ['comum', comum]] as const)('%s não lê sobre publicar nem editar', (_nome, usuario) => {
-    for (const passo of montarPassos(usuario)) {
+    for (const passo of montarPassos(usuario, true)) {
       expect(passo.texto).not.toMatch(ACOES_DE_ESCRITA)
     }
+  })
+
+  it('sem atalhos na tela, o passo Acesso rápido é pulado', () => {
+    expect(montarPassos(comum, false).map((passo) => passo.alvo)).not.toContain('atalhos')
   })
 
   it('visitante não vê Configurações e é avisado que baixar exige entrar', () => {

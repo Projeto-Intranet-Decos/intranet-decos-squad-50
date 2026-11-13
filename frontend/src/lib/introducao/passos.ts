@@ -51,7 +51,7 @@ function textoSetores(usuario: UsuarioOuNada): string {
   return busca + seGerencia(usuario, 'Você também edita os ramais do seu setor.')
 }
 
-export function montarPassos(usuario: UsuarioOuNada): PassoIntroducao[] {
+export function montarPassos(usuario: UsuarioOuNada, temAtalhos: boolean): PassoIntroducao[] {
   const escopo = escopoDoSetor(usuario)
   const passos: PassoIntroducao[] = [
     boasVindas(usuario),
@@ -85,12 +85,14 @@ export function montarPassos(usuario: UsuarioOuNada): PassoIntroducao[] {
     })
   }
 
-  passos.push({
-    alvo: 'atalhos',
-    titulo: 'Acesso rápido',
-    texto: 'Links para outros sistemas do hospital.'
-      + (canGerenciarAtalhos(usuario) ? ' Você adiciona, edita e remove esses links.' : ''),
-  })
+  if (temAtalhos) {
+    passos.push({
+      alvo: 'atalhos',
+      titulo: 'Acesso rápido',
+      texto: 'Links para outros sistemas do hospital.'
+        + (canGerenciarAtalhos(usuario) ? ' Você adiciona, edita e remove esses links.' : ''),
+    })
+  }
 
   if (usuario) {
     passos.push({
