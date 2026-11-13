@@ -11,6 +11,8 @@ interface PropriedadesLinhaDocumento {
   aoBaixar: () => void
   aoEditar: () => void
   aoExcluir: () => void
+  versao?: number
+  aoVerHistorico?: () => void
 }
 
 // Abaixo de md a linha vira card: documento em cima, categoria e data lado a
@@ -26,6 +28,8 @@ function LinhaDocumento({
   aoBaixar,
   aoEditar,
   aoExcluir,
+  versao,
+  aoVerHistorico,
 }: PropriedadesLinhaDocumento) {
   const extensao = extensaoArquivo(documento.nomeArquivo)
 
@@ -55,6 +59,17 @@ function LinhaDocumento({
           >
             {documento.titulo}
           </span>
+        )}
+        {versao !== undefined && aoVerHistorico && (
+          <button
+            type="button"
+            onClick={aoVerHistorico}
+            title="Histórico de versões"
+            aria-label={`Versão ${versao}: ver histórico`}
+            className="shrink-0 cursor-pointer rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 tabular-nums ring-1 ring-slate-200 transition-colors hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100"
+          >
+            v{versao}
+          </button>
         )}
       </div>
 
