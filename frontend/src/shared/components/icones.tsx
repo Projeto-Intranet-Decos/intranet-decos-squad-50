@@ -33,6 +33,7 @@ import {
   Phone,
   Pin,
   Plus,
+  QrCode,
   Search,
   Send,
   SlidersHorizontal,
@@ -116,3 +117,4 @@ export const IconeAlerta = criarIcone(TriangleAlert)
 export const IconeSucesso = criarIcone(CircleCheck)
 export const IconeErro = criarIcone(CircleX)
 export const IconeInfo = criarIcone(Info)
+export const IconeQrCode = criarIcone(QrCode)
