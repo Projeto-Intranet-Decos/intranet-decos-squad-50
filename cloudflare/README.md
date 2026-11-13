@@ -47,7 +47,7 @@ Cada push na `main` dispara o deploy pelo GitHub Actions (`.github/workflows/dep
 
 O workflow precisa de dois segredos no repositório (**Settings → Secrets and variables → Actions**):
 
-- `CLOUDFLARE_API_TOKEN`: em **My Profile → API Tokens → Create Token**, modelo *Edit Cloudflare Workers*, restrito a esta conta e à zona `projetodecos.online` (os custom domains precisam dela).
+- `CLOUDFLARE_API_TOKEN`: token da conta, não do usuário, para não depender do acesso de ninguém. Em **Manage Account → Account API Tokens → Create Token**, modelo *Edit Cloudflare Workers*, restrito a esta conta e à zona `projetodecos.online` (os custom domains precisam dela).
 - `CLOUDFLARE_ACCOUNT_ID`: o mesmo que aparece em `AWS_ENDPOINT_URL` no `wrangler.jsonc`.
 
 Deploy manual a partir da sua máquina, se precisar:
