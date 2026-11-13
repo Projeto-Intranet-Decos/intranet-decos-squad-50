@@ -418,3 +418,51 @@ Critérios:
   configuração no startup).
 - ❓ Remetente: o Resend só envia de um domínio verificado (SPF e DKIM). Domínio do hospital ×
   domínio próprio do projeto — a combinar com a TI do hospital.
+
+### GER-23 — Introdução
+Origem: pedido do time (2026-11-13) · Back — · Front ⬜ · Teste ⬜
+
+Na primeira vez que alguém abre a intranet, uma introdução passo a passo apresenta o menu lateral:
+destaca cada item e explica o que **aquele acesso** pode fazer na página (papéis do GER-03,
+visitante do AUT-10). Como as preferências (GER-14), fica no **navegador**: em `localStorage`, com
+uma chave por usuário (`intranet:introducao:<id do usuário>`, ou `intranet:introducao:visitante`),
+sem passar pelo backend.
+
+Passos, nesta ordem. Um passo cujo item não está na tela (ex: "Acesso rápido" sem nenhum atalho) é
+pulado.
+
+| Passo | Destaque | Visitante | `comum` | `admin_setor` | `superadmin` |
+|---|---|---|---|---|---|
+| Boas-vindas | nenhum (cartão no centro) | ✅ | ✅ | ✅ | ✅ |
+| Mural de avisos | item do menu | ler avisos e eventos | igual | + publicar avisos e eventos do próprio setor | + em qualquer setor |
+| Calendário | item do menu | ver os eventos nas datas | igual | + editar eventos do próprio setor | + de qualquer setor |
+| POPs & documentos | item do menu | buscar; baixar exige entrar | buscar e baixar | + publicar no próprio setor | + em qualquer setor |
+| Central de dúvidas | item do menu | consultar | igual | + cadastrar perguntas do próprio setor | + de qualquer setor |
+| Setores e ramais | item do menu | achar ramais | igual | + editar os ramais do próprio setor | + criar, renomear e excluir setores |
+| Administração | seção do menu | — | — | — | usuários e registro de atividades |
+| Acesso rápido | seção do menu | links externos | igual | igual | + gerenciar os atalhos |
+| Configurações | item do menu | — | ajustar o visual | igual | igual |
+| Sua conta | rodapé do menu | botão "Entrar" | alterar senha e sair | igual | igual |
+
+- **Dado** um usuário (ou visitante) que nunca concluiu nem pulou a introdução neste navegador,
+  **quando** abre uma página com o menu lateral, **então** a introdução começa pelo passo de
+  boas-vindas.
+- **Quando** ele conclui ou pula, **então** a introdução não aparece mais para ele neste navegador;
+  outro usuário no mesmo navegador ainda vê a sua.
+- **Dado** um visitante que já viu a versão de visitante, **quando** entra com login, **então** vê
+  a introdução do seu papel.
+- **Dado** um passo com destaque, **então** o item fica em destaque, o resto da tela escurece e um
+  cartão aparece ao lado com título, texto, a posição ("3 de 8") e os botões Anterior, Próximo e
+  Pular. No primeiro passo não há Anterior; no último, Próximo vira "Concluir".
+- **Dado** o texto de cada passo, **então** ele só cita ações que aquele acesso consegue fazer
+  (tabela acima): visitante e `comum` não leem sobre publicar nem editar.
+- **Dado** a tela abaixo de 1024px (menu em tela cheia, GER-18), **então** os passos aparecem como
+  cartões no centro, sem destaque.
+- **Dado** a introdução aberta, **então** o foco fica no cartão e `Esc` pula a introdução, como num
+  modal (GER-16).
+- **Dado** animações reduzidas (GER-14 ou `prefers-reduced-motion`), **então** a troca de passo é
+  imediata, sem animação.
+- **Quando** o usuário aciona "Ver introdução" no rodapé do menu, **então** a introdução recomeça
+  do início, mesmo já vista.
+- **Dado** o `localStorage` bloqueado (navegação privada), **então** a introdução aparece
+  normalmente e, depois de concluída ou pulada, só volta quando a página for recarregada.
