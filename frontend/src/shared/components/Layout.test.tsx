@@ -6,6 +6,7 @@ import { definirPreferencias, iniciarPreferencias } from '../../lib/preferencias
 import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
 import estilos from '../../index.css?raw'
 import { salvarAccessToken } from '../../lib/auth/useAuth'
+import { marcarIntroducaoVista } from '../../lib/introducao/useIntroducao'
 import Layout from './Layout'
 
 const renovacao = vi.hoisted(() => ({ token: '' }))
@@ -26,6 +27,8 @@ vi.mock('../../lib/api', async (original) => {
 
 beforeEach(() => {
   renovacao.token = ''
+  marcarIntroducaoVista('1')
+  marcarIntroducaoVista(null)
 })
 
 vi.mock('../../features/atalhos/api', async (original) => ({

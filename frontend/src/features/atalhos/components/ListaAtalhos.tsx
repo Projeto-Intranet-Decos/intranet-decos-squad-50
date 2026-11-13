@@ -25,6 +25,7 @@ function ListaAtalhos({ compacto, semAnimacao, aoNavegar }: PropriedadesListaAta
   return (
     <SecaoMenu
       titulo="Acesso rápido"
+      introducao="atalhos"
       compacto={compacto}
       semAnimacao={semAnimacao}
       className="mt-5 border-t border-white/70 pt-4 liquido:border-slate-900/5"
