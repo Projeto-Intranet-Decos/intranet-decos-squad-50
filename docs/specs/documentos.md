@@ -16,13 +16,13 @@ Categorias: `pop`, `protocolo`, `manual`, `formulario`, `outro`.
 | DOC-06 | Substituir o arquivo | ✅ | ✅ | ⬜ |
 | DOC-07 | Excluir documento | ✅ | ✅ | ⬜ |
 | DOC-08 | Tela de documentos | — | ✅ | ⬜ |
-| DOC-09 | Histórico de versões | ❓ | ❓ | ⬜ |
+| DOC-09 | Histórico de versões | ✅ | ✅ | ✅ |
 
 ### DOC-01 — Listar e filtrar documentos
 Origem: [ESP] [ENT H2] · Back ✅ · Front ✅ · Teste ⬜
 
-`GET /documentos?setor_id=&categoria=&busca=` — público, sem login (AUT-10), todos os
-setores (GER-04). Mais recentes primeiro. Sem token → `401`.
+`GET /documentos?setor_id=&categoria=&busca=` — qualquer **autenticado**, todos os setores
+(GER-04). Mais recentes primeiro. Sem token (visitante, AUT-10) → `401`.
 
 - `busca` (até 200): trecho do **título**, sem diferenciar maiúsculas; `%` e `_` são tratados como
   texto, não como curinga.
@@ -33,14 +33,14 @@ setores (GER-04). Mais recentes primeiro. Sem token → `401`.
 ### DOC-02 — Consultar um documento
 Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
 
-`GET /documentos/{id}` — público, sem login (AUT-10); `404 "Documento não encontrado"`. Traz `titulo`,
+`GET /documentos/{id}` — qualquer **autenticado**; sem token → `401`; `404 "Documento não encontrado"`. Traz `titulo`,
 `descricao`, `categoria`, `nome_arquivo`, `tipo_conteudo`, `tamanho_bytes`, setor e autor com nome.
 
 ### DOC-03 — Baixar e pré-visualizar documento
 Origem: [ENT H2] · Back ✅ · Front ✅ · Teste ⬜
 
 `GET /documentos/{id}/download?inline=` — qualquer **autenticado**, sem precisar de papel admin. O
-visitante (AUT-10) vê os metadados, mas não baixa nem abre o arquivo: `401`.
+visitante (AUT-10) não vê nem os metadados dos documentos: tudo no módulo responde `401`.
 
 - Padrão `attachment` com o nome original; `inline=true` para pré-visualizar no navegador.
 - Tipo vem do cadastro (derivado da extensão, GER-06).
@@ -77,14 +77,16 @@ Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
 ### DOC-06 — Substituir o arquivo
 Origem: [ENT] [ENT persona Carla — "versão mais recente do POP"] · Back ✅ · Front ✅ · Teste ⬜
 
-`PUT /documentos/{id}/arquivo` (campo `arquivo`) — escopo por setor. Troca o binário mantendo o
-mesmo documento (id, título, histórico de autor/setor); atualiza `nome_arquivo`, `tipo_conteudo`,
-`tamanho_bytes`, `atualizado_em`. O arquivo antigo é removido depois do commit.
+`PUT /documentos/{id}/arquivo` (campos `arquivo` e `alteracao` opcional, até 500) — escopo por
+setor. Troca o binário mantendo o mesmo documento (id, título, histórico de autor/setor); atualiza
+`nome_arquivo`, `tipo_conteudo`, `tamanho_bytes`, `atualizado_em` e cria uma **nova versão** (DOC-09).
+O arquivo antigo **não** é removido: fica no bucket como versão anterior.
 
 ### DOC-07 — Excluir documento
 Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
 
-`DELETE /documentos/{id}` → `204`; escopo por setor. Remove a linha e depois o objeto.
+`DELETE /documentos/{id}` → `204`; escopo por setor. Remove a linha (e as versões, DOC-09) e depois
+todos os objetos.
 
 ### DOC-08 — Tela de documentos
 Origem: [ESP] [ENT H2] · Back — · Front ✅ · Teste ⬜
@@ -99,7 +101,28 @@ Origem: [ESP] [ENT H2] · Back — · Front ✅ · Teste ⬜
 - Validação de tipo e tamanho antes do envio, espelhando GER-06.
 
 ### DOC-09 — Histórico de versões
-Origem: [ENT persona Carla] · Back ❓ · Front ❓ · Teste ⬜
+Origem: [ENT persona Carla] · pedido do time (2026-11-26) · Back ✅ · Front ✅ · Teste ✅
 
-Hoje substituir o arquivo descarta a versão anterior. A decidir se o hospital precisa guardar
-versões antigas de POPs (rastreabilidade/acreditação).
+Cada arquivo enviado para um documento é uma **versão** numerada a partir de 1 (rastreabilidade/
+acreditação de POPs). Enviar o documento (DOC-04) cria a versão 1; substituir o arquivo (DOC-06) cria
+a versão seguinte e **mantém** as anteriores no bucket. O documento aponta sempre para a versão atual;
+`DocumentoResposta` ganha `versao` (número da atual).
+
+Cada versão guarda `numero`, `nome_arquivo`, `tipo_conteudo`, `tamanho_bytes`, `alteracao` (nota
+opcional de quem enviou), autor (`autor_nome`) e `criado_em`. Objeto em
+`documentos/setores/{setor_id}/{categoria}/{documento_id}/v{numero}/{nome-sanitizado}` (a versão 1 dos
+documentos criados antes do histórico mantém a chave antiga).
+
+- `GET /documentos/{id}/versoes` — qualquer **autenticado**, como DOC-02; mais recente primeiro;
+  documento inexistente → `404`; sem token → `401`.
+- `GET /documentos/{id}/versoes/{numero}/download?inline=` — **autenticado**, como DOC-03; versão
+  inexistente → `404`.
+- **Dado** documentos já existentes, **então** a migration cria a versão 1 deles, com os dados atuais.
+- **Dado** a troca da categoria (DOC-05), **então** só o objeto da versão atual é movido; as
+  anteriores ficam onde estão (a chave de cada versão é guardada no banco).
+- **Dado** a exclusão do documento, **então** os objetos de todas as versões são removidos.
+- **Dado** a tela (DOC-08), **então** cada linha mostra o selo `v{n}`, que abre o histórico em modal
+  (versão, nota, data, autor, arquivo e tamanho; "Atual" na mais recente) com botão de baixar por
+  versão. Ao editar um documento e escolher outro arquivo, aparece o campo
+  opcional "O que mudou?".
+- Fora do escopo: restaurar uma versão antiga e apagar uma versão avulsa.

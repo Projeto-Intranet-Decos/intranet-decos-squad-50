@@ -1,6 +1,6 @@
 import Botao from '../../../shared/components/Botao'
 import Modal from '../../../shared/components/Modal'
-import { IconeAlerta, IconeBaixar, IconeQrCode } from '../../../shared/components/icones'
+import { IconeAlerta, IconeBaixar } from '../../../shared/components/icones'
 import { formatarTamanho } from '../formatadores'
 import { useBaixarDocumento } from '../hooks/useBaixarDocumento'
 import { usePreviaDocumento } from '../hooks/usePreviaDocumento'
@@ -9,10 +9,9 @@ import type { Documento } from '../types'
 interface PropriedadesModalPreviaDocumento {
   documento: Documento
   aoFechar: () => void
-  aoGerarQrCode?: () => void
 }
 
-function ModalPreviaDocumento({ documento, aoFechar, aoGerarQrCode }: PropriedadesModalPreviaDocumento) {
+function ModalPreviaDocumento({ documento, aoFechar }: PropriedadesModalPreviaDocumento) {
   const { tipo, url, isLoading, isError } = usePreviaDocumento(documento)
   const baixarDocumento = useBaixarDocumento()
 
@@ -54,12 +53,6 @@ function ModalPreviaDocumento({ documento, aoFechar, aoGerarQrCode }: Propriedad
           {documento.nomeArquivo} · {formatarTamanho(documento.tamanhoBytes)}
         </span>
         <div className="flex flex-none gap-2.5">
-          {aoGerarQrCode && (
-            <Botao variante="secundario" onClick={aoGerarQrCode} className="flex-1 sm:flex-none">
-              <IconeQrCode tamanho={15} />
-              QR code
-            </Botao>
-          )}
           <Botao
             variante="primario"
             onClick={() => baixarDocumento.mutate({ documento })}

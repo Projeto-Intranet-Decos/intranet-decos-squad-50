@@ -29,6 +29,20 @@ export interface Documento {
   autorNome: string
   criadoEm: string
   atualizadoEm: string | null
+  /** Número da versão atual (DOC-09). */
+  versao: number
+}
+
+/** Espelho de VersaoResposta (DOC-09). */
+export interface VersaoDocumento {
+  numero: number
+  nomeArquivo: string
+  tipoConteudo: string
+  tamanhoBytes: number
+  alteracao: string | null
+  autorId: string
+  autorNome: string
+  criadoEm: string
 }
 
 export interface FiltroDocumentos {
