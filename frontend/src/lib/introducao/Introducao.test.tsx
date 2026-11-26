@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Layout from '../../shared/components/Layout'
 import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
-import { marcarIntroducaoVista } from './useIntroducao'
+import { definirIntroducaoDesativada, marcarIntroducaoVista } from './useIntroducao'
 
 vi.mock('../../features/atalhos/api', async (original) => ({
   ...(await original<typeof import('../../features/atalhos/api')>()),
@@ -130,5 +130,18 @@ describe('GER-23 — introdução', () => {
 
     expect(introducao()).toBeNull()
     bloqueio.mockRestore()
+  })
+
+  it('desativada em Configurações, não abre sozinha, mas "Ver introdução" ainda funciona e não reativa', () => {
+    entrarComo('u1', 'Carla Mendes')
+    definirIntroducaoDesativada('u1', true)
+    montar()
+    expect(introducao()).toBeNull()
+
+    fireEvent.click(screen.getAllByRole('button', { name: /ver introdução/i })[0])
+    expect(screen.getByRole('dialog', { name: 'Olá, Carla!' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Pular' }))
+
+    expect(localStorage.getItem('intranet:introducao:u1')).toBe('desativada')
   })
 })

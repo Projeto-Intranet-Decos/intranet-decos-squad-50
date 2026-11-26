@@ -1,4 +1,6 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
+import { useAuth } from '../auth/useAuth'
+import { definirIntroducaoDesativada, isIntroducaoDesativada } from '../introducao/useIntroducao'
 import Botao from '../../shared/components/Botao'
 import {
   LIMITES,
@@ -136,6 +138,8 @@ function Interruptor({ rotulo, ajuda, ligado, desativado = false, aoMudar }: Pro
 
 function PaginaConfiguracoes() {
   const preferencias = usePreferencias()
+  const { usuario } = useAuth()
+  const [introducaoDesativada, setIntroducaoDesativada] = useState(() => (usuario ? isIntroducaoDesativada(usuario.id) : false))
   const refracaoPossivel = suportaRefracao() && preferencias.visual === 'liquido'
 
   return (
@@ -230,6 +234,21 @@ function PaginaConfiguracoes() {
           />
         </div>
       </section>
+
+      {usuario && (
+        <section className="surface mb-5 p-5 sm:p-6">
+          <h2 className="m-0 mb-1 text-base font-semibold text-slate-900 liquido:text-[17px]">Introdução</h2>
+          <Interruptor
+            rotulo="Mostrar introdução ao entrar"
+            ajuda="Desligada, a introdução não abre mais sozinha. Você ainda pode vê-la em “Ver introdução”, no menu."
+            ligado={!introducaoDesativada}
+            aoMudar={(ligado) => {
+              definirIntroducaoDesativada(usuario.id, !ligado)
+              setIntroducaoDesativada(!ligado)
+            }}
+          />
+        </section>
+      )}
 
       <Botao onClick={restaurarPreferencias} className="w-full sm:w-auto">
         Restaurar padrão

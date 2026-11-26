@@ -22,6 +22,26 @@ export function marcarIntroducaoVista(usuarioId: string | null) {
   }
 }
 
+const VALOR_DESATIVADA = 'desativada'
+
+export function isIntroducaoDesativada(usuarioId: string | null): boolean {
+  try {
+    return localStorage.getItem(chaveDe(usuarioId)) === VALOR_DESATIVADA
+  } catch {
+    return false
+  }
+}
+
+/** Desativada: não abre sozinha. Reativada: apaga a chave e volta a abrir sozinha (GER-23). */
+export function definirIntroducaoDesativada(usuarioId: string | null, desativada: boolean) {
+  try {
+    if (desativada) localStorage.setItem(chaveDe(usuarioId), VALOR_DESATIVADA)
+    else localStorage.removeItem(chaveDe(usuarioId))
+  } catch {
+    // sem localStorage, a escolha não persiste
+  }
+}
+
 export function useIntroducao(usuarioId: string | null) {
   const [pedida, setPedida] = useState(false)
   const [encerradas, setEncerradas] = useState<(string | null)[]>([])
@@ -32,7 +52,8 @@ export function useIntroducao(usuarioId: string | null) {
   }
 
   function encerrar() {
-    marcarIntroducaoVista(usuarioId)
+    // Quem desativou continua desativado ao encerrar uma abertura manual.
+    if (!isIntroducaoDesativada(usuarioId)) marcarIntroducaoVista(usuarioId)
     setEncerradas((atuais) => [...atuais, usuarioId])
     setPedida(false)
   }
