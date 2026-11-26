@@ -2,10 +2,11 @@ import type { Usuario } from '../auth/tipos'
 import {
   canAcessarAdministracao,
   canAdministrarSetores,
-  canBaixarArquivos,
   canEscolherSetor,
   canGerenciarAtalhos,
   canGerenciarConteudo,
+  canPublicarAviso,
+  canVerLogs,
 } from '../permissions'
 
 export interface PassoIntroducao {
@@ -24,6 +25,10 @@ function seGerencia(usuario: UsuarioOuNada, texto: string): string {
   return canGerenciarConteudo(usuario) ? ` ${texto}` : ''
 }
 
+function seAviso(usuario: UsuarioOuNada, texto: string): string {
+  return canPublicarAviso(usuario) ? ` ${texto}` : ''
+}
+
 function boasVindas(usuario: UsuarioOuNada): PassoIntroducao {
   const primeiroNome = usuario?.nome.split(' ')[0]
   return {
@@ -31,15 +36,12 @@ function boasVindas(usuario: UsuarioOuNada): PassoIntroducao {
     titulo: primeiroNome ? `Olá, ${primeiroNome}!` : 'Boas-vindas à intranet',
     texto: usuario
       ? 'Este é um passeio rápido pelo menu. Você pode pular quando quiser.'
-      : 'Você está como visitante: dá para consultar tudo, mas não baixar arquivos. Este é um passeio rápido pelo menu.',
+      : 'Você está como visitante: dá para consultar o mural, o calendário, as dúvidas e os ramais. Este é um passeio rápido pelo menu.',
   }
 }
 
 function textoDocumentos(usuario: UsuarioOuNada): string {
-  const consulta = canBaixarArquivos(usuario)
-    ? 'Busque pelo título e baixe a versão atual.'
-    : 'Dá para buscar e consultar; para baixar, é preciso entrar.'
-  return `POPs, protocolos, manuais e formulários. ${consulta}`
+  return 'POPs, protocolos, manuais e formulários. Busque pelo título e baixe a versão atual.'
     + seGerencia(usuario, `Pelo botão "Enviar documento", você publica documentos ${escopoDoSetor(usuario)}.`)
 }
 
@@ -59,15 +61,15 @@ export function montarPassos(usuario: UsuarioOuNada, temAtalhos: boolean): Passo
       alvo: 'mural',
       titulo: 'Mural de avisos',
       texto: 'Avisos, comunicados e eventos do hospital, e os aniversariantes do mês.'
-        + seGerencia(usuario, `Pelo botão "Novo aviso", você publica avisos e eventos ${escopo}.`),
+        + seAviso(usuario, `Pelo botão "Novo aviso", você publica avisos e eventos ${escopo}.`),
     },
     {
       alvo: 'calendario',
       titulo: 'Calendário',
       texto: 'Os eventos do mural, cada um na sua data.'
-        + seGerencia(usuario, `Abrindo um evento, você edita os eventos ${escopo}.`),
+        + seAviso(usuario, `Abrindo um evento, você edita os eventos ${escopo}.`),
     },
-    { alvo: 'documentos', titulo: 'POPs & documentos', texto: textoDocumentos(usuario) },
+    ...(usuario ? [{ alvo: 'documentos', titulo: 'POPs & documentos', texto: textoDocumentos(usuario) }] : []),
     {
       alvo: 'duvidas',
       titulo: 'Central de dúvidas',
@@ -81,7 +83,9 @@ export function montarPassos(usuario: UsuarioOuNada, temAtalhos: boolean): Passo
     passos.push({
       alvo: 'administracao',
       titulo: 'Administração',
-      texto: 'Cadastro de usuários e o registro de tudo o que foi criado, editado ou excluído no sistema.',
+      texto: canVerLogs(usuario)
+        ? 'Cadastro de usuários e o registro de tudo o que foi criado, editado ou excluído no sistema.'
+        : 'Cadastro de usuários: você convida pessoas, edita os dados e desativa o acesso.',
     })
   }
 

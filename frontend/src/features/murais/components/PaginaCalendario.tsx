@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { canBaixarArquivos, canEditar } from '../../../lib/permissions'
+import { canBaixarArquivos, canEditarAviso } from '../../../lib/permissions'
 import ModalConfirmacao from '../../../shared/components/ModalConfirmacao'
 import { IconeAlerta } from '../../../shared/components/icones'
 import Skeleton from '../../../shared/components/Skeleton'
@@ -86,7 +86,7 @@ function PaginaCalendario() {
   }
 
   function podeGerenciarEsteAviso(aviso: Aviso) {
-    return canEditar(usuario, aviso)
+    return canEditarAviso(usuario, aviso)
   }
 
   function periodoAnterior() {

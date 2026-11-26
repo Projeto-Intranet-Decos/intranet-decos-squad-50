@@ -55,7 +55,9 @@ eventos (mesmo corpo de MUR-01).
 ### MUR-03 — Publicar aviso
 Origem: [ESP] [ENT H1] [ENT H3] [CTX] · Back ✅ · Front ✅ · Teste 🟡
 
-`POST /murais/avisos`, `multipart/form-data` — `admin_setor` ou `superadmin`; setor por GER-04.
+`POST /murais/avisos`, `multipart/form-data` — `admin_setor`, `superadmin` ou `marketing`; setor por
+GER-04 (o `marketing` escolhe qualquer setor e só edita/exclui os próprios avisos, em todas as rotas
+de escrita de aviso: MUR-03 a MUR-08).
 
 | Campo | Regra |
 |---|---|
@@ -193,7 +195,7 @@ Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste 🟡
   lista, para o aviso fixado ser visto primeiro.
 - Painéis laterais: próximos eventos (a partir de agora, MUR-12) e aniversariantes do mês
   (MUR-13). Clicar num próximo evento abre o detalhe do aviso.
-- "Novo aviso" só para `admin_setor`/`superadmin`; editar/excluir só nos avisos que o usuário pode
+- "Novo aviso" só para `admin_setor`/`superadmin`/`marketing`; editar/excluir só nos avisos que o usuário pode
   gerenciar (GER-12).
 - Formulário: escolher `evento` mostra os campos de data de início (obrigatória) e fim (opcional)
   e deixa o conteúdo opcional; valida tipo/tamanho de capa e anexos antes do envio; erro do backend

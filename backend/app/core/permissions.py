@@ -14,6 +14,8 @@ class Papel(StrEnum):
     COMUM = "comum"
     ADMIN_SETOR = "admin_setor"
     SUPERADMIN = "superadmin"
+    RH = "rh"
+    MARKETING = "marketing"
 
 
 @dataclass(frozen=True)
@@ -66,6 +68,9 @@ def requer_roles(*roles: Papel) -> Callable[[UsuarioAutenticado], UsuarioAutenti
 
 requer_admin = requer_roles(Papel.ADMIN_SETOR, Papel.SUPERADMIN)
 requer_superadmin = requer_roles(Papel.SUPERADMIN)
+# Papéis funcionais (GER-03): marketing publica avisos; rh gerencia usuários.
+requer_publicador_aviso = requer_roles(Papel.ADMIN_SETOR, Papel.SUPERADMIN, Papel.MARKETING)
+requer_gestao_usuarios = requer_roles(Papel.RH, Papel.SUPERADMIN)
 
 
 def pode_gerenciar_setor(usuario: UsuarioAutenticado, setor_id: uuid.UUID) -> bool:

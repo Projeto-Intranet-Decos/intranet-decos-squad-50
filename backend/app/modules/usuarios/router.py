@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import obter_sessao
-from app.core.permissions import UsuarioAutenticado, requer_superadmin
+from app.core.permissions import UsuarioAutenticado, requer_gestao_usuarios
 from app.modules.usuarios import schemas, service
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 @router.get(
   "",
   response_model=list[schemas.UsuarioResposta],
-  dependencies=[Depends(requer_superadmin)],
+  dependencies=[Depends(requer_gestao_usuarios)],
 )
 def listar_usuarios(sessao: Session = Depends(obter_sessao)):
   return service.listar_usuarios(sessao)
@@ -23,7 +23,7 @@ def listar_usuarios(sessao: Session = Depends(obter_sessao)):
 )
 def criar_usuario(
   dados: schemas.UsuarioCriar,
-  ator: UsuarioAutenticado = Depends(requer_superadmin),
+  ator: UsuarioAutenticado = Depends(requer_gestao_usuarios),
   sessao: Session = Depends(obter_sessao),
 ):
   usuario, email_enviado = service.criar_usuario(sessao, dados, ator)
@@ -36,7 +36,7 @@ def criar_usuario(
 @router.post("/{usuario_id}/convite", response_model=schemas.ConviteEnviadoResposta)
 def reenviar_convite(
   usuario_id: uuid.UUID,
-  ator: UsuarioAutenticado = Depends(requer_superadmin),
+  ator: UsuarioAutenticado = Depends(requer_gestao_usuarios),
   sessao: Session = Depends(obter_sessao),
 ):
   return schemas.ConviteEnviadoResposta(
@@ -48,7 +48,7 @@ def reenviar_convite(
 def atualizar_usuario(
   usuario_id: uuid.UUID,
   dados: schemas.UsuarioAtualizar,
-  ator: UsuarioAutenticado = Depends(requer_superadmin),
+  ator: UsuarioAutenticado = Depends(requer_gestao_usuarios),
   sessao: Session = Depends(obter_sessao),
 ):
   return service.atualizar_usuario(sessao, usuario_id, dados, ator)
@@ -57,7 +57,7 @@ def atualizar_usuario(
 @router.delete("/{usuario_id}", response_model=schemas.UsuarioResposta)
 def desativar_usuario(
   usuario_id: uuid.UUID,
-  ator: UsuarioAutenticado = Depends(requer_superadmin),
+  ator: UsuarioAutenticado = Depends(requer_gestao_usuarios),
   sessao: Session = Depends(obter_sessao),
 ):
   return service.desativar_usuario(sessao, usuario_id, ator)
