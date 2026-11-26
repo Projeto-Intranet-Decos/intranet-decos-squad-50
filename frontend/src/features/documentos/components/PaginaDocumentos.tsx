@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { canBaixarArquivos, canEditar, canEscolherSetor, canGerenciarConteudo, setoresParaPublicar } from '../../../lib/permissions'
+import { canEditar, canEscolherSetor, canGerenciarConteudo, setoresParaPublicar } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import CabecalhoOrdenavel from '../../../shared/components/CabecalhoOrdenavel'
 import Dropdown from '../../../shared/components/Dropdown'
@@ -11,12 +11,10 @@ import { useBaixarDocumento } from '../hooks/useBaixarDocumento'
 import { useDocumentos } from '../hooks/useDocumentos'
 import { useSetoresDocumentos } from '../hooks/useSetoresDocumentos'
 import { ROTULOS_CATEGORIA, type CategoriaDocumento, type Documento } from '../types'
-import { gerarVersoesFicticias } from '../prototipoVersoes'
 import LinhaDocumento, { COLUNAS_TABELA } from './LinhaDocumento'
 import ModalDocumento from './ModalDocumento'
 import ModalExcluirDocumento from './ModalExcluirDocumento'
 import ModalHistoricoVersoes from './ModalHistoricoVersoes'
-import ModalQrCodeDocumento from './ModalQrCodeDocumento'
 import ModalPreviaDocumento from './ModalPreviaDocumento'
 
 // Busca sem diferenciar maiúsculas nem acentos ("higienizacao" acha "Higienização").
@@ -76,7 +74,6 @@ function PaginaDocumentos() {
   const [documentoExcluindo, setDocumentoExcluindo] = useState<Documento | null>(null)
   const [documentoPrevia, setDocumentoPrevia] = useState<Documento | null>(null)
   const [documentoHistorico, setDocumentoHistorico] = useState<Documento | null>(null)
-  const [documentoQrCode, setDocumentoQrCode] = useState<Documento | null>(null)
 
   const podeCriar = canGerenciarConteudo(usuario)
   // admin_setor só publica no próprio setor; superadmin em qualquer um.
@@ -198,12 +195,10 @@ function PaginaDocumentos() {
                 key={documento.id}
                 documento={documento}
                 podeGerenciar={podeGerenciarEste(documento)}
-                podeAbrirArquivo={canBaixarArquivos(usuario)}
                 aoVisualizar={() => setDocumentoPrevia(documento)}
                 aoBaixar={() => baixarDocumento.mutate({ documento })}
                 aoEditar={() => abrirEdicao(documento)}
                 aoExcluir={() => setDocumentoExcluindo(documento)}
-                versao={gerarVersoesFicticias(documento)[0].numero}
                 aoVerHistorico={() => setDocumentoHistorico(documento)}
               />
             ))}
@@ -226,18 +221,6 @@ function PaginaDocumentos() {
           key={documentoPrevia.id}
           documento={documentoPrevia}
           aoFechar={() => setDocumentoPrevia(null)}
-          aoGerarQrCode={() => {
-            setDocumentoPrevia(null)
-            setDocumentoQrCode(documentoPrevia)
-          }}
-        />
-      )}
-
-      {documentoQrCode && (
-        <ModalQrCodeDocumento
-          key={documentoQrCode.id}
-          documento={documentoQrCode}
-          aoFechar={() => setDocumentoQrCode(null)}
         />
       )}
 
@@ -245,7 +228,6 @@ function PaginaDocumentos() {
         <ModalHistoricoVersoes
           key={documentoHistorico.id}
           documento={documentoHistorico}
-          versoes={gerarVersoesFicticias(documentoHistorico)}
           aoFechar={() => setDocumentoHistorico(null)}
         />
       )}

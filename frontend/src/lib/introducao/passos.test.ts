@@ -4,6 +4,8 @@ import { montarPassos } from './passos'
 
 const comum: Usuario = { id: 'c', nome: 'Carla Mendes', role: 'comum', setorId: 'enf' }
 const adminSetor: Usuario = { id: 'a', nome: 'Roberto Souza', role: 'admin_setor', setorId: 'rh' }
+const marketing: Usuario = { id: 'm', nome: 'Marta Lima', role: 'marketing', setorId: 'mkt' }
+const rh: Usuario = { id: 'r', nome: 'Rui Alves', role: 'rh', setorId: 'rh' }
 const superadmin: Usuario = { id: 's', nome: 'Super Admin', role: 'superadmin', setorId: null }
 
 const ACOES_DE_ESCRITA = /\b(publica|edita|cadastra|cria|exclui|adiciona|remove)\b/i
@@ -39,9 +41,9 @@ describe('GER-23 — passos da introdução por acesso', () => {
     expect(montarPassos(comum, false).map((passo) => passo.alvo)).not.toContain('atalhos')
   })
 
-  it('visitante não vê Configurações e é avisado que baixar exige entrar', () => {
+  it('visitante não vê Configurações nem documentos (AUT-10)', () => {
     expect(alvos(null)).not.toContain('configuracoes')
-    expect(textoDo(null, 'documentos')).toContain('é preciso entrar')
+    expect(alvos(null)).not.toContain('documentos')
   })
 
   it('admin_setor gerencia o próprio setor; superadmin, qualquer setor', () => {
@@ -51,3 +53,19 @@ describe('GER-23 — passos da introdução por acesso', () => {
     expect(textoDo(superadmin, 'setores')).toContain('exclui setores')
   })
 })
+
+describe('GER-23 — passos de rh e marketing (USU-09)', () => {
+  it('marketing lê sobre publicar avisos em qualquer setor, mas não sobre documentos', () => {
+    expect(textoDo(marketing, 'mural')).toContain('de qualquer setor')
+    expect(textoDo(marketing, 'documentos')).not.toMatch(ACOES_DE_ESCRITA)
+    expect(alvos(marketing)).not.toContain('administracao')
+  })
+
+  it('rh vê a Administração, só com usuários', () => {
+    expect(alvos(rh)).toContain('administracao')
+    expect(textoDo(rh, 'administracao')).toContain('usuários')
+    expect(textoDo(rh, 'administracao')).not.toContain('registro')
+    expect(textoDo(rh, 'mural')).not.toMatch(ACOES_DE_ESCRITA)
+  })
+})
+

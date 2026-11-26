@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.arquivos import content_disposition
 from app.core.database import obter_sessao
-from app.core.permissions import UsuarioAutenticado, requer_admin, usuario_atual
+from app.core.permissions import UsuarioAutenticado, requer_publicador_aviso, usuario_atual
 from app.modules.murais import service
 from app.modules.murais.schemas import (
   AniversarianteResposta,
@@ -60,7 +60,7 @@ def buscar_aviso(aviso_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
 @router.post("/avisos", response_model=AvisoResposta, status_code=status.HTTP_201_CREATED)
 def criar_aviso(
   dados: Annotated[AvisoCriar, Form()],
-  usuario: UsuarioAutenticado = Depends(requer_admin),
+  usuario: UsuarioAutenticado = Depends(requer_publicador_aviso),
   sessao: Session = Depends(obter_sessao),
 ):
   return service.criar_aviso(sessao, dados, usuario)
@@ -70,7 +70,7 @@ def criar_aviso(
 def atualizar_aviso(
   aviso_id: uuid.UUID,
   dados: AvisoAtualizar,
-  usuario: UsuarioAutenticado = Depends(requer_admin),
+  usuario: UsuarioAutenticado = Depends(requer_publicador_aviso),
   sessao: Session = Depends(obter_sessao),
 ):
   return service.atualizar_aviso(sessao, aviso_id, dados, usuario)
@@ -79,7 +79,7 @@ def atualizar_aviso(
 @router.delete("/avisos/{aviso_id}", status_code=status.HTTP_204_NO_CONTENT)
 def deletar_aviso(
   aviso_id: uuid.UUID,
-  usuario: UsuarioAutenticado = Depends(requer_admin),
+  usuario: UsuarioAutenticado = Depends(requer_publicador_aviso),
   sessao: Session = Depends(obter_sessao),
 ):
   service.deletar_aviso(sessao, aviso_id, usuario)
@@ -107,7 +107,7 @@ def abrir_imagem(
 def substituir_imagem(
   aviso_id: uuid.UUID,
   arquivo: UploadFile,
-  usuario: UsuarioAutenticado = Depends(requer_admin),
+  usuario: UsuarioAutenticado = Depends(requer_publicador_aviso),
   sessao: Session = Depends(obter_sessao),
 ):
   return service.substituir_imagem(sessao, aviso_id, arquivo, usuario)
@@ -116,7 +116,7 @@ def substituir_imagem(
 @router.delete("/avisos/{aviso_id}/imagem", status_code=status.HTTP_204_NO_CONTENT)
 def remover_imagem(
   aviso_id: uuid.UUID,
-  usuario: UsuarioAutenticado = Depends(requer_admin),
+  usuario: UsuarioAutenticado = Depends(requer_publicador_aviso),
   sessao: Session = Depends(obter_sessao),
 ):
   service.remover_imagem(sessao, aviso_id, usuario)
@@ -126,7 +126,7 @@ def remover_imagem(
 def adicionar_anexos(
   aviso_id: uuid.UUID,
   arquivos: list[UploadFile],
-  usuario: UsuarioAutenticado = Depends(requer_admin),
+  usuario: UsuarioAutenticado = Depends(requer_publicador_aviso),
   sessao: Session = Depends(obter_sessao),
 ):
   return service.adicionar_anexos(sessao, aviso_id, arquivos, usuario)
@@ -138,7 +138,7 @@ def adicionar_anexos(
 def remover_anexo(
   aviso_id: uuid.UUID,
   anexo_id: uuid.UUID,
-  usuario: UsuarioAutenticado = Depends(requer_admin),
+  usuario: UsuarioAutenticado = Depends(requer_publicador_aviso),
   sessao: Session = Depends(obter_sessao),
 ):
   service.remover_anexo(sessao, aviso_id, anexo_id, usuario)

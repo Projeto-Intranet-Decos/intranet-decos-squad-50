@@ -74,7 +74,8 @@ Origem: [ENT] [CTX] · Back — · Front ✅ · Teste ⬜
 
 - Sem sessão, `/usuarios` e `/logs` redirecionam para `/login`; as telas de conteúdo ficam abertas
   ao visitante (AUT-10).
-- `/usuarios` e `/logs` só para `superadmin`; os outros papéis vão para `/nao-autorizado`.
+- `/logs` só para `superadmin` e `/usuarios` para `superadmin` e `rh` (USU-09); os outros papéis vão
+  para `/nao-autorizado`.
 - `/` redireciona para `/mural`.
 
 ### AUT-06 — Logout com revogação do refresh token
@@ -168,19 +169,23 @@ Backend — sem token, respondem `200`:
 - `GET /murais/avisos`, `/murais/avisos/{id}`, `/murais/eventos`, `/murais/aniversariantes`;
 - `GET /setores`, `/setores/{id}`, `/setores/{id}/ramais`;
 - `GET /duvidas/faq`, `/duvidas/faq/{id}`;
-- `GET /documentos`, `/documentos/{id}` (só metadados);
 - `GET /atalhos`.
 
 Backend — sem token, continuam `401`:
 - todo `POST`/`PUT`/`DELETE`;
-- `GET /documentos/{id}/download` e `GET /murais/avisos/{id}/anexos/{anexo_id}/download`;
-- `GET /usuarios`, `GET /logs` (e o `403` para quem está logado sem ser `superadmin`).
+- **todo o módulo de documentos** (`GET /documentos`, `/documentos/{id}`, `/documentos/{id}/versoes`
+  e os downloads): visitante não vê documento nenhum, nem os metadados;
+- `GET /murais/avisos/{id}/anexos/{anexo_id}/download`;
+- `GET /usuarios`, `GET /logs` (e o `403` para quem está logado sem o papel: `superadmin` nos dois,
+  mais `rh` em `/usuarios`).
 
 Frontend:
-- **Dado** um visitante, **quando** abre `/mural`, `/calendario`, `/documentos`, `/duvidas` ou
-  `/setores`, **então** a tela abre, sem redirecionar para `/login`.
+- **Dado** um visitante, **quando** abre `/mural`, `/calendario`, `/duvidas` ou `/setores`, **então**
+  a tela abre, sem redirecionar para `/login`.
+- **Dado** um visitante, **então** o item "POPs & documentos" não aparece no menu; **quando** abre
+  `/documentos`, **então** vai para `/login` (e volta para lá depois de entrar).
 - **Dado** um visitante, **então** não aparece nenhum botão de criar, editar, excluir, enviar,
-  baixar ou abrir arquivo (documento e anexo), e a barra lateral mostra "Entrar" no lugar do papel
+  baixar ou abrir anexo, e a barra lateral mostra "Entrar" no lugar do papel
   e do "Sair".
 - **Dado** um visitante, **quando** abre `/usuarios` ou `/logs`, **então** vai para `/login`.
 - **Dado** que o visitante entra pelo "Entrar", **então** depois do login volta para a página em
@@ -189,6 +194,6 @@ Frontend:
   em "Entrar" ou abre uma tela de administração. Sair da conta volta para `/mural`.
 - Um `401` de visitante (sem token salvo) não muda de página.
 
-- Risco aceito: a lista de aniversariantes (nome, dia, setor) e os metadados de documentos ficam
-  legíveis por qualquer pessoa que alcance a API. Se o servidor for exposto fora da rede do
+- Risco aceito: a lista de aniversariantes (nome, dia, setor) fica
+  legível por qualquer pessoa que alcance a API. Se o servidor for exposto fora da rede do
   hospital, rever.

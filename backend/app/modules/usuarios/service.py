@@ -7,13 +7,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core import correio
-from app.core.permissions import UsuarioAutenticado
+from app.core.permissions import Papel as PapelAcesso, UsuarioAutenticado
 from app.modules.autenticacao import service as autenticacao_service
 from app.modules.autenticacao.models import FinalidadeToken
 from app.modules.logs.models import AcaoLog, ModuloLog
 from app.modules.logs.service import registrar
 from app.modules.usuarios import emails, repository, schemas
-from app.modules.usuarios.models import Usuario
+from app.modules.usuarios.models import Papel, Usuario
 
 EMAIL_DUPLICADO = {"campo": "email", "mensagem": "Já existe um usuário com esse e-mail"}
 SETOR_INEXISTENTE = {"campo": "setor_id", "mensagem": "Setor não encontrado"}
@@ -38,6 +38,22 @@ def _traduzir_conflito(sessao: Session) -> Iterator[None]:
     raise HTTPException(status.HTTP_409_CONFLICT, conflito) from erro
 
 
+def _negar() -> HTTPException:
+  return HTTPException(status.HTTP_403_FORBIDDEN, "Acesso negado")
+
+
+def _garantir_papel_permitido(ator: UsuarioAutenticado, papel: Papel | str) -> None:
+  """O RH nunca cria nem promove um superadmin (USU-09)."""
+  if ator.role == PapelAcesso.RH and papel == Papel.superadmin:
+    raise _negar()
+
+
+def _garantir_alvo_permitido(ator: UsuarioAutenticado, alvo: Usuario) -> None:
+  """O RH nunca altera nem desativa um superadmin (USU-09)."""
+  if ator.role == PapelAcesso.RH and alvo.role == Papel.superadmin:
+    raise _negar()
+
+
 def listar_usuarios(sessao: Session) -> list[Usuario]:
   return repository.listar(sessao)
 
@@ -53,6 +69,7 @@ def criar_usuario(
   sessao: Session, dados: schemas.UsuarioCriar, ator: UsuarioAutenticado
 ) -> tuple[Usuario, bool]:
   """Cria o usuário pendente e envia o convite (USU-02). Devolve `(usuario, email_enviado)`."""
+  _garantir_papel_permitido(ator, dados.role)
   usuario = Usuario(
     nome=dados.nome,
     email=dados.email,
@@ -76,6 +93,7 @@ def reenviar_convite(
 ) -> bool:
   """Novo convite para um pendente (USU-08). Devolve se o e-mail saiu."""
   usuario = _buscar(sessao, usuario_id)
+  _garantir_alvo_permitido(ator, usuario)
   if not usuario.convite_pendente:
     raise HTTPException(status.HTTP_409_CONFLICT, "Usuário já ativou a conta")
   if not usuario.ativo:
@@ -90,7 +108,10 @@ def atualizar_usuario(
   sessao: Session, usuario_id: uuid.UUID, dados: schemas.UsuarioAtualizar, ator: UsuarioAutenticado
 ) -> Usuario:
   usuario = _buscar(sessao, usuario_id)
+  _garantir_alvo_permitido(ator, usuario)
   campos = dados.model_dump(exclude_unset=True)
+  if "role" in campos:
+    _garantir_papel_permitido(ator, campos["role"])
   # Link mandado pro e-mail antigo não pode ativar/redefinir a conta do novo (AUT-08).
   if "email" in campos and campos["email"] != usuario.email:
     autenticacao_service.invalidar_links(sessao, usuario)
@@ -105,6 +126,7 @@ def desativar_usuario(
   sessao: Session, usuario_id: uuid.UUID, ator: UsuarioAutenticado
 ) -> Usuario:
   usuario = _buscar(sessao, usuario_id)
+  _garantir_alvo_permitido(ator, usuario)
   usuario.ativo = False
   autenticacao_service.invalidar_links(sessao, usuario)
   # Usuário não é apagado, só desativado: para a auditoria isso é a exclusão (USU-04).

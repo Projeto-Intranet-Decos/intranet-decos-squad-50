@@ -17,6 +17,8 @@ interface Propriedades {
   direcao: DirecaoOrdenacao
   aoClicarColuna: (coluna: ColunaUsuario) => void
   edicaoDisponivel: boolean
+  /** O RH não age sobre superadmin (USU-09): sem ações nessas linhas. */
+  podeAlterar?: (usuario: UsuarioCadastro) => boolean
   aoEditar: (usuario: UsuarioCadastro) => void
   aoExcluir: (usuario: UsuarioCadastro) => void
   reenvioEmAndamento: boolean
@@ -44,7 +46,7 @@ function LinhaSkeleton({ indice }: { indice: number }) {
   )
 }
 
-export default function TabelaUsuarios({ usuarios, isLoading, setores, ordenarPor, direcao, aoClicarColuna, edicaoDisponivel, aoEditar, aoExcluir, reenvioEmAndamento, aoReenviarConvite }: Propriedades) {
+export default function TabelaUsuarios({ usuarios, isLoading, setores, ordenarPor, direcao, aoClicarColuna, edicaoDisponivel, podeAlterar, aoEditar, aoExcluir, reenvioEmAndamento, aoReenviarConvite }: Propriedades) {
   return (
     <div className="surface overflow-x-auto">
       <table className="w-full text-left text-sm">
@@ -67,9 +69,11 @@ export default function TabelaUsuarios({ usuarios, isLoading, setores, ordenarPo
             <td className="px-4 py-3 text-slate-600">{usuario.setorId ? setores.get(usuario.setorId) ?? 'Setor indisponível' : 'Sem setor'}</td>
             <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs whitespace-nowrap ${ESTILOS_SITUACAO[situacao]}`}>{ROTULOS_SITUACAO[situacao]}</span></td>
             <td className="px-4 py-3"><div className="flex gap-1">
+              {(podeAlterar?.(usuario) ?? true) && <>
               {situacao === 'pendente' && <Botao variante="icone" disabled={reenvioEmAndamento} title="Reenviar convite" aria-label={`Reenviar convite para ${usuario.nome}`} onClick={() => aoReenviarConvite(usuario)}><IconeReenviar tamanho={18} /></Botao>}
               <Botao variante="icone" disabled={!edicaoDisponivel} title={edicaoDisponivel ? "Editar usuário" : "Aguarde o carregamento dos setores"} aria-label={`Editar ${usuario.nome}`} onClick={() => aoEditar(usuario)}><IconeLapis tamanho={18} /></Botao>
               <Botao variante="icone" title="Excluir (desativar) usuário" aria-label={`Excluir ${usuario.nome}`} disabled={!usuario.ativo} onClick={() => aoExcluir(usuario)}><IconeLixeira tamanho={18} /></Botao>
+              </>}
             </div></td>
           </tr> })}
           {!isLoading && !usuarios.length && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">Nenhum usuário encontrado com esses filtros.</td></tr>}

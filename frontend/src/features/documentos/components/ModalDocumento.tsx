@@ -48,6 +48,7 @@ function ModalDocumento({ aoFechar, documentoEditando, setores, escolheSetor }: 
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [erroArquivo, setErroArquivo] = useState<string | null>(null)
   const [arrastando, setArrastando] = useState(false)
+  const [alteracao, setAlteracao] = useState('')
 
   const {
     register,
@@ -85,7 +86,7 @@ function ModalDocumento({ aoFechar, documentoEditando, setores, escolheSetor }: 
     const { categoria } = valores
     if (documentoEditando) {
       salvarDocumento.mutate(
-        { id: documentoEditando.id, dados: { titulo, descricao: descricao || null, categoria }, arquivo },
+        { id: documentoEditando.id, dados: { titulo, descricao: descricao || null, categoria }, arquivo, alteracao: alteracao.trim() || undefined },
         { onSuccess: aoFechar },
       )
     } else if (arquivo) {
@@ -146,6 +147,17 @@ function ModalDocumento({ aoFechar, documentoEditando, setores, escolheSetor }: 
             onChange={(e) => selecionarArquivo(e.target.files?.[0])}
           />
         </div>
+
+        {editando && arquivo && (
+          <Campo rotulo="O que mudou?">
+            <Input
+              value={alteracao}
+              onChange={(e) => setAlteracao(e.target.value)}
+              maxLength={500}
+              placeholder="Opcional. Aparece no histórico de versões"
+            />
+          </Campo>
+        )}
 
         <Campo rotulo="Título" erro={errors.titulo?.message}>
           <Input

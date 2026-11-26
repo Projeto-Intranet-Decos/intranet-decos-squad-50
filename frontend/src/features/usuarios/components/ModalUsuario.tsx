@@ -1,5 +1,7 @@
 import { useForm } from 'react-hook-form'
 import type { Papel } from '../../../lib/auth/tipos'
+import { useAuth } from '../../../lib/auth/useAuth'
+import { papeisAtribuiveis } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import Campo from '../../../shared/components/Campo'
 import Input from '../../../shared/components/Input'
@@ -26,6 +28,7 @@ interface Propriedades {
 
 export default function ModalUsuario({ usuarioEditando, setores, aoFechar }: Propriedades) {
   const salvar = useSalvarUsuario()
+  const { usuario: ator } = useAuth()
   const { register, handleSubmit, setError, formState: { errors } } = useForm<ValoresFormulario>({
     defaultValues: {
       nome: usuarioEditando?.nome ?? '', email: usuarioEditando?.email ?? '',
@@ -71,7 +74,7 @@ export default function ModalUsuario({ usuarioEditando, setores, aoFechar }: Pro
           </p>}
           <Campo rotulo="Perfil de acesso" erro={errors.role?.message}>
             <Select {...register('role')}>
-              {Object.entries(ROTULOS_PAPEL).map(([valor, rotulo]) => <option key={valor} value={valor} >{rotulo}</option>)}
+              {papeisAtribuiveis(ator).map((valor) => <option key={valor} value={valor}>{ROTULOS_PAPEL[valor]}</option>)}
             </Select>
           </Campo>
           <Campo rotulo="Setor" erro={errors.setorId?.message}>

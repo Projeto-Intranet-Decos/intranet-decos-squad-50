@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Navigate } from 'react-router-dom'
 import { IconeFunil, IconeLupa, IconeMais } from '../../../shared/components/icones'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { canAcessarAdministracao } from '../../../lib/permissions'
+import { canAlterarUsuario, canGerenciarUsuarios, papeisAtribuiveis } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
 import Dropdown from '../../../shared/components/Dropdown'
 import Modal from '../../../shared/components/Modal'
@@ -34,7 +34,7 @@ function compararUsuarios(a: UsuarioCadastro, b: UsuarioCadastro, coluna: Coluna
 
 export default function PaginaUsuarios() {
   const { usuario } = useAuth()
-  const permitido = canAcessarAdministracao(usuario)
+  const permitido = canGerenciarUsuarios(usuario)
   const consulta = useUsuarios(usuario?.id, permitido)
   const setores = useQuery({ queryKey: ['setores-usuarios'], queryFn: listarSetores, enabled: permitido })
   const excluir = useExcluirUsuario()
@@ -93,7 +93,7 @@ export default function PaginaUsuarios() {
         <Dropdown
           rotuloPadrao="Perfil"
           icone={<IconeFunil tamanho={15} />}
-          opcoes={[{ valor: '', rotulo: 'Todos os perfis' }, ...Object.entries(ROTULOS_PAPEL).map(([valor, rotulo]) => ({ valor, rotulo }))]}
+          opcoes={[{ valor: '', rotulo: 'Todos os perfis' }, ...papeisAtribuiveis(usuario).map(valor => ({ valor, rotulo: ROTULOS_PAPEL[valor] }))]}
           valor={papel}
           aoMudar={valor => { setPapel(valor); setPagina(1) }}
         />
@@ -128,7 +128,7 @@ export default function PaginaUsuarios() {
       {setores.isError && <div role="alert" className="mb-4 text-sm text-critical">Não foi possível carregar os setores. <button type="button" onClick={() => void setores.refetch()} className="underline">Tentar novamente</button></div>}
       {consulta.isError && <div role="alert" className="text-sm text-critical">{mensagemErroUsuario(consulta.error)} <button type="button" className="underline" onClick={() => void consulta.refetch()}>Tentar novamente</button></div>}
       {!consulta.isError && <>
-        <TabelaUsuarios usuarios={filtrados.slice(inicio, inicio + TAMANHO_PAGINA)} isLoading={consulta.isPending} setores={mapaSetores} ordenarPor={ordenarPor} direcao={direcao} aoClicarColuna={aoClicarColuna} edicaoDisponivel={setores.isSuccess} aoEditar={item => { if (setores.isSuccess) setEdicao(item) }} aoExcluir={item => { excluir.reset(); setExclusao(item) }} reenvioEmAndamento={reenviar.isPending} aoReenviarConvite={item => reenviar.mutate(item)} />
+        <TabelaUsuarios usuarios={filtrados.slice(inicio, inicio + TAMANHO_PAGINA)} isLoading={consulta.isPending} setores={mapaSetores} ordenarPor={ordenarPor} direcao={direcao} aoClicarColuna={aoClicarColuna} edicaoDisponivel={setores.isSuccess} podeAlterar={item => canAlterarUsuario(usuario, item)} aoEditar={item => { if (setores.isSuccess) setEdicao(item) }} aoExcluir={item => { excluir.reset(); setExclusao(item) }} reenvioEmAndamento={reenviar.isPending} aoReenviarConvite={item => reenviar.mutate(item)} />
         {consulta.isSuccess && (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-500">
             <span>{filtrados.length} usuário(s) · Página {paginaAtual} de {totalPaginas}</span>

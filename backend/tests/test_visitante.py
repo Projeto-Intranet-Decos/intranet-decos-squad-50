@@ -11,7 +11,6 @@ LEITURAS_PUBLICAS = [
     "/murais/aniversariantes",
     "/setores",
     "/duvidas/faq",
-    "/documentos",
     "/atalhos",
 ]
 
@@ -29,13 +28,11 @@ def test_aut10_visitante_le_detalhes_sem_token(cliente: TestClient):
     assert cliente.get(f"/setores/{inexistente}").status_code == 404
     assert cliente.get(f"/setores/{inexistente}/ramais").status_code == 404
     assert cliente.get(f"/duvidas/faq/{inexistente}").status_code == 404
-    assert cliente.get(f"/documentos/{inexistente}").status_code == 404
 
 
 def test_aut10_visitante_nao_baixa_arquivos(cliente: TestClient):
     inexistente = uuid.uuid4()
 
-    assert cliente.get(f"/documentos/{inexistente}/download").status_code == 401
     assert cliente.get(f"/murais/avisos/{inexistente}/anexos/{inexistente}/download").status_code == 401
 
 
@@ -67,3 +64,17 @@ def test_aut10_token_invalido_continua_401_na_escrita(cliente: TestClient):
     resposta = cliente.post("/atalhos", headers={"Authorization": "Bearer nao-e-um-jwt"})
 
     assert resposta.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "rota",
+    [
+        "/documentos",
+        f"/documentos/{uuid.uuid4()}",
+        f"/documentos/{uuid.uuid4()}/versoes",
+        f"/documentos/{uuid.uuid4()}/download",
+        f"/documentos/{uuid.uuid4()}/versoes/1/download",
+    ],
+)
+def test_aut10_visitante_nao_ve_documentos(cliente: TestClient, rota: str):
+    assert cliente.get(rota).status_code == 401

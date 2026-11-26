@@ -10,7 +10,7 @@ import { useAuth } from '../../lib/auth/useAuth'
 import Introducao from '../../lib/introducao/Introducao'
 import { montarPassos } from '../../lib/introducao/passos'
 import { useIntroducao } from '../../lib/introducao/useIntroducao'
-import { canAcessarAdministracao, canGerenciarAtalhos } from '../../lib/permissions'
+import { canAcessarAdministracao, canGerenciarAtalhos, canVerLogs } from '../../lib/permissions'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
 import { useConsultaDeMidia } from '../hooks/useConsultaDeMidia'
 import { useReduzirAnimacoes } from '../hooks/useReduzirAnimacoes'
@@ -246,7 +246,7 @@ function Layout({ children }: PropriedadesLayout) {
 
         <motion.div layoutScroll className="min-h-0 flex-1 overflow-y-auto">
           <SecaoMenu titulo="Páginas" compacto={compacto} semAnimacao={semAnimacao} as="nav">
-            {NAV_PRINCIPAL.map((item) => (
+            {NAV_PRINCIPAL.filter((item) => usuario || item.rota !== '/documentos').map((item) => (
               <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
             ))}
           </SecaoMenu>
@@ -259,7 +259,7 @@ function Layout({ children }: PropriedadesLayout) {
               semAnimacao={semAnimacao}
               className="mt-5 border-t border-white/70 pt-4 liquido:border-slate-900/5"
             >
-              {NAV_ADMIN.map((item) => (
+              {NAV_ADMIN.filter((item) => item.rota !== '/logs' || canVerLogs(usuario)).map((item) => (
                 <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
               ))}
             </SecaoMenu>

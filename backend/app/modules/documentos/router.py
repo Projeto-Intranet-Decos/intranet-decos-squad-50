@@ -14,9 +14,11 @@ from app.modules.documentos.schemas import (
   DocumentoCriar,
   DocumentoResposta,
   FiltroDocumentos,
+  VersaoResposta,
 )
 
-router = APIRouter(prefix="/documentos", tags=["documentos"])
+# Visitante (AUT-10) não vê documento nenhum: o módulo inteiro exige login.
+router = APIRouter(prefix="/documentos", tags=["documentos"], dependencies=[Depends(usuario_atual)])
 
 
 @router.get("", response_model=list[DocumentoResposta])
@@ -33,7 +35,30 @@ def buscar_documento(documento_id: uuid.UUID, sessao: Session = Depends(obter_se
   return service.buscar_documento(sessao, documento_id)
 
 
-@router.get("/{documento_id}/download", dependencies=[Depends(usuario_atual)])
+@router.get("/{documento_id}/versoes", response_model=list[VersaoResposta])
+def listar_versoes(documento_id: uuid.UUID, sessao: Session = Depends(obter_sessao)):
+  return service.listar_versoes(sessao, documento_id)
+
+
+@router.get("/{documento_id}/versoes/{numero}/download")
+def baixar_versao(
+  documento_id: uuid.UUID, numero: int, inline: bool = False, sessao: Session = Depends(obter_sessao)
+) -> StreamingResponse:
+  versao, blocos = service.baixar_versao(sessao, documento_id, numero)
+  return StreamingResponse(
+    blocos,
+    media_type=versao.tipo_conteudo,
+    headers={
+      "Content-Disposition": content_disposition(
+        "inline" if inline else "attachment", versao.nome_arquivo, "documento"
+      ),
+      "Content-Length": str(versao.tamanho_bytes),
+      "X-Content-Type-Options": "nosniff",
+    },
+  )
+
+
+@router.get("/{documento_id}/download")
 def baixar_documento(
   documento_id: uuid.UUID, inline: bool = False, sessao: Session = Depends(obter_sessao)
 ) -> StreamingResponse:
@@ -74,10 +99,11 @@ def atualizar_documento(
 def substituir_arquivo(
   documento_id: uuid.UUID,
   arquivo: UploadFile,
+  alteracao: Annotated[str | None, Form(max_length=500)] = None,
   usuario: UsuarioAutenticado = Depends(requer_admin),
   sessao: Session = Depends(obter_sessao),
 ):
-  return service.substituir_arquivo(sessao, documento_id, arquivo, usuario)
+  return service.substituir_arquivo(sessao, documento_id, arquivo, usuario, alteracao)
 
 
 @router.delete("/{documento_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -57,15 +57,24 @@ Toda rota da API exige access token válido, exceto: `POST /auth/login`, `POST /
 ### GER-03 — Papéis de acesso
 Origem: [ESP] [ENT] [CTX] · Back ✅ · Front ✅ · Teste 🟡
 
-Três papéis: `comum` (só lê), `admin_setor` (mantém conteúdo do próprio setor) e `superadmin`
-(nível sistêmico: único com acesso a Usuários, Registro de atividades e criação/edição/remoção de
-setores).
+Cinco papéis: `comum` (só lê), `admin_setor` (mantém conteúdo do próprio setor), `superadmin`
+(nível sistêmico: único com acesso a Registro de atividades e criação/edição/remoção de setores) e
+dois papéis **funcionais**, que fazem uma coisa só e leem como um `comum` no resto:
+
+- `marketing` — publica e mantém **avisos** (mural, MUR-03 a MUR-08) em qualquer setor; só edita e
+  exclui os avisos que ele mesmo criou. Não mexe em documentos, FAQ, ramais nem usuários.
+- `rh` — gerencia **usuários** (página Usuários, USU-01 a USU-04 e USU-08): lista, convida, edita e
+  desativa, com a trava de que nunca cria, promove nem altera um `superadmin`. Não vê o Registro de
+  atividades nem publica conteúdo.
 
 - Permissão que não depende do recurso é checada por dependency (`requer_admin`,
   `requer_superadmin`) e responde `403 {"mensagem": "Acesso negado"}` antes de qualquer
   processamento — inclusive antes de validar o recurso.
 - **Dado** um `comum`, **quando** chama qualquer endpoint de escrita de conteúdo, **então** `403`.
 - **Dado** um `admin_setor`, **quando** chama endpoint exclusivo de `superadmin`, **então** `403`.
+- **Dado** um `marketing`, **quando** chama escrita de documento, FAQ, ramal, setor ou usuário,
+  **então** `403`; **dado** um `rh`, **quando** chama escrita de aviso, documento, FAQ, ramal ou
+  setor, **então** `403`.
 
 ### GER-04 — Escopo por setor (escrita) e leitura institucional
 Origem: [CTX] [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
@@ -81,6 +90,10 @@ Edição/exclusão (checagem no service, depois de buscar o recurso):
   `{"mensagem": "Fora do seu setor"}` e nada muda.
 - **Dado** um `superadmin`, **então** edita/exclui recurso de qualquer setor.
 - **Dado** um id inexistente, **então** `404` (a busca vem antes da checagem de escopo).
+
+Exceção — `marketing` (só avisos): cria em qualquer setor, como o `superadmin` (sem `setor_id`, usa o
+próprio; sem nenhum dos dois, `422`), mas só edita e exclui avisos em que é o **autor**; aviso de outra
+pessoa → `403 "Fora do seu setor"`. O `admin_setor` e o `superadmin` seguem as regras abaixo.
 
 Criação (`resolver_setor`):
 - **Dado** um `admin_setor`, **quando** cria sem `setor_id` ou com o próprio, **então** o recurso
@@ -436,7 +449,7 @@ pulado.
 | Boas-vindas | nenhum (cartão no centro) | ✅ | ✅ | ✅ | ✅ |
 | Mural de avisos | item do menu | ler avisos e eventos | igual | + publicar avisos e eventos do próprio setor | + em qualquer setor |
 | Calendário | item do menu | ver os eventos nas datas | igual | + editar eventos do próprio setor | + de qualquer setor |
-| POPs & documentos | item do menu | buscar; baixar exige entrar | buscar e baixar | + publicar no próprio setor | + em qualquer setor |
+| POPs & documentos | item do menu | — (exige entrar) | buscar e baixar | + publicar no próprio setor | + em qualquer setor |
 | Central de dúvidas | item do menu | consultar | igual | + cadastrar perguntas do próprio setor | + de qualquer setor |
 | Setores e ramais | item do menu | achar ramais | igual | + editar os ramais do próprio setor | + criar, renomear e excluir setores |
 | Administração | seção do menu | — | — | — | usuários e registro de atividades |
@@ -466,3 +479,8 @@ pulado.
   do início, mesmo já vista.
 - **Dado** o `localStorage` bloqueado (navegação privada), **então** a introdução aparece
   normalmente e, depois de concluída ou pulada, só volta quando a página for recarregada.
+- **Dado** um usuário autenticado, **quando** abre Configurações (GER-14), **então** vê o interruptor
+  "Mostrar introdução ao entrar". **Quando** o desliga, **então** a introdução não abre mais sozinha
+  para ele (a chave do usuário passa a guardar `desativada`); "Ver introdução" no menu continua
+  funcionando. **Quando** o liga de novo, **então** a chave é apagada e a introdução volta a abrir
+  sozinha. O visitante (AUT-10) não vê o interruptor.

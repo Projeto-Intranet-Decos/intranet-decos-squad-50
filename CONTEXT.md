@@ -11,6 +11,8 @@ Unidade organizacional do hospital (ex: enfermagem, farmácia) que delimita o es
 Nível de acesso do usuário:
 - `comum` — só consome conteúdo (lê mural, calendário, documentos, FAQ, setores/ramais); não cria nem envia nada.
 - `admin_setor` — administrador **operacional**: cria e mantém conteúdo do dia a dia (avisos, documentos, eventos, ramal do próprio setor), em geral escopado ao próprio setor. **Sem acesso** às páginas de Administração (Usuários, Registro de atividades) nem à criação de setores novos.
+- `marketing` — papel funcional: publica e mantém **avisos** em qualquer setor, mas só edita/exclui os próprios. Fora isso, lê como `comum`.
+- `rh` — papel funcional: gerencia **usuários** (convida, edita, desativa), sem nunca criar nem alterar um `superadmin`. Não vê o Registro de atividades.
 - `superadmin` — papel de nível **sistêmico** (equivalente a alguém de TI), com acesso irrestrito, independente de setor. Exclusivo das páginas de Administração e da criação de setores novos.
 
 **Magic link**:

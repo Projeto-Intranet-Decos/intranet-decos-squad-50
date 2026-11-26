@@ -14,6 +14,8 @@ class Papel(str, Enum):
   comum = "comum"
   admin_setor = "admin_setor"
   superadmin = "superadmin"
+  rh = "rh"
+  marketing = "marketing"
 
 class Usuario(Base):
   __tablename__ = "usuarios"
