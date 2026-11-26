@@ -1,0 +1,5 @@
+# Scripts executados dentro de containers Linux precisam de LF, mesmo com core.autocrlf=true no Windows.
+*.sh text eol=lf
+*.envsh text eol=lf
+Dockerfile text eol=lf
+*.template text eol=lf
