@@ -22,7 +22,7 @@ Legenda: ✅ controle presente · 🟡 risco aceito/decisão registrada.
 | **A03** Cadeia de suprimentos | ✅ `pip-audit` e `npm audit` limpos; ✅ CI com auditoria; ✅ Dependabot; ✅ imagens e Actions fixadas | GER-26 |
 | **A04** Criptografia | ✅ argon2; ✅ tokens só como hash; ✅ JWT com algoritmo fixo; ✅ refresh token em cookie HttpOnly, access token só em memória | AUT-03, AUT-07 |
 | **A05** Injeção | ✅ só ORM; ✅ tipo servido pela extensão + `nosniff`; ✅ atalhos só `http(s)`; ✅ e-mails escapados; ✅ log técnico não deixa quebrar a linha | GER-06, ATA, GER-22, GER-25 |
-| **A06** Design inseguro | ✅ limite de tentativas no login e na redefinição (por e-mail); ✅ lista de senhas comuns; ✅ upload confere a assinatura do arquivo | AUT-11, USU-07, USU-09, GER-06 |
+| **A06** Design inseguro | ✅ limite de tentativas no login e na redefinição (por e-mail); ✅ lista de senhas comuns; ✅ upload confere a assinatura do arquivo | AUT-11, USU-07, USU-10, GER-06 |
 | **A07** Autenticação | ✅ tempo do login igual com ou sem conta; ✅ logout revoga a sessão inteira; ✅ rotação com detecção de reuso; ✅ e-mail sem diferença de maiúsculas | AUT-01, AUT-02, AUT-06, USU-02 |
 | **A08** Integridade | ✅ CI obrigatório antes do merge (falta ligar a proteção de branch, abaixo); ✅ imagens por digest | GER-26 |
 | **A09** Log e alerta | ✅ auditoria de escrita; ✅ log técnico de login, bloqueio, redefinição, 403 e reuso de refresh | GER-10, GER-25 |

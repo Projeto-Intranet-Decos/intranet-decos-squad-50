@@ -14,7 +14,7 @@ SENHA_MINIMA = 8
 
 
 def _recusar_senha_comum(senha: str) -> str:
-  # USU-09. PydanticCustomError: a mensagem chega ao cliente sem o prefixo "Value error,".
+  # USU-10. PydanticCustomError: a mensagem chega ao cliente sem o prefixo "Value error,".
   if senha_comum(senha):
     raise PydanticCustomError("senha_comum", "Senha muito comum. Escolha outra.")
   return senha

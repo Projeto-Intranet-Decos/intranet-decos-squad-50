@@ -299,13 +299,13 @@ def test_ger25_pedido_e_bloqueio_de_redefinicao_vao_para_o_log(
     ]
 
 
-# Política de senha (USU-09)
+# Política de senha (USU-10)
 
 SENHA_COMUM = {"mensagem": "Senha muito comum. Escolha outra."}
 
 
 @pytest.mark.parametrize("senha", ["12345678", "Password", "senha123", "aaaaaaaa", "HOSPITAL123"])
-def test_usu09_troca_recusa_senha_comum(cliente: TestClient, comum: Usuario, senha: str):
+def test_usu10_troca_recusa_senha_comum(cliente: TestClient, comum: Usuario, senha: str):
     resposta = trocar(cliente, comum, SENHA_PADRAO, senha)
 
     assert resposta.status_code == 422
@@ -313,7 +313,7 @@ def test_usu09_troca_recusa_senha_comum(cliente: TestClient, comum: Usuario, sen
     assert login(cliente, comum.email, SENHA_PADRAO).status_code == 200
 
 
-def test_usu09_redefinicao_recusa_senha_comum_sem_gastar_o_link(
+def test_usu10_redefinicao_recusa_senha_comum_sem_gastar_o_link(
     cliente: TestClient, fabrica: Fabrica, comum: Usuario
 ):
     token = fabrica.link(comum, FinalidadeToken.redefinicao_senha)
@@ -325,7 +325,7 @@ def test_usu09_redefinicao_recusa_senha_comum_sem_gastar_o_link(
     assert confirmar(cliente, token).status_code == 200
 
 
-def test_usu09_ativacao_recusa_senha_comum(cliente: TestClient, fabrica: Fabrica):
+def test_usu10_ativacao_recusa_senha_comum(cliente: TestClient, fabrica: Fabrica):
     pendente = fabrica.usuario(pendente=True)
     token = fabrica.link(pendente, FinalidadeToken.convite)
 

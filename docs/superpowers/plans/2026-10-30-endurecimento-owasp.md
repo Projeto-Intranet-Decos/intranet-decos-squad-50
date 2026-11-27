@@ -23,7 +23,7 @@ fecha; os critérios novos ganham ID no spec e teste no módulo.
   depende dele.
 - **Log técnico de segurança (GER-25).** Logger `app.seguranca`, em formato chave=valor, para o log
   do container. Não vai para o Registro de atividades (LOG), que é auditoria de escrita.
-- **Senha (USU-09).** 8–128 caracteres e fora de uma lista de senhas comuns.
+- **Senha (USU-10).** 8–128 caracteres e fora de uma lista de senhas comuns.
 - **Upload (GER-06).** Além da extensão, os primeiros bytes têm que bater com o formato.
 
 ## Fases

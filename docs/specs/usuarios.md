@@ -13,7 +13,7 @@ Cadastro dos colaboradores com papel de acesso e setor. Área de Administração
 | USU-06 | Cargo do colaborador | ⬜ | ⬜ | ⬜ |
 | USU-07 | Troca e redefinição de senha | ✅ | ✅ | ✅ |
 | USU-08 | Reenviar convite | ✅ | ✅ | ✅ |
-| USU-09 | Política de senha | ✅ | ✅ | ✅ |
+| USU-10 | Política de senha | ✅ | ✅ | ✅ |
 
 ### USU-01 — Listar usuários
 Origem: [ENT H6] · Back ✅ · Front ✅ · Teste ✅
@@ -201,7 +201,7 @@ envia para o e-mail atual do usuário.
 - Frontend: ação "Reenviar convite" na linha de usuário pendente, com toast de sucesso ou de aviso
   conforme `email_enviado`.
 
-### USU-09 — Política de senha
+### USU-10 — Política de senha
 Origem: [COD] (auditoria OWASP, A06) · Back ✅ · Front ✅ · Teste ✅
 
 Vale em todo lugar onde uma senha é criada: ativação do convite (AUT-09), redefinição e troca

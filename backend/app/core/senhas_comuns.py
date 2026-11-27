@@ -1,4 +1,4 @@
-"""Senhas recusadas na política de senha (USU-09), comparadas em minúsculas.
+"""Senhas recusadas na política de senha (USU-10), comparadas em minúsculas.
 
 As de 8+ caracteres mais comuns nos vazamentos públicos, mais as óbvias em português e do
 contexto do hospital. Só entram senhas com 8 ou mais caracteres: as menores o tamanho mínimo já
