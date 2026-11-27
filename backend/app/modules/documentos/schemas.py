@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import UploadFile
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
 from app.modules.documentos.models import CategoriaDocumento
 
@@ -40,6 +40,8 @@ class FiltroDocumentos(BaseModel):
   setor_id: uuid.UUID | None = None
   categoria: CategoriaDocumento | None = None
   busca: str | None = Field(default=None, max_length=200)
+  # Só os criados ou com versão nova do arquivo depois desta data e hora (GER-28).
+  desde: AwareDatetime | None = None
 
 
 class DocumentoResposta(BaseModel):

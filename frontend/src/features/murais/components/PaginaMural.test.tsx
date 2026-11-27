@@ -28,10 +28,10 @@ vi.mock('../api', async (original) => ({
   listarAniversariantes: vi.fn(async () => []),
 }))
 
-function montar() {
+function montar(endereco = '/mural') {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[endereco]}>
         <PaginaMural />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -62,5 +62,20 @@ describe('MUR-11 — filtro por data de publicação', () => {
 
     expect(screen.getByRole('heading', { level: 3, name: 'Comunicado da diretoria' })).toBeTruthy()
     expect(screen.queryByRole('heading', { level: 3, name: 'Promoção de aniversário' })).toBeNull()
+  })
+})
+
+describe('GER-28 — mural aberto num aviso', () => {
+  it('/mural?aviso=<id> abre o detalhe do aviso', async () => {
+    montar('/mural?aviso=a2')
+
+    expect(await screen.findByRole('dialog', { name: 'Promoção de aniversário' })).toBeTruthy()
+  })
+
+  it('id que não existe é ignorado', async () => {
+    montar('/mural?aviso=nao-existe')
+
+    await screen.findByRole('heading', { level: 3, name: 'Comunicado da diretoria' })
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })

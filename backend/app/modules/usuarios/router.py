@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import obter_sessao
-from app.core.permissions import UsuarioAutenticado, requer_gestao_usuarios
+from app.core.permissions import UsuarioAutenticado, requer_gestao_usuarios, usuario_atual
 from app.modules.usuarios import schemas, service
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
@@ -31,6 +31,21 @@ def criar_usuario(
     **schemas.UsuarioResposta.model_validate(usuario).model_dump(),
     email_enviado=email_enviado,
   )
+
+
+# Do próprio usuário logado, qualquer papel (GER-28).
+@router.get("/eu/novidades", response_model=schemas.NovidadesResposta)
+def buscar_novidades(
+  ator: UsuarioAutenticado = Depends(usuario_atual), sessao: Session = Depends(obter_sessao)
+):
+  return service.buscar_novidades(sessao, ator)
+
+
+@router.put("/eu/novidades", response_model=schemas.NovidadesResposta)
+def marcar_novidades_vistas(
+  ator: UsuarioAutenticado = Depends(usuario_atual), sessao: Session = Depends(obter_sessao)
+):
+  return service.marcar_novidades_vistas(sessao, ator)
 
 
 @router.post("/{usuario_id}/convite", response_model=schemas.ConviteEnviadoResposta)

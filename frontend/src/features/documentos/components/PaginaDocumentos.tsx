@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { canEditar, canEscolherSetor, canGerenciarConteudo, setoresParaPublicar } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
@@ -74,6 +75,18 @@ function PaginaDocumentos() {
   const [documentoExcluindo, setDocumentoExcluindo] = useState<Documento | null>(null)
   const [documentoPrevia, setDocumentoPrevia] = useState<Documento | null>(null)
   const [documentoHistorico, setDocumentoHistorico] = useState<Documento | null>(null)
+
+  // `?documento=<id>` (novidades do sino, GER-28): abre a prévia quando a lista chega, uma vez por
+  // navegação. Id que não está na lista é ignorado.
+  const [parametros] = useSearchParams()
+  const { key: chaveDaNavegacao } = useLocation()
+  const documentoPedido = parametros.get('documento')
+  const [navegacaoAplicada, setNavegacaoAplicada] = useState<string | null>(null)
+  if (documentoPedido && documentos.length > 0 && navegacaoAplicada !== chaveDaNavegacao) {
+    setNavegacaoAplicada(chaveDaNavegacao)
+    const pedido = documentos.find((documento) => documento.id === documentoPedido)
+    if (pedido) setDocumentoPrevia(pedido)
+  }
 
   const podeCriar = canGerenciarConteudo(usuario)
   // admin_setor só publica no próprio setor; superadmin em qualquer um.

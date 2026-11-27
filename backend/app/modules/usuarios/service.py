@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -65,6 +66,19 @@ def _buscar(sessao: Session, usuario_id: uuid.UUID) -> Usuario:
   if not usuario:
     raise HTTPException(status.HTTP_404_NOT_FOUND, "Usuario nao encontrado")
   return usuario
+
+
+def buscar_novidades(sessao: Session, ator: UsuarioAutenticado) -> Usuario:
+  return _buscar(sessao, ator.id)
+
+
+def marcar_novidades_vistas(sessao: Session, ator: UsuarioAutenticado) -> Usuario:
+  """Sem registro de atividade (GER-10): não é ação administrativa."""
+  usuario = _buscar(sessao, ator.id)
+  # Relógio do banco, o mesmo dos `criado_em` comparados pelo `desde` (GER-28). O
+  # clock_timestamp anda dentro da transação; o now() ficaria parado nela.
+  usuario.novidades_vistas_em = func.clock_timestamp()
+  return repository.salvar(sessao, usuario)
 
 
 def criar_usuario(

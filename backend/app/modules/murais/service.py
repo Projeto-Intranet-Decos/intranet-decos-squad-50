@@ -126,8 +126,8 @@ def _salvar_ou_desfazer(sessao: Session, enviados: list[str]) -> None:
     raise
 
 
-def listar_avisos(sessao: Session) -> list[Aviso]:
-  return repository.listar(sessao)
+def listar_avisos(sessao: Session, desde: datetime | None = None) -> list[Aviso]:
+  return repository.listar(sessao, desde)
 
 
 def listar_eventos(

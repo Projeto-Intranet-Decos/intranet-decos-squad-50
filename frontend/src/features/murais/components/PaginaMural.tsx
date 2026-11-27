@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { canBaixarArquivos, canEditarAviso, canPublicarAviso } from '../../../lib/permissions'
 import ModalConfirmacao from '../../../shared/components/ModalConfirmacao'
@@ -95,6 +96,18 @@ function PaginaMural() {
   const [avisoEditando, setAvisoEditando] = useState<Aviso | null>(null)
   const [detalhe, setDetalhe] = useState<Aviso | null>(null)
   const [exclusao, setExclusao] = useState<{ aviso: Aviso; voltarAoDetalhe: boolean } | null>(null)
+
+  // `?aviso=<id>` (novidades do sino, GER-28): abre o detalhe quando a lista chega, uma vez por
+  // navegação. Id que não está na lista é ignorado.
+  const [parametros] = useSearchParams()
+  const { key: chaveDaNavegacao } = useLocation()
+  const avisoPedido = parametros.get('aviso')
+  const [navegacaoAplicada, setNavegacaoAplicada] = useState<string | null>(null)
+  if (avisoPedido && avisos.length > 0 && navegacaoAplicada !== chaveDaNavegacao) {
+    setNavegacaoAplicada(chaveDaNavegacao)
+    const pedido = avisos.find((aviso) => aviso.id === avisoPedido)
+    if (pedido) setDetalhe(pedido)
+  }
 
   const podeCriar = canPublicarAviso(usuario)
 

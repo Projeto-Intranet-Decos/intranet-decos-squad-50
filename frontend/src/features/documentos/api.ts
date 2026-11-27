@@ -68,6 +68,7 @@ export async function listarDocumentos(filtro: FiltroDocumentos = {}): Promise<D
       ...(filtro.busca ? { busca: filtro.busca } : {}),
       ...(filtro.setorId ? { setor_id: filtro.setorId } : {}),
       ...(filtro.categoria ? { categoria: filtro.categoria } : {}),
+      ...(filtro.desde ? { desde: filtro.desde } : {}),
     },
   })
   return data.map(paraDocumento)

@@ -474,7 +474,7 @@ pulado.
 | Administração | seção do menu | — | — | — | usuários e registro de atividades |
 | Acesso rápido | seção do menu | links externos | igual | igual | + gerenciar os atalhos |
 | Configurações | item do menu | — | ajustar o visual | igual | igual |
-| Sua conta | rodapé do menu | botão "Entrar" | alterar senha e sair | igual | igual |
+| Sua conta | rodapé do menu | botão "Entrar" | novidades (GER-28), alterar senha e sair | igual | igual |
 
 - **Dado** um usuário (ou visitante) que nunca concluiu nem pulou a introdução neste navegador,
   **quando** abre uma página com o menu lateral, **então** a introdução começa pelo passo de
@@ -552,3 +552,39 @@ Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
 - **Dado** uma resposta que não define o próprio cache, **então** `Cache-Control: no-store` (dado de
   colaborador não fica no cache do navegador do posto). A capa do aviso (MUR-09) mantém o
   `Cache-Control` dela.
+
+### GER-28 — Novidades desde a última visita
+Origem: pedido do time (2026-11-27) · Back ✅ · Front ✅ · Teste 🟡
+
+O sino do rodapé do menu lateral mostra o que foi publicado desde a última vez que o usuário abriu
+as novidades: **avisos** (inclusive eventos) e **documentos** novos ou com **versão nova** do
+arquivo (DOC-09). A última visita (`usuarios.novidades_vistas_em`) fica no **backend**, por
+usuário, e vale em qualquer navegador. Visitante (AUT-10) não tem sino.
+
+Backend:
+
+- `GET /usuarios/eu/novidades` — qualquer usuário logado; devolve `{"vistas_em": <data e hora>}`.
+  Sem login → `401`.
+- `PUT /usuarios/eu/novidades` — marca como vistas agora (hora do servidor) e devolve o novo
+  `vistas_em`. Não entra no registro de atividades (GER-10): não é ação administrativa.
+- **Dado** um usuário recém-criado, **então** `vistas_em` é o momento da criação: o que foi
+  publicado antes não conta como novidade. Quem já existia começa no momento da migration.
+- `GET /murais/avisos?desde=<data e hora>` — só os avisos com `criado_em` depois de `desde`.
+- `GET /documentos?desde=<data e hora>` — só os documentos criados ou com versão nova do arquivo
+  depois de `desde`. Editar só título, descrição ou categoria (DOC-05) não conta.
+- `desde` precisa vir com fuso (ex: `2026-11-27T13:00:00Z`); sem fuso → `422`.
+
+Frontend:
+
+- **Dado** novidades publicadas por **outras pessoas** depois de `vistas_em`, **então** o sino
+  mostra a contagem (acima de 9, "9+") e o rótulo acessível diz quantas são ("Novidades: 3 novas").
+  O que o próprio usuário publicou não conta. A contagem é refeita a cada 5 minutos e ao voltar
+  para a aba.
+- **Quando** o usuário clica no sino, **então** abre o modal "Novidades" com os itens, mais recentes
+  primeiro (aviso: título, categoria e setor; documento: título, "Documento novo" ou "Nova versão
+  (vN)" e setor), e as novidades são marcadas como vistas (`PUT`): a contagem some, e a lista
+  continua no modal até ele fechar. Sem novidades, o modal diz "Nada novo desde a sua última
+  visita."
+- **Quando** o usuário clica num aviso da lista, **então** vai para `/mural?aviso=<id>` com o
+  detalhe do aviso aberto; num documento, vai para `/documentos?documento=<id>` com a prévia
+  aberta. Id que não existe mais é ignorado e a página abre normalmente.

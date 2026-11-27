@@ -49,6 +49,8 @@ export interface FiltroDocumentos {
   busca?: string
   setorId?: string
   categoria?: CategoriaDocumento | ''
+  /** ISO com fuso: só os criados ou com versão nova depois (GER-28). */
+  desde?: string
 }
 
 export interface NovoDocumento {

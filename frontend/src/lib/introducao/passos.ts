@@ -110,7 +110,7 @@ export function montarPassos(usuario: UsuarioOuNada, temAtalhos: boolean): Passo
     alvo: 'conta',
     titulo: usuario ? 'Sua conta' : 'Entrar',
     texto: usuario
-      ? 'Aqui você altera sua senha e sai da intranet. Para rever esta introdução, use "Ver introdução".'
+      ? 'Aqui você vê o que foi publicado desde a sua última visita (o sino), altera sua senha e sai da intranet. Para rever esta introdução, use "Ver introdução".'
       : 'Entre com seu e-mail e senha para baixar arquivos e usar as funções do seu acesso. Para rever esta introdução, use "Ver introdução".',
   })
 
