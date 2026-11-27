@@ -61,7 +61,10 @@ class Aviso(Base):
   chave_imagem: Mapped[str | None] = mapped_column(String(500))
   autor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuarios.id"), index=True)
   setor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("setores.id"), index=True)
-  criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+  # Hora do INSERT, não do início da transação: é comparada com `novidades_vistas_em` (GER-28).
+  criado_em: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True), server_default=func.clock_timestamp()
+  )
   atualizado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
   autor: Mapped[Usuario] = relationship()

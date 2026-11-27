@@ -2,7 +2,15 @@ import uuid
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import (
+  AfterValidator,
+  AwareDatetime,
+  BaseModel,
+  ConfigDict,
+  EmailStr,
+  Field,
+  field_validator,
+)
 from pydantic_core import PydanticCustomError
 
 from app.core.senhas_comuns import senha_comum
@@ -87,3 +95,9 @@ class NovidadesResposta(BaseModel):
   model_config = ConfigDict(from_attributes=True)
 
   vistas_em: datetime = Field(validation_alias="novidades_vistas_em")
+
+
+class NovidadesMarcar(BaseModel):
+  """Até onde o usuário viu: o item mais recente da lista que o sino mostrou (GER-28)."""
+
+  ate: AwareDatetime

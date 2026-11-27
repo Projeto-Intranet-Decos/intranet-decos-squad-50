@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Body, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import obter_sessao
@@ -43,9 +43,11 @@ def buscar_novidades(
 
 @router.put("/eu/novidades", response_model=schemas.NovidadesResposta)
 def marcar_novidades_vistas(
-  ator: UsuarioAutenticado = Depends(usuario_atual), sessao: Session = Depends(obter_sessao)
+  dados: schemas.NovidadesMarcar | None = Body(default=None),
+  ator: UsuarioAutenticado = Depends(usuario_atual),
+  sessao: Session = Depends(obter_sessao),
 ):
-  return service.marcar_novidades_vistas(sessao, ator)
+  return service.marcar_novidades_vistas(sessao, ator, dados.ate if dados else None)
 
 
 @router.post("/{usuario_id}/convite", response_model=schemas.ConviteEnviadoResposta)

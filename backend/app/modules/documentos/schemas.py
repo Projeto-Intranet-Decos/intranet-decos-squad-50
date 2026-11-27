@@ -61,6 +61,9 @@ class DocumentoResposta(BaseModel):
   criado_em: datetime
   atualizado_em: datetime | None
   versao: int
+  # Quem enviou a versão atual do arquivo e quando (GER-28); editar só metadados não muda.
+  versao_autor_id: uuid.UUID
+  versao_criada_em: datetime
 
 
 class VersaoResposta(BaseModel):

@@ -67,6 +67,13 @@ class Documento(Base):
     passive_deletes=True,
     order_by="DocumentoVersao.numero.desc()",
   )
+  # A versão atual (DOC-09): quem enviou o arquivo de agora e quando (GER-28).
+  versao_atual: Mapped["DocumentoVersao"] = relationship(
+    primaryjoin="and_(DocumentoVersao.documento_id == Documento.id, "
+    "DocumentoVersao.numero == Documento.versao)",
+    uselist=False,
+    viewonly=True,
+  )
 
   @property
   def autor_nome(self) -> str:
@@ -75,6 +82,14 @@ class Documento(Base):
   @property
   def setor_nome(self) -> str:
     return self.setor.nome
+
+  @property
+  def versao_autor_id(self) -> uuid.UUID:
+    return self.versao_atual.autor_id
+
+  @property
+  def versao_criada_em(self) -> datetime:
+    return self.versao_atual.criado_em
 
 
 class DocumentoVersao(Base):
@@ -95,7 +110,10 @@ class DocumentoVersao(Base):
   chave_armazenamento: Mapped[str] = mapped_column(String(500), unique=True)
   alteracao: Mapped[str | None] = mapped_column(String(500))
   autor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuarios.id"), index=True)
-  criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+  # Hora do INSERT, não do início da transação: é comparada com `novidades_vistas_em` (GER-28).
+  criado_em: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True), server_default=func.clock_timestamp()
+  )
 
   documento: Mapped[Documento] = relationship(back_populates="versoes")
   autor: Mapped[Usuario] = relationship()

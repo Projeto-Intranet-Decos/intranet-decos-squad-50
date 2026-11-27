@@ -4,7 +4,7 @@ Cada teste roda numa transação só, onde o `now()` do Postgres não anda: as d
 para o `desde` são gravadas explicitamente.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select, update
@@ -164,3 +164,104 @@ def test_ger28_editar_so_metadados_do_documento_nao_e_novidade(
     assert edicao.status_code == 200, edicao.json()
 
     assert cliente.get("/documentos", params={"desde": DESDE.isoformat()}, headers=autenticar(admin_setor)).json() == []
+
+
+# Marcar até o item mais recente visto (🐞 revisão do PR)
+
+
+def _vistas_em(cliente: TestClient, usuario: Usuario) -> datetime:
+    resposta = cliente.get("/usuarios/eu/novidades", headers=autenticar(usuario))
+    return datetime.fromisoformat(resposta.json()["vistas_em"])
+
+
+def test_ger28_marcar_ate_o_item_mais_recente_visto(cliente: TestClient, comum: Usuario):
+    ate = _vistas_em(cliente, comum) + timedelta(microseconds=1)
+
+    marcada = cliente.put(
+        "/usuarios/eu/novidades", json={"ate": ate.isoformat()}, headers=autenticar(comum)
+    )
+
+    assert marcada.status_code == 200, marcada.json()
+    assert datetime.fromisoformat(marcada.json()["vistas_em"]) == ate
+    assert _vistas_em(cliente, comum) == ate
+
+
+def test_ger28_marcar_ate_nao_volta_para_tras(cliente: TestClient, comum: Usuario):
+    antes = _vistas_em(cliente, comum)
+
+    marcada = cliente.put(
+        "/usuarios/eu/novidades", json={"ate": ANTIGO.isoformat()}, headers=autenticar(comum)
+    )
+
+    assert marcada.status_code == 200, marcada.json()
+    assert datetime.fromisoformat(marcada.json()["vistas_em"]) == antes
+
+
+def test_ger28_marcar_ate_nao_passa_da_hora_do_servidor(cliente: TestClient, comum: Usuario):
+    futuro = datetime(2100, 1, 1, tzinfo=UTC)
+
+    marcada = cliente.put(
+        "/usuarios/eu/novidades", json={"ate": futuro.isoformat()}, headers=autenticar(comum)
+    )
+
+    assert marcada.status_code == 200, marcada.json()
+    assert datetime.fromisoformat(marcada.json()["vistas_em"]) <= datetime.now(UTC)
+
+
+def test_ger28_marcar_ate_sem_fuso_e_rejeitado(cliente: TestClient, comum: Usuario):
+    resposta = cliente.put(
+        "/usuarios/eu/novidades", json={"ate": "2026-11-27T10:00:00"}, headers=autenticar(comum)
+    )
+
+    assert resposta.status_code == 422
+
+
+# `criado_em` é a hora do INSERT, não o início da transação (🐞 revisão do PR)
+
+
+def test_ger28_criado_em_e_a_hora_do_insert_nao_o_inicio_da_transacao(
+    cliente: TestClient, sessao: Session, admin_setor: Usuario
+):
+    # O teste inteiro é uma transação só: o `now()` dela é o início do teste.
+    inicio_da_transacao = sessao.scalar(select(func.now()))
+
+    aviso_id = _publicar_aviso(cliente, admin_setor, "Aviso lento")
+    documento_id = _enviar_documento(cliente, admin_setor, "POP lento")
+
+    sessao.expire_all()
+    assert sessao.get(Aviso, aviso_id).criado_em > inicio_da_transacao
+    versao = sessao.scalar(select(DocumentoVersao).where(DocumentoVersao.documento_id == documento_id))
+    assert versao.criado_em > inicio_da_transacao
+
+
+# Autor e hora da versão atual do documento (🐞 revisão do PR)
+
+
+def test_ger28_documento_traz_autor_e_hora_da_versao_atual(
+    cliente: TestClient, sessao: Session, admin_setor: Usuario, superadmin: Usuario
+):
+    documento_id = _enviar_documento(cliente, admin_setor, "POP revisado")
+    substituicao = cliente.put(
+        f"/documentos/{documento_id}/arquivo",
+        files={"arquivo": ("pop.txt", b"v2", "text/plain")},
+        headers=autenticar(superadmin),
+    )
+    assert substituicao.status_code == 200, substituicao.json()
+    # Editar só os metadados não muda a versão atual.
+    edicao = cliente.put(
+        f"/documentos/{documento_id}", json={"titulo": "POP renomeado"}, headers=autenticar(admin_setor)
+    )
+    assert edicao.status_code == 200, edicao.json()
+
+    corpo = cliente.get(f"/documentos/{documento_id}", headers=autenticar(admin_setor)).json()
+
+    v2 = sessao.scalar(
+        select(DocumentoVersao).where(
+            DocumentoVersao.documento_id == documento_id, DocumentoVersao.numero == 2
+        )
+    )
+    assert corpo["autor_id"] == str(admin_setor.id)
+    assert corpo["versao_autor_id"] == str(superadmin.id)
+    assert datetime.fromisoformat(corpo["versao_criada_em"]) == v2.criado_em
+    listado = cliente.get("/documentos", headers=autenticar(admin_setor)).json()
+    assert [d["versao_autor_id"] for d in listado] == [str(superadmin.id)]

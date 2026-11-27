@@ -1,9 +1,10 @@
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import datetime
 
 from fastapi import HTTPException, status
-from sqlalchemy import func
+from sqlalchemy import DateTime, func, literal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -72,12 +73,18 @@ def buscar_novidades(sessao: Session, ator: UsuarioAutenticado) -> Usuario:
   return _buscar(sessao, ator.id)
 
 
-def marcar_novidades_vistas(sessao: Session, ator: UsuarioAutenticado) -> Usuario:
-  """Sem registro de atividade (GER-10): não é ação administrativa."""
+def marcar_novidades_vistas(
+  sessao: Session, ator: UsuarioAutenticado, ate: datetime | None = None
+) -> Usuario:
+  """Marca como vistas até `ate` (o item mais recente que o sino mostrou) ou, sem ele, até agora.
+  Nunca volta para trás nem passa da hora do servidor (GER-28). Sem registro de atividade
+  (GER-10): não é ação administrativa."""
   usuario = _buscar(sessao, ator.id)
-  # Relógio do banco, o mesmo dos `criado_em` comparados pelo `desde` (GER-28). O
-  # clock_timestamp anda dentro da transação; o now() ficaria parado nela.
-  usuario.novidades_vistas_em = func.clock_timestamp()
+  # Relógio do banco, o mesmo dos `criado_em` comparados pelo `desde`. O clock_timestamp anda
+  # dentro da transação; o now() ficaria parado nela.
+  agora = func.clock_timestamp()
+  limite = agora if ate is None else func.least(literal(ate, DateTime(timezone=True)), agora)
+  usuario.novidades_vistas_em = func.greatest(Usuario.novidades_vistas_em, limite)
   return repository.salvar(sessao, usuario)
 
 
