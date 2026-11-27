@@ -52,3 +52,14 @@ export async function excluirUsuario(id: string): Promise<UsuarioCadastro> {
   const { data } = await api.delete<UsuarioApi>(`/usuarios/${id}`)
   return paraUsuario(data)
 }
+
+// Última vez que o usuário logado abriu as novidades do sino (GER-28).
+export async function buscarNovidadesVistas(): Promise<string> {
+  const { data } = await api.get<{ vistas_em: string }>('/usuarios/eu/novidades')
+  return data.vistas_em
+}
+
+export async function marcarNovidadesVistas(): Promise<string> {
+  const { data } = await api.put<{ vistas_em: string }>('/usuarios/eu/novidades')
+  return data.vistas_em
+}

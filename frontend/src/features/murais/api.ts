@@ -85,8 +85,9 @@ function paraCorpoAviso(dados: EdicaoAviso) {
   }
 }
 
-export async function listarAvisos(): Promise<Aviso[]> {
-  const { data } = await api.get<AvisoApi[]>('/murais/avisos')
+/** `desde` (ISO com fuso): só os publicados depois, para as novidades do sino (GER-28). */
+export async function listarAvisos(desde?: string): Promise<Aviso[]> {
+  const { data } = await api.get<AvisoApi[]>('/murais/avisos', { params: desde ? { desde } : {} })
   return data.map(paraAviso)
 }
 

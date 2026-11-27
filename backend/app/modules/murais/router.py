@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
+from pydantic import AwareDatetime
 from sqlalchemy.orm import Session
 
 from app.core.arquivos import content_disposition
@@ -23,8 +24,12 @@ router = APIRouter(prefix="/murais", tags=["murais"])
 @router.get(
   "/avisos", response_model=list[AvisoResposta]
 )
-def listar_avisos(sessao: Session = Depends(obter_sessao)):
-  return service.listar_avisos(sessao)
+def listar_avisos(
+  # Só os publicados depois desta data e hora: as novidades do sino (GER-28).
+  desde: AwareDatetime | None = Query(default=None),
+  sessao: Session = Depends(obter_sessao),
+):
+  return service.listar_avisos(sessao, desde)
 
 
 @router.get(

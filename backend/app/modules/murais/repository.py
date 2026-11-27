@@ -14,8 +14,10 @@ def _consulta_base() -> Select[tuple[Aviso]]:
   )
 
 
-def listar(sessao: Session) -> list[Aviso]:
+def listar(sessao: Session, desde: datetime | None = None) -> list[Aviso]:
   consulta = _consulta_base().order_by(Aviso.criado_em.desc())
+  if desde is not None:
+    consulta = consulta.where(Aviso.criado_em > desde)
   return list(sessao.scalars(consulta))
 
 

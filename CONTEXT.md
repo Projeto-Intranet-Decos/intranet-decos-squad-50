@@ -65,6 +65,10 @@ _Avoid_: Evento como entidade separada do Aviso, convite
 Tela do mural que posiciona os Eventos nas suas datas (visões de dia, semana, mês e ano). É uma visão, não um módulo; clicar num evento abre o detalhe do aviso.
 _Avoid_: módulo calendário
 
+**Novidades**:
+Avisos e documentos (novos ou com versão nova do arquivo) publicados por outras pessoas desde a última vez que o usuário abriu o sino do menu lateral. A última visita mora no backend, por usuário (`usuarios.novidades_vistas_em`), e vale em qualquer navegador. Não é notificação por e-mail nem push.
+_Avoid_: notificações (sugere envio ativo e "lida/não lida" por item)
+
 **Preferências de interface**:
 Ajustes visuais (desfoque e transparência do vidro, gradiente de fundo, efeito elástico na rolagem, animações) escolhidos na página Configurações. Pertencem ao navegador, não ao usuário: moram no `localStorage` e não existem no backend.
 _Avoid_: configurações do usuário, perfil

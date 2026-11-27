@@ -4,6 +4,6 @@ import { listarAvisos } from '../api'
 export function useAvisos() {
   return useQuery({
     queryKey: ['avisos'],
-    queryFn: listarAvisos,
+    queryFn: () => listarAvisos(),
   })
 }

@@ -11,6 +11,8 @@ import { useAuth } from '../../lib/auth/useAuth'
 import Introducao from '../../lib/introducao/Introducao'
 import { montarPassos } from '../../lib/introducao/passos'
 import { useIntroducao } from '../../lib/introducao/useIntroducao'
+import ModalNovidades from '../../lib/novidades/ModalNovidades'
+import { useNovidades, type Novidade } from '../../lib/novidades/useNovidades'
 import { canAcessarAdministracao, canGerenciarAtalhos, canVerLogs } from '../../lib/permissions'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
 import { useConsultaDeMidia } from '../hooks/useConsultaDeMidia'
@@ -119,6 +121,12 @@ function Layout({ children }: PropriedadesLayout) {
   const preferencias = usePreferencias()
   const semAnimacao = useReduzirAnimacoes()
   const introducao = useIntroducao(usuario?.id ?? null)
+  const novidades = useNovidades(usuario?.id ?? null)
+  // Fotografia da lista ao abrir: marcar como vistas esvazia a contagem, não o modal (GER-28).
+  const [novidadesAbertas, setNovidadesAbertas] = useState<Novidade[] | null>(null)
+  const totalNovidades = novidades.itens.length
+  const rotuloNovidades =
+    totalNovidades > 0 ? `Novidades: ${totalNovidades} ${totalNovidades === 1 ? 'nova' : 'novas'}` : 'Novidades'
   const { data: atalhos = [] } = useAtalhos()
   const temAtalhos = canGerenciarAtalhos(usuario) || atalhos.length > 0
 
@@ -159,6 +167,17 @@ function Layout({ children }: PropriedadesLayout) {
   function verIntroducao() {
     fecharMenu()
     introducao.abrir()
+  }
+
+  function abrirNovidades() {
+    setNovidadesAbertas(novidades.itens)
+    novidades.marcarComoVistas()
+  }
+
+  function abrirNovidade(item: Novidade) {
+    setNovidadesAbertas(null)
+    fecharMenu()
+    navegar(item.destino)
   }
 
   function aoSair() {
@@ -342,11 +361,20 @@ function Layout({ children }: PropriedadesLayout) {
             <div className="flex items-center justify-end gap-1">
               <button
                 type="button"
-                title="Notificações"
-                aria-label="Notificações"
-                className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 lg:size-8 liquido:btn-icon"
+                onClick={abrirNovidades}
+                title={rotuloNovidades}
+                aria-label={rotuloNovidades}
+                className="relative flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 lg:size-8 liquido:btn-icon"
               >
                 <IconeSino tamanho={18} />
+                {totalNovidades > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] leading-none font-semibold text-white tabular-nums"
+                  >
+                    {totalNovidades > 9 ? '9+' : totalNovidades}
+                  </span>
+                )}
               </button>
               <button
                 type="button"
@@ -372,6 +400,13 @@ function Layout({ children }: PropriedadesLayout) {
       </motion.aside>
 
       {alterandoSenha && <ModalAlterarSenha aoFechar={() => setAlterandoSenha(false)} />}
+      {novidadesAbertas && (
+        <ModalNovidades
+          itens={novidadesAbertas}
+          aoFechar={() => setNovidadesAbertas(null)}
+          aoAbrirItem={abrirNovidade}
+        />
+      )}
       {introducao.aberta && (
         <Introducao passos={montarPassos(usuario, temAtalhos)} destacar={desktop} aoEncerrar={introducao.encerrar} />
       )}

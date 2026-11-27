@@ -79,3 +79,11 @@ class UsuarioCriadoResposta(UsuarioResposta):
 
 class ConviteEnviadoResposta(BaseModel):
   email_enviado: bool
+
+
+class NovidadesResposta(BaseModel):
+  """Última vez que o usuário abriu as novidades (GER-28)."""
+
+  model_config = ConfigDict(from_attributes=True)
+
+  vistas_em: datetime = Field(validation_alias="novidades_vistas_em")

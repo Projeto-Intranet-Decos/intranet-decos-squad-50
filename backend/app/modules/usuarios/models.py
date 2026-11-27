@@ -51,6 +51,10 @@ class Usuario(Base):
   criado_em: Mapped[datetime] = mapped_column(
       DateTime(timezone=True), server_default=func.now()
   )
+  # Última vez que o usuário abriu as novidades (GER-28). Começa na criação da conta.
+  novidades_vistas_em: Mapped[datetime] = mapped_column(
+      DateTime(timezone=True), server_default=func.now()
+  )
 
   # Sem back_populates: evita alterar setores/models.py, que é de outro módulo.
   setor: Mapped[Setor | None] = relationship()

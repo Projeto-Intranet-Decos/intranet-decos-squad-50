@@ -19,6 +19,17 @@ def listar(sessao: Session, filtro: FiltroDocumentos) -> list[Documento]:
     consulta = consulta.where(Documento.categoria == filtro.categoria)
   if filtro.busca:
     consulta = consulta.where(Documento.titulo.icontains(filtro.busca, autoescape=True))
+  if filtro.desde is not None:
+    # A versão 1 nasce com o documento (DOC-09): uma versão recente cobre o envio e a
+    # substituição do arquivo, e editar só os metadados não conta.
+    consulta = consulta.where(
+      select(DocumentoVersao.id)
+      .where(
+        DocumentoVersao.documento_id == Documento.id,
+        DocumentoVersao.criado_em > filtro.desde,
+      )
+      .exists()
+    )
   return list(sessao.scalars(consulta.order_by(Documento.criado_em.desc())))
 
 
