@@ -565,26 +565,47 @@ Backend:
 
 - `GET /usuarios/eu/novidades` — qualquer usuário logado; devolve `{"vistas_em": <data e hora>}`.
   Sem login → `401`.
-- `PUT /usuarios/eu/novidades` — marca como vistas agora (hora do servidor) e devolve o novo
-  `vistas_em`. Não entra no registro de atividades (GER-10): não é ação administrativa.
+- `PUT /usuarios/eu/novidades` — marca como vistas e devolve o novo `vistas_em`. Corpo opcional
+  `{"ate": <data e hora com fuso>}`: marca até ali (o item mais recente que o usuário viu); sem
+  corpo, até agora (hora do servidor). `vistas_em` nunca volta para trás nem passa da hora do
+  servidor; `ate` sem fuso → `422`. Não entra no registro de atividades (GER-10): não é ação
+  administrativa. 🐞 corrigido (revisão do PR): marcava sempre até a hora do servidor, e o que foi
+  publicado entre a última busca das listas e o clique no sino sumia sem nunca aparecer.
+- O `criado_em` dos avisos e das versões de documento é a hora do `INSERT` (`clock_timestamp()`),
+  o mesmo relógio do `vistas_em`. 🐞 corrigido (revisão do PR): era o início da transação
+  (`now()`), e uma publicação lenta (anexo grande) que terminava depois de um `PUT` ficava com
+  `criado_em` anterior a ele e nunca virava novidade.
 - **Dado** um usuário recém-criado, **então** `vistas_em` é o momento da criação: o que foi
   publicado antes não conta como novidade. Quem já existia começa no momento da migration.
 - `GET /murais/avisos?desde=<data e hora>` — só os avisos com `criado_em` depois de `desde`.
 - `GET /documentos?desde=<data e hora>` — só os documentos criados ou com versão nova do arquivo
   depois de `desde`. Editar só título, descrição ou categoria (DOC-05) não conta.
+- A resposta de documento traz `versao_autor_id` e `versao_criada_em`: quem enviou a versão atual
+  do arquivo (DOC-09) e quando. Editar só os metadados não muda nenhum dos dois.
 - `desde` precisa vir com fuso (ex: `2026-11-27T13:00:00Z`); sem fuso → `422`.
 
 Frontend:
 
 - **Dado** novidades publicadas por **outras pessoas** depois de `vistas_em`, **então** o sino
   mostra a contagem (acima de 9, "9+") e o rótulo acessível diz quantas são ("Novidades: 3 novas").
-  O que o próprio usuário publicou não conta. A contagem é refeita a cada 5 minutos e ao voltar
-  para a aba.
-- **Quando** o usuário clica no sino, **então** abre o modal "Novidades" com os itens, mais recentes
-  primeiro (aviso: título, categoria e setor; documento: título, "Documento novo" ou "Nova versão
-  (vN)" e setor), e as novidades são marcadas como vistas (`PUT`): a contagem some, e a lista
+  O que o próprio usuário publicou não conta; num documento, vale quem enviou a **versão atual**,
+  não quem criou o documento, e a hora mostrada é a da versão atual. A contagem é refeita a cada
+  5 minutos e ao voltar para a aba. 🐞 corrigido (revisão do PR): o filtro usava o autor do
+  documento, e a versão nova enviada por outra pessoa sumia para quem o criou; a hora vinha do
+  `atualizado_em`, que muda também ao editar só os metadados.
+- **Quando** o usuário clica no sino, **então** as listas são buscadas de novo e abre o modal
+  "Novidades" com os itens dessa busca, mais recentes primeiro (aviso: título, categoria e setor;
+  documento: título, "Documento novo" ou "Nova versão (vN)" e setor), e as novidades são marcadas
+  como vistas até o item mais recente da busca (`PUT` com `ate`): a contagem some, e a lista
   continua no modal até ele fechar. Sem novidades, o modal diz "Nada novo desde a sua última
-  visita."
+  visita." e nada é marcado. Fechar o modal antes de a busca terminar também não marca nada.
+- Enquanto a última visita não carregou, o sino fica desabilitado. 🐞 corrigido (revisão do PR): o
+  modal mostrava a lista da última busca (até 5 minutos antes), ou vazia se ela ainda carregava, e
+  marcava tudo como visto mesmo assim.
 - **Quando** o usuário clica num aviso da lista, **então** vai para `/mural?aviso=<id>` com o
   detalhe do aviso aberto; num documento, vai para `/documentos?documento=<id>` com a prévia
-  aberta. Id que não existe mais é ignorado e a página abre normalmente.
+  aberta. O item é buscado pelo id (`GET /murais/avisos/{id}`, `GET /documentos/{id}`), então
+  abre mesmo com filtros ativos na página ou com uma lista antiga em cache. Id que não existe mais
+  é ignorado e a página abre normalmente. 🐞 corrigido (revisão do PR): o item era procurado na
+  lista carregada, e não abria se a lista em cache era anterior a ele ou se um filtro de setor ou
+  categoria o escondia.

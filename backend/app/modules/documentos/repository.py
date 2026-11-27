@@ -8,7 +8,11 @@ from app.modules.documentos.schemas import FiltroDocumentos
 
 
 def _consulta_base() -> Select[tuple[Documento]]:
-  return select(Documento).options(selectinload(Documento.autor), selectinload(Documento.setor))
+  return select(Documento).options(
+    selectinload(Documento.autor),
+    selectinload(Documento.setor),
+    selectinload(Documento.versao_atual),
+  )
 
 
 def listar(sessao: Session, filtro: FiltroDocumentos) -> list[Documento]:
