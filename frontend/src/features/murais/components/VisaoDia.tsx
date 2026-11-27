@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { chaveDeData, comecaNoDia, faixaDeHoras, formatarIntervaloHoras, rotuloHora } from '../formatadoresCalendario'
+import { HORAS_DO_DIA, chaveDeData, comecaNoDia, formatarIntervaloHoras, rotuloHora } from '../formatadoresCalendario'
 import type { Aniversariante, Evento } from '../types'
 
 interface PropriedadesVisaoDia {
@@ -57,7 +57,6 @@ function VisaoDia({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento }: 
   // Evento de vários dias: depois do primeiro dia, ocupa a faixa "Dia todo".
   const continuacoes = eventosDoDia.filter((evento) => !comecaNoDia(evento, chave))
   const aniversariantes = aniversariantesDoDia(data)
-  const horas = faixaDeHoras(eventos)
 
   return (
     <div className="overflow-hidden rounded-[10px] liquido:rounded-inner border border-slate-200/60 liquido:border-slate-900/5">
@@ -84,7 +83,7 @@ function VisaoDia({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento }: 
           ))}
         </LinhaHorario>
       )}
-      {horas.map((hora) => (
+      {HORAS_DO_DIA.map((hora) => (
         <LinhaHorario key={hora} rotulo={rotuloHora(hora)}>
           {eventos
             .filter((evento) => new Date(evento.dataInicio).getHours() === hora)

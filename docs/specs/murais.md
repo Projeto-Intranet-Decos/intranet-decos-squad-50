@@ -31,7 +31,7 @@ Aniversariante **não é registro próprio**: é derivado de `usuarios.data_nasc
 | MUR-12 | Listar eventos por período | ✅ | ✅ | ✅ |
 | MUR-13 | Aniversariantes do mês | ✅ | ✅ | ✅ |
 | MUR-14 | Filtrar aniversariantes por setor e data | ⬜ | ⬜ | ⬜ |
-| MUR-15 | Tela do calendário | — | ✅ | ⬜ |
+| MUR-15 | Tela do calendário | — | ✅ | 🟡 |
 
 ### MUR-01 — Listar avisos
 Origem: [ESP] [ENT H1] [CTX] · Back ✅ · Front ✅ · Teste ✅
@@ -247,7 +247,7 @@ Substitui CAL-07.
 - Frontend ⬜: filtros no painel de aniversariantes.
 
 ### MUR-15 — Tela do calendário
-Origem: [ESP] [ENT H3] [CTX] · Back — · Front ✅ · Teste ⬜
+Origem: [ESP] [ENT H3] [CTX] · Back — · Front ✅ · Teste 🟡
 
 Visão do mural que posiciona os eventos nas suas datas. Página "Calendário", rota `/calendario`,
 feature `murais`. Substitui CAL-08.
@@ -255,6 +255,8 @@ feature `murais`. Substitui CAL-08.
 - Visões de dia, semana, mês e ano, com navegação para períodos anterior/seguinte; a consulta usa
   MUR-12 com o intervalo da visão atual.
 - Evento de vários dias aparece em todos os dias que cobre.
+- **Dado** a visão de dia, **então** ela mostra as 24 horas, de `00:00` a `23:00`, com ou sem
+  eventos. A visão de semana continua na faixa de 07:00 a 19:00, ampliada só para caber os eventos.
 - Clicar num evento abre o **mesmo detalhe do aviso** do mural (capa, conteúdo, anexos), com
   editar/excluir para quem pode gerenciar (GER-12).
 - Painéis de próximos eventos e de aniversariantes do mês (MUR-13).
