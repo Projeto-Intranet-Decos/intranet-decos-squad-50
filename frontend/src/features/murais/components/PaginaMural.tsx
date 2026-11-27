@@ -5,6 +5,7 @@ import { canBaixarArquivos, canEditarAviso, canPublicarAviso } from '../../../li
 import ModalConfirmacao from '../../../shared/components/ModalConfirmacao'
 import Skeleton from '../../../shared/components/Skeleton'
 import { useAniversariantes } from '../hooks/useAniversariantes'
+import { useAviso } from '../hooks/useAviso'
 import { useAvisos } from '../hooks/useAvisos'
 import { useExcluirAviso } from '../hooks/useExcluirAviso'
 import { useProximosEventos } from '../hooks/useProximosEventos'
@@ -97,16 +98,16 @@ function PaginaMural() {
   const [detalhe, setDetalhe] = useState<Aviso | null>(null)
   const [exclusao, setExclusao] = useState<{ aviso: Aviso; voltarAoDetalhe: boolean } | null>(null)
 
-  // `?aviso=<id>` (novidades do sino, GER-28): abre o detalhe quando a lista chega, uma vez por
-  // navegação. Id que não está na lista é ignorado.
+  // `?aviso=<id>` (novidades do sino, GER-28): abre o detalhe uma vez por navegação. O aviso é
+  // buscado pelo id: a lista em cache pode ser de antes dele. Id que não existe é ignorado.
   const [parametros] = useSearchParams()
   const { key: chaveDaNavegacao } = useLocation()
   const avisoPedido = parametros.get('aviso')
+  const { data: pedido } = useAviso(avisoPedido)
   const [navegacaoAplicada, setNavegacaoAplicada] = useState<string | null>(null)
-  if (avisoPedido && avisos.length > 0 && navegacaoAplicada !== chaveDaNavegacao) {
+  if (pedido && pedido.id === avisoPedido && navegacaoAplicada !== chaveDaNavegacao) {
     setNavegacaoAplicada(chaveDaNavegacao)
-    const pedido = avisos.find((aviso) => aviso.id === avisoPedido)
-    if (pedido) setDetalhe(pedido)
+    setDetalhe(pedido)
   }
 
   const podeCriar = canPublicarAviso(usuario)

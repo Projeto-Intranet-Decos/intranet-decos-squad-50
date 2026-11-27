@@ -20,17 +20,25 @@ const avisos: Aviso[] = [
   },
 ]
 
+/** O que o backend tem; a lista em cache pode ser mais antiga. */
+const servidor = { avisos }
+
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
-  listarAvisos: vi.fn(async () => avisos),
+  listarAvisos: vi.fn(async () => servidor.avisos),
+  buscarAviso: vi.fn(async (id: string) => {
+    const aviso = servidor.avisos.find((a) => a.id === id)
+    if (!aviso) throw new Error('404')
+    return aviso
+  }),
   listarSetores: vi.fn(async () => []),
   listarEventos: vi.fn(async () => []),
   listarAniversariantes: vi.fn(async () => []),
 }))
 
-function montar(endereco = '/mural') {
+function montar(endereco = '/mural', clienteDeConsultas = new QueryClient()) {
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={clienteDeConsultas}>
       <MemoryRouter initialEntries={[endereco]}>
         <PaginaMural />
       </MemoryRouter>
@@ -77,5 +85,21 @@ describe('GER-28 — mural aberto num aviso', () => {
 
     await screen.findByRole('heading', { level: 3, name: 'Comunicado da diretoria' })
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('abre o aviso mesmo com uma lista antiga em cache, de antes de ele existir', async () => {
+    const novo: Aviso = { ...avisos[0], id: 'a3', titulo: 'Plantão extra', criadoEm: '2026-10-11T10:00:00Z' }
+    servidor.avisos = [novo, ...avisos]
+    const clienteDeConsultas = new QueryClient()
+    // A pessoa já tinha passado pelo mural: a lista em cache é de antes do aviso novo.
+    clienteDeConsultas.setQueryData(['avisos'], avisos)
+
+    try {
+      montar('/mural?aviso=a3', clienteDeConsultas)
+
+      expect(await screen.findByRole('dialog', { name: 'Plantão extra' })).toBeTruthy()
+    } finally {
+      servidor.avisos = avisos
+    }
   })
 })

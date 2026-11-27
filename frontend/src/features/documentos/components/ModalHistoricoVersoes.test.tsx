@@ -22,6 +22,8 @@ const documento: Documento = {
   criadoEm: '2026-10-01T10:00:00Z',
   atualizadoEm: '2026-11-01T10:00:00Z',
   versao: 2,
+  versaoAutorId: 'u1',
+  versaoCriadaEm: '2026-11-01T10:00:00Z',
 }
 
 const versoes: VersaoDocumento[] = [

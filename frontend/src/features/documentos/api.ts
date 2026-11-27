@@ -25,6 +25,8 @@ interface DocumentoApi {
   criado_em: string
   atualizado_em: string | null
   versao: number
+  versao_autor_id: string
+  versao_criada_em: string
 }
 
 interface VersaoApi {
@@ -59,6 +61,8 @@ function paraDocumento(bruto: DocumentoApi): Documento {
     criadoEm: bruto.criado_em,
     atualizadoEm: bruto.atualizado_em,
     versao: bruto.versao,
+    versaoAutorId: bruto.versao_autor_id,
+    versaoCriadaEm: bruto.versao_criada_em,
   }
 }
 

@@ -59,7 +59,8 @@ export async function buscarNovidadesVistas(): Promise<string> {
   return data.vistas_em
 }
 
-export async function marcarNovidadesVistas(): Promise<string> {
-  const { data } = await api.put<{ vistas_em: string }>('/usuarios/eu/novidades')
+/** Marca até `ate` (ISO do item mais recente que o sino mostrou) ou, sem ele, até agora. */
+export async function marcarNovidadesVistas(ate?: string): Promise<string> {
+  const { data } = await api.put<{ vistas_em: string }>('/usuarios/eu/novidades', ate ? { ate } : undefined)
   return data.vistas_em
 }

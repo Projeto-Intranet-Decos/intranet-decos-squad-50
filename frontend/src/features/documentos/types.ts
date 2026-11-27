@@ -31,6 +31,10 @@ export interface Documento {
   atualizadoEm: string | null
   /** Número da versão atual (DOC-09). */
   versao: number
+  /** Quem enviou a versão atual do arquivo (GER-28). */
+  versaoAutorId: string
+  /** ISO: envio da versão atual. Editar só os metadados não muda (GER-28). */
+  versaoCriadaEm: string
 }
 
 /** Espelho de VersaoResposta (DOC-09). */
