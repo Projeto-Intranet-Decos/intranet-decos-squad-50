@@ -122,8 +122,11 @@ function Layout({ children }: PropriedadesLayout) {
   const semAnimacao = useReduzirAnimacoes()
   const introducao = useIntroducao(usuario?.id ?? null)
   const novidades = useNovidades(usuario?.id ?? null)
-  // Fotografia da lista ao abrir: marcar como vistas esvazia a contagem, não o modal (GER-28).
-  const [novidadesAbertas, setNovidadesAbertas] = useState<Novidade[] | null>(null)
+  // Fotografia da busca feita ao abrir: marcar como vistas esvazia a contagem, não o modal
+  // (GER-28). 'buscando' enquanto a busca não volta.
+  const [novidadesAbertas, setNovidadesAbertas] = useState<Novidade[] | 'buscando' | null>(null)
+  // Muda a cada abertura e fechamento: a busca que volta depois de o modal fechar não marca nada.
+  const aberturaNovidades = useRef(0)
   const totalNovidades = novidades.itens.length
   const rotuloNovidades =
     totalNovidades > 0 ? `Novidades: ${totalNovidades} ${totalNovidades === 1 ? 'nova' : 'novas'}` : 'Novidades'
@@ -169,13 +172,22 @@ function Layout({ children }: PropriedadesLayout) {
     introducao.abrir()
   }
 
-  function abrirNovidades() {
-    setNovidadesAbertas(novidades.itens)
-    novidades.marcarComoVistas()
+  async function abrirNovidades() {
+    const abertura = ++aberturaNovidades.current
+    setNovidadesAbertas('buscando')
+    const { itens, ate } = await novidades.buscarParaAbrir()
+    if (aberturaNovidades.current !== abertura) return
+    setNovidadesAbertas(itens)
+    if (ate) novidades.marcarComoVistas(ate)
+  }
+
+  function fecharNovidades() {
+    aberturaNovidades.current++
+    setNovidadesAbertas(null)
   }
 
   function abrirNovidade(item: Novidade) {
-    setNovidadesAbertas(null)
+    fecharNovidades()
     fecharMenu()
     navegar(item.destino)
   }
@@ -361,10 +373,11 @@ function Layout({ children }: PropriedadesLayout) {
             <div className="flex items-center justify-end gap-1">
               <button
                 type="button"
-                onClick={abrirNovidades}
+                onClick={() => void abrirNovidades()}
+                disabled={!novidades.pronto}
                 title={rotuloNovidades}
                 aria-label={rotuloNovidades}
-                className="relative flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 lg:size-8 liquido:btn-icon"
+                className="relative flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700 disabled:pointer-events-none disabled:opacity-50 lg:size-8 liquido:btn-icon"
               >
                 <IconeSino tamanho={18} />
                 {totalNovidades > 0 && (
@@ -402,8 +415,8 @@ function Layout({ children }: PropriedadesLayout) {
       {alterandoSenha && <ModalAlterarSenha aoFechar={() => setAlterandoSenha(false)} />}
       {novidadesAbertas && (
         <ModalNovidades
-          itens={novidadesAbertas}
-          aoFechar={() => setNovidadesAbertas(null)}
+          itens={novidadesAbertas === 'buscando' ? null : novidadesAbertas}
+          aoFechar={fecharNovidades}
           aoAbrirItem={abrirNovidade}
         />
       )}

@@ -9,6 +9,7 @@ import { IconeEnviar, IconeFunil, IconeLupa } from '../../../shared/components/i
 import Skeleton from '../../../shared/components/Skeleton'
 import { useOrdenacaoClique } from '../../../shared/hooks/useOrdenacaoClique'
 import { useBaixarDocumento } from '../hooks/useBaixarDocumento'
+import { useDocumento } from '../hooks/useDocumento'
 import { useDocumentos } from '../hooks/useDocumentos'
 import { useSetoresDocumentos } from '../hooks/useSetoresDocumentos'
 import { ROTULOS_CATEGORIA, type CategoriaDocumento, type Documento } from '../types'
@@ -76,16 +77,17 @@ function PaginaDocumentos() {
   const [documentoPrevia, setDocumentoPrevia] = useState<Documento | null>(null)
   const [documentoHistorico, setDocumentoHistorico] = useState<Documento | null>(null)
 
-  // `?documento=<id>` (novidades do sino, GER-28): abre a prévia quando a lista chega, uma vez por
-  // navegação. Id que não está na lista é ignorado.
+  // `?documento=<id>` (novidades do sino, GER-28): abre a prévia uma vez por navegação. O
+  // documento é buscado pelo id: um filtro de setor ou categoria pode escondê-lo da lista, e a
+  // lista em cache pode ser de antes dele. Id que não existe é ignorado.
   const [parametros] = useSearchParams()
   const { key: chaveDaNavegacao } = useLocation()
   const documentoPedido = parametros.get('documento')
+  const { data: pedido } = useDocumento(documentoPedido)
   const [navegacaoAplicada, setNavegacaoAplicada] = useState<string | null>(null)
-  if (documentoPedido && documentos.length > 0 && navegacaoAplicada !== chaveDaNavegacao) {
+  if (pedido && pedido.id === documentoPedido && navegacaoAplicada !== chaveDaNavegacao) {
     setNavegacaoAplicada(chaveDaNavegacao)
-    const pedido = documentos.find((documento) => documento.id === documentoPedido)
-    if (pedido) setDocumentoPrevia(pedido)
+    setDocumentoPrevia(pedido)
   }
 
   const podeCriar = canGerenciarConteudo(usuario)
