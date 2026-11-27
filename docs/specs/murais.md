@@ -255,8 +255,8 @@ feature `murais`. Substitui CAL-08.
 - Visões de dia, semana, mês e ano, com navegação para períodos anterior/seguinte; a consulta usa
   MUR-12 com o intervalo da visão atual.
 - Evento de vários dias aparece em todos os dias que cobre.
-- **Dado** a visão de dia, **então** ela mostra as 24 horas, de `00:00` a `23:00`, com ou sem
-  eventos. A visão de semana continua na faixa de 07:00 a 19:00, ampliada só para caber os eventos.
+- **Dado** a visão de dia ou de semana, **então** ela mostra as 24 horas, de `00:00` a `23:00`, com
+  ou sem eventos, e cada evento fica na linha da hora em que começa.
 - Clicar num evento abre o **mesmo detalhe do aviso** do mural (capa, conteúdo, anexos), com
   editar/excluir para quem pode gerenciar (GER-12).
 - Painéis de próximos eventos e de aniversariantes do mês (MUR-13).
