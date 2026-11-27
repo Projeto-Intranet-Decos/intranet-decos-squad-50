@@ -123,6 +123,9 @@ export function tituloDoPeriodo(data: Date, visao: VisaoCalendario): string {
   return `${inicio.getDate()}–${fim.getDate()} ${mesFim} ${fim.getFullYear()}`
 }
 
+/** A visão de dia mostra o dia inteiro (MUR-15); a de semana usa `faixaDeHoras`. */
+export const HORAS_DO_DIA = Array.from({ length: 24 }, (_, hora) => hora)
+
 export function faixaDeHoras(eventos: Evento[]): number[] {
   let inicial = HORA_INICIAL_PADRAO
   let final = HORA_FINAL_PADRAO
