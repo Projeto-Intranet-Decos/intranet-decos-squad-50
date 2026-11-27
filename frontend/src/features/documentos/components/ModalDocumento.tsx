@@ -12,7 +12,7 @@ import { ROTULOS_CATEGORIA, type CategoriaDocumento, type Documento, type Setor 
 
 // Espelha TIPOS_DOCUMENTO e tamanho_maximo_upload_mb do backend; a validação
 // real é lá, aqui é só pra avisar antes de subir o arquivo.
-const TAMANHO_MAXIMO_MB = 50
+const TAMANHO_MAXIMO_MB = 10
 const EXTENSOES_ACEITAS = [
   'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp', 'txt', 'png', 'jpg', 'jpeg',
 ]

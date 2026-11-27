@@ -15,7 +15,8 @@ server {
 
     # Upload de documentos e de capa/anexos de aviso passa por aqui. A criação de aviso manda
     # capa e todos os anexos numa requisição só, então o total precisa caber neste limite
-    # (o frontend confere antes de enviar). Tem que bater com MAX_UPLOAD_SIZE_MB do backend.
+    # (o frontend confere antes de enviar). Cada arquivo tem o limite menor de MAX_UPLOAD_SIZE_MB
+    # do backend (10 MB, GER-06); este é o teto da requisição inteira.
     client_max_body_size 50m;
 
     # As variáveis de ambiente API_URL e NGINX_LOCAL_RESOLVERS são preenchidas pela imagem do

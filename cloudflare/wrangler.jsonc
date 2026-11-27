@@ -57,8 +57,8 @@
 		"AWS_ENDPOINT_URL": "https://fad69c06e78fbe7b540d9cf8220c78b3.r2.cloudflarestorage.com",
 		"AWS_S3_BUCKET_NAME": "intranet",
 		"AWS_DEFAULT_REGION": "auto",
-		// O Worker aceita até 100 MB por requisição; o limite do backend fica abaixo disso.
-		"MAX_UPLOAD_SIZE_MB": "50",
+		// Limite por arquivo (GER-06). O Worker aceita até 100 MB por requisição.
+		"MAX_UPLOAD_SIZE_MB": "10",
 		"EMAIL_PROVIDER": "resend",
 		"EMAIL_FROM": "Intranet do Hospital <nao-responda@contato.projetodecos.online>",
 		"FRONTEND_URL": "https://projetodecos.online",

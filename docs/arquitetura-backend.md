@@ -87,7 +87,8 @@ A capa é o único arquivo servido **sem autenticação** (`GET /murais/avisos/{
 conteúdo institucional que todo colaborador já vê, o id do aviso é um UUID que não dá para
 adivinhar, e a tag `<img>` não envia o header `Authorization`. Os anexos seguem a regra dos
 documentos: download autenticado, via stream. Capa aceita png/jpg/webp até 5 MB; anexos usam
-a mesma lista de tipos e o mesmo `MAX_UPLOAD_SIZE_MB` dos documentos, até 10 por aviso.
+a mesma lista de tipos e o mesmo `MAX_UPLOAD_SIZE_MB` dos documentos (10 MB por arquivo), até 10
+por aviso.
 Ao excluir o aviso, a FK com `ON DELETE CASCADE` apaga os anexos no banco e depois todos os
 objetos do aviso são removidos do bucket.
 
