@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../App'
 import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
 import { marcarIntroducaoVista } from '../introducao/useIntroducao'
+import { entrarComToken } from './useAuth'
 
 vi.mock('../../features/atalhos/api', async (original) => ({
   ...(await original<typeof import('../../features/atalhos/api')>()),
@@ -17,7 +18,7 @@ vi.mock('../../features/murais/api', async (original) => ({
 }))
 
 function entrarComo(role: string) {
-  localStorage.setItem('intranet:token', tokenDeAcessoFalso({ sub: 'u1', nome: 'Pessoa', role, setor_id: null }))
+  entrarComToken(tokenDeAcessoFalso({ sub: 'u1', nome: 'Pessoa', role, setor_id: null }))
 }
 
 function montar(rota: string) {

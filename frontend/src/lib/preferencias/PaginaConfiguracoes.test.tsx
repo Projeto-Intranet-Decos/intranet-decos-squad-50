@@ -7,6 +7,7 @@ import { simularConsultasDeMidia, simularNavegador } from '../../testes/apoio'
 import { isIntroducaoVista, marcarIntroducaoVista } from '../introducao/useIntroducao'
 import PaginaConfiguracoes from './PaginaConfiguracoes'
 import { CHAVE_PREFERENCIAS, PREFERENCIAS_PADRAO, definirPreferencias, iniciarPreferencias, obterPreferencias } from './preferencias'
+import { entrarComToken, limparTokens } from '../auth/useAuth'
 
 vi.mock('../../features/atalhos/api', async (original) => ({
   ...(await original<typeof import('../../features/atalhos/api')>()),
@@ -28,7 +29,7 @@ describe('GER-14 — página Configurações', () => {
   })
 
   it('colaborador comum abre /configuracoes e encontra o item no menu lateral', () => {
-    localStorage.setItem('intranet:token', tokenDe('comum'))
+    entrarComToken(tokenDe('comum'))
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
 
     render(
@@ -127,7 +128,7 @@ describe('GER-14 — página Configurações', () => {
   })
 
   it('GER-23 — usuário logado desliga e religa a introdução pelo interruptor', () => {
-    localStorage.setItem('intranet:token', tokenDe('comum'))
+    entrarComToken(tokenDe('comum'))
     localStorage.removeItem('intranet:introducao:1')
     render(<PaginaConfiguracoes />)
     const interruptor = () => screen.getByRole('switch', { name: 'Mostrar introdução ao entrar' }) as HTMLInputElement
@@ -144,7 +145,7 @@ describe('GER-14 — página Configurações', () => {
   })
 
   it('GER-23 — o visitante não vê o interruptor da introdução', () => {
-    localStorage.removeItem('intranet:token')
+    limparTokens()
     render(<PaginaConfiguracoes />)
 
     expect(screen.queryByRole('switch', { name: 'Mostrar introdução ao entrar' })).toBeNull()

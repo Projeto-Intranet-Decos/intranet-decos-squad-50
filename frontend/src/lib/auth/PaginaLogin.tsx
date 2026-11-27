@@ -1,12 +1,16 @@
 import { useMutation } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { api } from '../api'
+import { lerErroDaApi } from '../../shared/erros'
+import { entrarComSenha } from './api'
 import CampoAcesso from './CampoAcesso'
 import { BOTAO_ACESSO } from './estilos'
 import LayoutAcesso from './LayoutAcesso'
 import { useAuth } from './useAuth'
+
+const MENSAGEM_NEUTRA = 'E-mail ou senha inválidos.'
 
 interface FormularioLogin {
   email: string
@@ -21,13 +25,18 @@ function PaginaLogin() {
   const origem = (useLocation().state as { de?: string } | null)?.de
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (dados: FormularioLogin) =>
-      api.post<{ access_token: string; refresh_token: string }>('/auth/login', dados),
-    onSuccess: (resposta) => {
-      entrar(resposta.data.access_token, resposta.data.refresh_token)
+    mutationFn: entrarComSenha,
+    onSuccess: (sessao) => {
+      entrar(sessao.accessToken)
       navegar(origem ?? '/mural')
     },
-    onError: () => toast.error('E-mail ou senha inválidos.'),
+    onError: (erro: unknown) => {
+      // 429 (AUT-11) explica o bloqueio; o resto fica na mensagem neutra, que não diz o que falhou.
+      const bloqueado = isAxiosError(erro) && erro.response?.status === 429
+      toast.error(
+        bloqueado ? lerErroDaApi(erro, MENSAGEM_NEUTRA).mensagem : MENSAGEM_NEUTRA,
+      )
+    },
   })
 
   return (

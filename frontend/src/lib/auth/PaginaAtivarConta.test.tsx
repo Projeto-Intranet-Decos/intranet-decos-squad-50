@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { erroDaApi, tokenDeAcessoFalso as tokenDeAcesso } from '../../testes/apoio'
 import * as authApi from './api'
 import PaginaAtivarConta from './PaginaAtivarConta'
+import { entrarComToken, obterToken } from './useAuth'
 
 vi.mock('./api')
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
@@ -15,7 +16,6 @@ const CONVITE: authApi.DadosConvite = { email: 'maria@example.com', nome: 'Maria
 
 const SESSAO: authApi.SessaoNova = {
   accessToken: tokenDeAcesso({ sub: 'maria', role: 'comum', setor_id: null }),
-  refreshToken: 'refresh-novo',
 }
 
 function Endereco() {
@@ -67,8 +67,7 @@ describe('AUT-08 — página do magic link', () => {
   })
 
   it('ao confirmar, troca a sessão que estava no navegador pela nova', async () => {
-    localStorage.setItem('intranet:token', tokenDeAcesso({ sub: 'outra-pessoa', role: 'superadmin', setor_id: null }))
-    localStorage.setItem('intranet:refresh_token', 'refresh-antigo')
+    entrarComToken(tokenDeAcesso({ sub: 'outra-pessoa', role: 'superadmin', setor_id: null }))
     vi.mocked(authApi.verificarConvite).mockResolvedValue(CONVITE)
     vi.mocked(authApi.aceitarConvite).mockResolvedValue(SESSAO)
     const interagir = montar()
@@ -77,8 +76,8 @@ describe('AUT-08 — página do magic link', () => {
     await interagir.click(screen.getByRole('button', { name: 'Ativar conta' }))
 
     expect(await screen.findByText('Mural')).toBeTruthy()
-    expect(localStorage.getItem('intranet:token')).toBe(SESSAO.accessToken)
-    expect(localStorage.getItem('intranet:refresh_token')).toBe('refresh-novo')
+    expect(obterToken()).toBe(SESSAO.accessToken)
+    expect(localStorage.getItem('intranet:sessao')).not.toBeNull()
   })
 })
 

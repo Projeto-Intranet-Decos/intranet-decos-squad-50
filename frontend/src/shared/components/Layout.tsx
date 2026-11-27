@@ -6,6 +6,7 @@ import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
 import { useAtalhos } from '../../features/atalhos/hooks/useAtalhos'
 import { renovarAccessToken } from '../../lib/api'
 import ModalAlterarSenha from '../../lib/auth/ModalAlterarSenha'
+import { sairDaConta } from '../../lib/auth/sessao'
 import { useAuth } from '../../lib/auth/useAuth'
 import Introducao from '../../lib/introducao/Introducao'
 import { montarPassos } from '../../lib/introducao/passos'
@@ -108,7 +109,7 @@ function Layout({ children }: PropriedadesLayout) {
   const [menuAberto, setMenuAberto] = useState(false)
   const [alterandoSenha, setAlterandoSenha] = useState(false)
   const desktop = useConsultaDeMidia(CONSULTA_DESKTOP)
-  const { usuario, sair } = useAuth()
+  const { usuario } = useAuth()
   const navegar = useNavigate()
   const { pathname } = useLocation()
   const menuRef = useRef<HTMLElement>(null)
@@ -161,7 +162,7 @@ function Layout({ children }: PropriedadesLayout) {
   }
 
   function aoSair() {
-    sair()
+    void sairDaConta()
     navegar('/mural', { replace: true })
   }
 

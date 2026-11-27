@@ -6,13 +6,13 @@ import { toast } from 'sonner'
 import { erroDaApi, tokenDeAcessoFalso } from '../../testes/apoio'
 import * as authApi from './api'
 import ModalAlterarSenha from './ModalAlterarSenha'
+import { obterToken } from './useAuth'
 
 vi.mock('./api')
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const SESSAO: authApi.SessaoNova = {
   accessToken: tokenDeAcessoFalso({ sub: 'maria', role: 'comum', setor_id: null }),
-  refreshToken: 'refresh-novo',
 }
 
 function montar() {
@@ -34,7 +34,6 @@ afterEach(() => {
 
 describe('USU-07 — alterar senha logado', () => {
   it('troca a senha, grava os tokens novos e fecha', async () => {
-    localStorage.setItem('intranet:refresh_token', 'refresh-antigo')
     vi.mocked(authApi.trocarSenha).mockResolvedValue(SESSAO)
     const { interagir, aoFechar } = montar()
 
@@ -43,8 +42,8 @@ describe('USU-07 — alterar senha logado', () => {
 
     await waitFor(() => expect(aoFechar).toHaveBeenCalled())
     expect(authApi.trocarSenha).toHaveBeenCalledWith({ senhaAtual: 'senha-atual-1', senhaNova: 'senha-nova-123' })
-    expect(localStorage.getItem('intranet:token')).toBe(SESSAO.accessToken)
-    expect(localStorage.getItem('intranet:refresh_token')).toBe('refresh-novo')
+    expect(obterToken()).toBe(SESSAO.accessToken)
+    expect(localStorage.getItem('intranet:sessao')).not.toBeNull()
     expect(toast.success).toHaveBeenCalledWith('Senha alterada. As outras sessões foram encerradas.')
   })
 

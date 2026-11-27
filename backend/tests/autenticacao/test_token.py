@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from app.core.security import decodificar_token
 from app.modules.setores.models import Setor
 from app.modules.usuarios.models import Papel
-from tests.apoio import SENHA_PADRAO, Fabrica
+from tests.apoio import SENHA_PADRAO, Fabrica, refresh_do_cookie, renovar
 
 
 def test_aut03_access_token_traz_id_nome_papel_e_setor(cliente: TestClient, fabrica: Fabrica, setor: Setor):
@@ -23,12 +23,12 @@ def test_aut03_access_token_traz_id_nome_papel_e_setor(cliente: TestClient, fabr
 
 def test_aut03_token_renovado_traz_o_nome_atual(cliente: TestClient, fabrica: Fabrica, sessao):
     usuario = fabrica.usuario(nome="Nome Antigo", email="nome@example.com")
-    refresh_token = cliente.post(
-        "/auth/login", json={"email": usuario.email, "senha": SENHA_PADRAO}
-    ).json()["refresh_token"]
+    refresh_token = refresh_do_cookie(
+        cliente.post("/auth/login", json={"email": usuario.email, "senha": SENHA_PADRAO})
+    )
     usuario.nome = "Nome Novo"
     sessao.flush()
 
-    resposta = cliente.post("/auth/refresh", json={"refresh_token": refresh_token})
+    resposta = renovar(cliente, refresh_token)
 
     assert decodificar_token(resposta.json()["access_token"])["nome"] == "Nome Novo"

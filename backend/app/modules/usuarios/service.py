@@ -17,6 +17,8 @@ from app.modules.usuarios.models import Papel, Usuario
 
 EMAIL_DUPLICADO = {"campo": "email", "mensagem": "Já existe um usuário com esse e-mail"}
 SETOR_INEXISTENTE = {"campo": "setor_id", "mensagem": "Setor não encontrado"}
+PROPRIA_CONTA_NA_DESATIVACAO = "Você não pode desativar a própria conta"
+PROPRIA_CONTA_NA_EDICAO = "Você não pode desativar nem rebaixar a própria conta"
 
 CONFLITOS = {
   "uq_usuarios_email": EMAIL_DUPLICADO,
@@ -112,6 +114,11 @@ def atualizar_usuario(
   campos = dados.model_dump(exclude_unset=True)
   if "role" in campos:
     _garantir_papel_permitido(ator, campos["role"])
+  # Quem se rebaixa ou se desativa pode ser o último superadmin (USU-03, USU-04).
+  if usuario.id == ator.id and (
+    campos.get("ativo") is False or campos.get("role", usuario.role) != usuario.role
+  ):
+    raise HTTPException(status.HTTP_409_CONFLICT, PROPRIA_CONTA_NA_EDICAO)
   # Link mandado pro e-mail antigo não pode ativar/redefinir a conta do novo (AUT-08).
   if "email" in campos and campos["email"] != usuario.email:
     autenticacao_service.invalidar_links(sessao, usuario)
@@ -127,6 +134,8 @@ def desativar_usuario(
 ) -> Usuario:
   usuario = _buscar(sessao, usuario_id)
   _garantir_alvo_permitido(ator, usuario)
+  if usuario.id == ator.id:
+    raise HTTPException(status.HTTP_409_CONFLICT, PROPRIA_CONTA_NA_DESATIVACAO)
   usuario.ativo = False
   autenticacao_service.invalidar_links(sessao, usuario)
   # Usuário não é apagado, só desativado: para a auditoria isso é a exclusão (USU-04).

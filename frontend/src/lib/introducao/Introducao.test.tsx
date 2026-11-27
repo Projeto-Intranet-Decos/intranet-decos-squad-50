@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Layout from '../../shared/components/Layout'
 import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
+import { entrarComToken } from '../auth/useAuth'
 import { definirIntroducaoDesativada, marcarIntroducaoVista } from './useIntroducao'
 
 vi.mock('../../features/atalhos/api', async (original) => ({
@@ -12,7 +13,7 @@ vi.mock('../../features/atalhos/api', async (original) => ({
 }))
 
 function entrarComo(id: string, nome: string) {
-  localStorage.setItem('intranet:token', tokenDeAcessoFalso({ sub: id, nome, role: 'comum', setor_id: 's1' }))
+  entrarComToken(tokenDeAcessoFalso({ sub: id, nome, role: 'comum', setor_id: 's1' }))
 }
 
 function montar() {

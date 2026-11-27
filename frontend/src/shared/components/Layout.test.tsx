@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { definirPreferencias, iniciarPreferencias } from '../../lib/preferencias/preferencias'
 import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
 import estilos from '../../index.css?raw'
-import { salvarAccessToken } from '../../lib/auth/useAuth'
+import { entrarComToken, salvarAccessToken } from '../../lib/auth/useAuth'
 import { marcarIntroducaoVista } from '../../lib/introducao/useIntroducao'
 import Layout from './Layout'
 
@@ -57,7 +57,7 @@ function irParaDocumentos() {
 describe('GER-17 — transição entre páginas', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
-    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    entrarComToken(`cabecalho.${carga}.assinatura`)
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
     iniciarPreferencias()
   })
@@ -122,7 +122,7 @@ function fundoDoUtilitario(nome: string) {
 describe('GER-01 — rótulos do menu em frase normal no Vidro líquido', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'superadmin', setor_id: null }))
-    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    entrarComToken(`cabecalho.${carga}.assinatura`)
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
     iniciarPreferencias()
   })
@@ -141,7 +141,7 @@ describe('GER-01 — rótulos do menu em frase normal no Vidro líquido', () => 
 describe('GER-19 — seções colapsáveis do menu lateral', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'superadmin', setor_id: null }))
-    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    entrarComToken(`cabecalho.${carga}.assinatura`)
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
     iniciarPreferencias()
   })
@@ -182,7 +182,7 @@ describe('GER-19 — seções colapsáveis do menu lateral', () => {
 describe('GER-01 — menu em tela cheia abaixo de 1024px', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
-    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    entrarComToken(`cabecalho.${carga}.assinatura`)
     simularConsultasDeMidia(() => false)
     iniciarPreferencias()
   })
@@ -214,7 +214,7 @@ describe('GER-01 — menu em tela cheia abaixo de 1024px', () => {
 describe('GER-01 🐞 — menu sem botão de fechar no desktop', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
-    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    entrarComToken(`cabecalho.${carga}.assinatura`)
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
     iniciarPreferencias()
   })
@@ -230,7 +230,7 @@ describe('GER-01 🐞 — menu sem botão de fechar no desktop', () => {
 describe('GER-18 — vidro do menu e da barra superior', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
-    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    entrarComToken(`cabecalho.${carga}.assinatura`)
     simularConsultasDeMidia(() => false)
     iniciarPreferencias()
   })
@@ -250,7 +250,7 @@ describe('GER-18 — vidro do menu e da barra superior', () => {
 describe('USU-07 — botão de alterar senha', () => {
   beforeEach(() => {
     const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
-    localStorage.setItem('intranet:token', `cabecalho.${carga}.assinatura`)
+    entrarComToken(`cabecalho.${carga}.assinatura`)
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
     iniciarPreferencias()
   })
@@ -266,7 +266,7 @@ describe('USU-07 — botão de alterar senha', () => {
 
 describe('AUT-03 — indicador do usuário logado', () => {
   function entrarComo(carga: object) {
-    localStorage.setItem('intranet:token', tokenDeAcessoFalso(carga))
+    entrarComToken(tokenDeAcessoFalso(carga))
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
     iniciarPreferencias()
     render(<Aplicacao />)
@@ -294,7 +294,7 @@ describe('AUT-03 🐞 — indicador acompanha o token', () => {
   })
 
   it('token renovado atualiza o indicador sem recarregar a página', async () => {
-    localStorage.setItem('intranet:token', tokenDeAcessoFalso({ sub: '1', nome: 'Nome Antigo', role: 'comum', setor_id: null }))
+    entrarComToken(tokenDeAcessoFalso({ sub: '1', nome: 'Nome Antigo', role: 'comum', setor_id: null }))
     render(<Aplicacao />)
     expect(screen.getByText('Nome Antigo')).toBeTruthy()
 
@@ -305,7 +305,7 @@ describe('AUT-03 🐞 — indicador acompanha o token', () => {
 
   it('token emitido antes do nome é renovado na hora e o nome aparece', async () => {
     renovacao.token = tokenDeAcessoFalso({ sub: '1', nome: 'Maria Silva', role: 'comum', setor_id: null })
-    localStorage.setItem('intranet:token', tokenDeAcessoFalso({ sub: '1', role: 'comum', setor_id: null }))
+    entrarComToken(tokenDeAcessoFalso({ sub: '1', role: 'comum', setor_id: null }))
 
     render(<Aplicacao />)
 
