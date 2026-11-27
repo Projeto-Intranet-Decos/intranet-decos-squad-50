@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { formatarHora } from '../formatadores'
-import { DIAS_SEMANA, chaveDeData, comecaNoDia, diasDaSemana, faixaDeHoras, rotuloHora } from '../formatadoresCalendario'
+import { DIAS_SEMANA, HORAS_DO_DIA, chaveDeData, comecaNoDia, diasDaSemana, rotuloHora } from '../formatadoresCalendario'
 import type { Aniversariante, Evento } from '../types'
 
 interface PropriedadesVisaoSemana {
@@ -25,7 +25,6 @@ function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento 
       aniversariantes: aniversariantesDoDia(dia),
     }
   })
-  const horas = faixaDeHoras(colunas.flatMap((coluna) => coluna.eventos))
   const temDiaTodo = colunas.some(
     (coluna) => coluna.aniversariantes.length > 0 || coluna.continuacoes.length > 0,
   )
@@ -88,7 +87,7 @@ function VisaoSemana({ data, eventosPorDia, aniversariantesDoDia, aoAbrirEvento 
           </>
         )}
 
-        {horas.map((hora) => (
+        {HORAS_DO_DIA.map((hora) => (
           <Fragment key={hora}>
             <span className={classesRotulo}>{rotuloHora(hora)}</span>
             {colunas.map((coluna, indice) => (

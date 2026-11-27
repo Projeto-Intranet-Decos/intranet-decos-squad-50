@@ -9,9 +9,6 @@ export const DIAS_SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 
 const NOMES_DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
-const HORA_INICIAL_PADRAO = 7
-const HORA_FINAL_PADRAO = 19
-
 function doisDigitos(valor: number): string {
   return String(valor).padStart(2, '0')
 }
@@ -123,19 +120,8 @@ export function tituloDoPeriodo(data: Date, visao: VisaoCalendario): string {
   return `${inicio.getDate()}–${fim.getDate()} ${mesFim} ${fim.getFullYear()}`
 }
 
-/** A visão de dia mostra o dia inteiro (MUR-15); a de semana usa `faixaDeHoras`. */
+/** As visões de dia e de semana mostram o dia inteiro (MUR-15). */
 export const HORAS_DO_DIA = Array.from({ length: 24 }, (_, hora) => hora)
-
-export function faixaDeHoras(eventos: Evento[]): number[] {
-  let inicial = HORA_INICIAL_PADRAO
-  let final = HORA_FINAL_PADRAO
-  for (const evento of eventos) {
-    const hora = new Date(evento.dataInicio).getHours()
-    inicial = Math.min(inicial, hora)
-    final = Math.max(final, hora)
-  }
-  return Array.from({ length: final - inicial + 1 }, (_, indice) => inicial + indice)
-}
 
 /** Evento de vários dias entra em todos os dias que cobre (MUR-15). */
 export function agruparEventosPorDia(eventos: Evento[]): Map<string, Evento[]> {
