@@ -6,6 +6,7 @@ import type { Documento } from '../../features/documentos/types'
 import type { Aviso } from '../../features/murais/types'
 import Layout from '../../shared/components/Layout'
 import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
+import { entrarComToken } from '../auth/useAuth'
 import { marcarIntroducaoVista } from '../introducao/useIntroducao'
 import { iniciarPreferencias } from '../preferencias/preferencias'
 
@@ -84,7 +85,7 @@ describe('GER-28 — novidades desde a última visita', () => {
     dados.vistasEm = '2026-11-20T00:00:00Z'
     dados.avisos = []
     dados.documentos = []
-    localStorage.setItem('intranet:token', tokenDeAcessoFalso({ sub: EU, nome: 'Eu', role: 'comum', setor_id: null }))
+    entrarComToken(tokenDeAcessoFalso({ sub: EU, nome: 'Eu', role: 'comum', setor_id: null }))
     marcarIntroducaoVista(EU)
     simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
     iniciarPreferencias()
