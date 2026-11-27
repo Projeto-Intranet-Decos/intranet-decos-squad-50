@@ -22,9 +22,11 @@ export const EXTENSOES_ANEXO = [
   '.odt', '.ods', '.odp', '.txt', '.png', '.jpg', '.jpeg',
 ]
 export const MAXIMO_ANEXOS = 10
-// MAX_UPLOAD_SIZE_MB do backend e client_max_body_size do nginx: vale por arquivo e
-// também para a requisição inteira, que na criação leva capa e anexos juntos.
-export const LIMITE_UPLOAD_MB = 50
+// MAX_UPLOAD_SIZE_MB do backend: vale para cada anexo (GER-06).
+export const LIMITE_UPLOAD_MB = 10
+// client_max_body_size do nginx: vale para a requisição inteira, que na criação leva capa e
+// anexos juntos.
+export const LIMITE_ENVIO_MB = 50
 
 export interface Anexo {
   id: string

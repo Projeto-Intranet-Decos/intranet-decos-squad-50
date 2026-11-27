@@ -15,6 +15,7 @@ import { formatarTamanhoArquivo } from '../formatadores'
 import { combinarDataHora, separarDataHora } from '../formatadoresCalendario'
 import {
   EXTENSOES_ANEXO,
+  LIMITE_ENVIO_MB,
   LIMITE_IMAGEM_MB,
   LIMITE_UPLOAD_MB,
   MAXIMO_ANEXOS,
@@ -186,8 +187,8 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
     const tamanhoEnvio =
       anexosNovos.reduce((total, arquivo) => total + arquivo.size, 0) +
       (imagemNova && !editando ? imagemNova.arquivo.size : 0)
-    if (tamanhoEnvio > LIMITE_UPLOAD_MB * MB) {
-      toast.error(`Os arquivos somam mais de ${LIMITE_UPLOAD_MB} MB. Envie menos de uma vez.`)
+    if (tamanhoEnvio > LIMITE_ENVIO_MB * MB) {
+      toast.error(`Os arquivos somam mais de ${LIMITE_ENVIO_MB} MB. Envie menos de uma vez.`)
       return
     }
 

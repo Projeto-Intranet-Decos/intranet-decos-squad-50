@@ -122,7 +122,7 @@ Todo erro da API tem corpo `{ "campo"?: string, "mensagem": string }`.
   servidor"}` em JSON, sem detalhe da exceção; o traceback vai só para o log técnico.
 
 ### GER-06 — Upload e download de arquivos
-Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
+Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
 
 - O tipo do arquivo é decidido **pela extensão**, numa lista fechada (`core/arquivos.py`), nunca
   pelo `content-type` enviado pelo cliente.
@@ -137,8 +137,13 @@ Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste ⬜
   **então** `415 {"campo": <campo>, "mensagem": "O conteúdo do arquivo não corresponde à
   extensão"}` e nada é gravado. Na capa do aviso a mensagem é a do MUR-04, "Arquivo não é uma
   imagem válida". (Auditoria OWASP, A06.)
-- Limite geral `MAX_UPLOAD_SIZE_MB` (padrão 50 MB), igual ao `client_max_body_size` do
-  nginx. O frontend valida tipo e tamanho antes de enviar (só UX).
+- Limite **por arquivo** `MAX_UPLOAD_SIZE_MB`, padrão **10 MB**, igual para documentos e anexos de
+  aviso. A capa tem limite próprio de 5 MB (MUR-04).
+  - **Dado** um documento ou anexo de aviso com 10 MB, **então** é aceito; **dado** um com mais de
+    10 MB, **então** `413 "Arquivo maior que o limite de 10 MB"`.
+- A requisição inteira tem o teto de 50 MB do `client_max_body_size` do nginx: pesa quando um aviso
+  é enviado com vários anexos de uma vez.
+- O frontend valida tipo e tamanho antes de enviar (só UX) e mostra o limite na área de envio.
 - Download passa pelo backend em stream (MinIO não é exposto ao navegador), com
   `Content-Disposition` preservando o nome original com acentos (RFC 5987), `Content-Length` e
   `X-Content-Type-Options: nosniff`.

@@ -228,3 +228,43 @@ def test_ger27_capa_do_aviso_mantem_o_proprio_cache(cliente: TestClient, admin_s
 
     assert resposta.headers["Cache-Control"] == "public, max-age=31536000, immutable"
     assert resposta.headers["X-Content-Type-Options"] == "nosniff"
+
+
+MB = 1024 * 1024
+
+
+def pdf_de(tamanho: int) -> bytes:
+    """PDF com assinatura válida (GER-06) e exatamente `tamanho` bytes."""
+    return (b"%PDF-1.7\n" + b"x" * tamanho)[:tamanho]
+
+
+def test_ger06_limite_padrao_por_arquivo_e_10_mb():
+    from app.core.config import Configuracoes
+
+    assert Configuracoes(_env_file=None, postgres_password="x").tamanho_maximo_upload_mb == 10
+
+
+def test_ger06_documento_de_10_mb_e_aceito(cliente: TestClient, admin_setor: Usuario):
+    resposta = enviar_documento(cliente, admin_setor, "manual.pdf", pdf_de(10 * MB))
+
+    assert resposta.status_code == 201
+
+
+def test_ger06_documento_acima_de_10_mb_retorna_413(cliente: TestClient, admin_setor: Usuario):
+    resposta = enviar_documento(cliente, admin_setor, "manual.pdf", pdf_de(10 * MB + 1))
+
+    assert resposta.status_code == 413
+    assert resposta.json() == {"campo": "arquivo", "mensagem": "Arquivo maior que o limite de 10 MB"}
+
+
+def test_ger06_anexo_de_aviso_acima_de_10_mb_retorna_413(cliente: TestClient, admin_setor: Usuario):
+    resposta = cliente.post(
+        "/murais/avisos",
+        data={"titulo": "Escala de dezembro", "conteudo": "Segue a escala."},
+        files={"anexos": ("escala.pdf", pdf_de(10 * MB + 1), "application/pdf")},
+        headers=autenticar(admin_setor),
+    )
+
+    assert resposta.status_code == 413
+    assert resposta.json()["mensagem"] == "Arquivo maior que o limite de 10 MB"
+    assert cliente.get("/murais/avisos").json() == []

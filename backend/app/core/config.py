@@ -62,8 +62,9 @@ class Configuracoes(BaseSettings):
         default=None, validation_alias="AWS_S3_FORCE_PATH_STYLE"
     )
 
-    # Tem que bater com o client_max_body_size do frontend/nginx.conf.template.
-    tamanho_maximo_upload_mb: int = Field(default=50, validation_alias="MAX_UPLOAD_SIZE_MB")
+    # Por arquivo (documento ou anexo de aviso, GER-06). A requisição inteira tem o teto do
+    # client_max_body_size do frontend/nginx.conf.template, que precisa ficar acima deste.
+    tamanho_maximo_upload_mb: int = Field(default=10, validation_alias="MAX_UPLOAD_SIZE_MB")
 
     # E-mail (GER-22). "console" só escreve o e-mail no log; "resend" envia de verdade.
     email_provedor: Literal["console", "resend"] = Field(
