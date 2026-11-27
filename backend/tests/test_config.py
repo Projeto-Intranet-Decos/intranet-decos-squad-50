@@ -113,7 +113,7 @@ def test_ger24_jwt_secret_com_32_bytes_vale():
     assert configuracoes.jwt_secret == "x" * 32
 
 
-def test_ger23_documentacao_da_api_desligada_por_padrao(monkeypatch: pytest.MonkeyPatch):
+def test_ger27_documentacao_da_api_desligada_por_padrao(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("API_DOCS", raising=False)
     assert Configuracoes(_env_file=None, postgres_password="senha").documentacao_api is False
 

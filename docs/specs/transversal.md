@@ -35,6 +35,8 @@ desktop (GER-15).
 - **Dado** uma tela abaixo de 1024px, **quando** o usuário abre o menu pela barra superior, **então**
   o menu cobre a tela toda (sem margem nem cantos arredondados) e tem um botão "Fechar menu", que o
   fecha e devolve o foco ao botão que o abriu. `Esc` e escolher um item também fecham.
+- 🐞 **Dado** uma tela a partir de 1024px, em qualquer estilo visual, **quando** o menu lateral
+  aparece, **então** ele não tem botão "Fechar menu" (no desktop o menu fica sempre à vista).
 
 ### GER-02 — Autenticação obrigatória
 Origem: [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
@@ -55,15 +57,24 @@ Toda rota da API exige access token válido, exceto: `POST /auth/login`, `POST /
 ### GER-03 — Papéis de acesso
 Origem: [ESP] [ENT] [CTX] · Back ✅ · Front ✅ · Teste 🟡
 
-Três papéis: `comum` (só lê), `admin_setor` (mantém conteúdo do próprio setor) e `superadmin`
-(nível sistêmico: único com acesso a Usuários, Registro de atividades e criação/edição/remoção de
-setores).
+Cinco papéis: `comum` (só lê), `admin_setor` (mantém conteúdo do próprio setor), `superadmin`
+(nível sistêmico: único com acesso a Registro de atividades e criação/edição/remoção de setores) e
+dois papéis **funcionais**, que fazem uma coisa só e leem como um `comum` no resto:
+
+- `marketing` — publica e mantém **avisos** (mural, MUR-03 a MUR-08) em qualquer setor; só edita e
+  exclui os avisos que ele mesmo criou. Não mexe em documentos, FAQ, ramais nem usuários.
+- `rh` — gerencia **usuários** (página Usuários, USU-01 a USU-04 e USU-08): lista, convida, edita e
+  desativa, com a trava de que nunca cria, promove nem altera um `superadmin`. Não vê o Registro de
+  atividades nem publica conteúdo.
 
 - Permissão que não depende do recurso é checada por dependency (`requer_admin`,
   `requer_superadmin`) e responde `403 {"mensagem": "Acesso negado"}` antes de qualquer
   processamento — inclusive antes de validar o recurso.
 - **Dado** um `comum`, **quando** chama qualquer endpoint de escrita de conteúdo, **então** `403`.
 - **Dado** um `admin_setor`, **quando** chama endpoint exclusivo de `superadmin`, **então** `403`.
+- **Dado** um `marketing`, **quando** chama escrita de documento, FAQ, ramal, setor ou usuário,
+  **então** `403`; **dado** um `rh`, **quando** chama escrita de aviso, documento, FAQ, ramal ou
+  setor, **então** `403`.
 
 ### GER-04 — Escopo por setor (escrita) e leitura institucional
 Origem: [CTX] [ENT] [COD] · Back ✅ · Front ✅ · Teste 🟡
@@ -79,6 +90,10 @@ Edição/exclusão (checagem no service, depois de buscar o recurso):
   `{"mensagem": "Fora do seu setor"}` e nada muda.
 - **Dado** um `superadmin`, **então** edita/exclui recurso de qualquer setor.
 - **Dado** um id inexistente, **então** `404` (a busca vem antes da checagem de escopo).
+
+Exceção — `marketing` (só avisos): cria em qualquer setor, como o `superadmin` (sem `setor_id`, usa o
+próprio; sem nenhum dos dois, `422`), mas só edita e exclui avisos em que é o **autor**; aviso de outra
+pessoa → `403 "Fora do seu setor"`. O `admin_setor` e o `superadmin` seguem as regras abaixo.
 
 Criação (`resolver_setor`):
 - **Dado** um `admin_setor`, **quando** cria sem `setor_id` ou com o próprio, **então** o recurso
@@ -220,9 +235,9 @@ com Postgres e armazenamento à parte. O nginx remove o prefixo `/api` e repassa
 - Segredos (senha do banco, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, `RESEND_API_KEY`) nunca aparecem na
   representação da configuração, que vai parar em tracebacks e erros de validação.
 - No compose, só o frontend (nginx) é publicado para a rede. Postgres, MinIO e a API ficam em
-  `127.0.0.1` do host: de fora, tudo passa pelo nginx (e pelos headers de GER-23).
+  `127.0.0.1` do host: de fora, tudo passa pelo nginx (e pelos headers de GER-27).
 - O nginx responde com `server_tokens off` e, em toda resposta (inclusive as de erro), os headers
-  de GER-23 mais `Content-Security-Policy` (só recursos da própria origem; `frame-ancestors 'none'`),
+  de GER-27 mais `Content-Security-Policy` (só recursos da própria origem; `frame-ancestors 'none'`),
   `Strict-Transport-Security` e `Permissions-Policy`.
 
 - ❓ Hospedagem em nuvem (citada pelo cliente) e MinIO self-hosted × gerenciado — a decidir.
@@ -431,16 +446,65 @@ Critérios:
 - ❓ Remetente: o Resend só envia de um domínio verificado (SPF e DKIM). Domínio do hospital ×
   domínio próprio do projeto — a combinar com a TI do hospital.
 
-### GER-23 — Superfície HTTP da API
+### GER-23 — Introdução
+Origem: pedido do time (2026-11-13) · Back — · Front ⬜ · Teste ⬜
+
+Na primeira vez que alguém abre a intranet, uma introdução passo a passo apresenta o menu lateral:
+destaca cada item e explica o que **aquele acesso** pode fazer na página (papéis do GER-03,
+visitante do AUT-10). Como as preferências (GER-14), fica no **navegador**: em `localStorage`, com
+uma chave por usuário (`intranet:introducao:<id do usuário>`, ou `intranet:introducao:visitante`),
+sem passar pelo backend.
+
+Passos, nesta ordem. Um passo cujo item não está na tela (ex: "Acesso rápido" sem nenhum atalho) é
+pulado.
+
+| Passo | Destaque | Visitante | `comum` | `admin_setor` | `superadmin` |
+|---|---|---|---|---|---|
+| Boas-vindas | nenhum (cartão no centro) | ✅ | ✅ | ✅ | ✅ |
+| Mural de avisos | item do menu | ler avisos e eventos | igual | + publicar avisos e eventos do próprio setor | + em qualquer setor |
+| Calendário | item do menu | ver os eventos nas datas | igual | + editar eventos do próprio setor | + de qualquer setor |
+| POPs & documentos | item do menu | — (exige entrar) | buscar e baixar | + publicar no próprio setor | + em qualquer setor |
+| Central de dúvidas | item do menu | consultar | igual | + cadastrar perguntas do próprio setor | + de qualquer setor |
+| Setores e ramais | item do menu | achar ramais | igual | + editar os ramais do próprio setor | + criar, renomear e excluir setores |
+| Administração | seção do menu | — | — | — | usuários e registro de atividades |
+| Acesso rápido | seção do menu | links externos | igual | igual | + gerenciar os atalhos |
+| Configurações | item do menu | — | ajustar o visual | igual | igual |
+| Sua conta | rodapé do menu | botão "Entrar" | alterar senha e sair | igual | igual |
+
+- **Dado** um usuário (ou visitante) que nunca concluiu nem pulou a introdução neste navegador,
+  **quando** abre uma página com o menu lateral, **então** a introdução começa pelo passo de
+  boas-vindas.
+- **Quando** ele conclui ou pula, **então** a introdução não aparece mais para ele neste navegador;
+  outro usuário no mesmo navegador ainda vê a sua.
+- **Dado** um visitante que já viu a versão de visitante, **quando** entra com login, **então** vê
+  a introdução do seu papel.
+- **Dado** um passo com destaque, **então** o item fica em destaque, o resto da tela escurece e um
+  cartão aparece ao lado com título, texto, a posição ("3 de 8") e os botões Anterior, Próximo e
+  Pular. No primeiro passo não há Anterior; no último, Próximo vira "Concluir".
+- **Dado** o texto de cada passo, **então** ele só cita ações que aquele acesso consegue fazer
+  (tabela acima): visitante e `comum` não leem sobre publicar nem editar.
+- **Dado** a tela abaixo de 1024px (menu em tela cheia, GER-18), **então** os passos aparecem como
+  cartões no centro, sem destaque.
+- **Dado** a introdução aberta, **então** o foco fica no cartão e `Esc` pula a introdução, como num
+  modal (GER-16).
+- **Dado** animações reduzidas (GER-14 ou `prefers-reduced-motion`), **então** a troca de passo é
+  imediata, sem animação.
+- **Quando** o usuário aciona "Ver introdução" no rodapé do menu, **então** a introdução recomeça
+  do início, mesmo já vista.
+- **Dado** o `localStorage` bloqueado (navegação privada), **então** a introdução aparece
+  normalmente e, depois de concluída ou pulada, só volta quando a página for recarregada.
+- **Dado** um usuário autenticado, **quando** abre Configurações (GER-14), **então** vê o interruptor
+  "Mostrar introdução ao entrar". **Quando** o desliga, **então** a introdução não abre mais sozinha
+  para ele (a chave do usuário passa a guardar `desativada`); "Ver introdução" no menu continua
+  funcionando. **Quando** o liga de novo, **então** a chave é apagada e a introdução volta a abrir
+  sozinha. O visitante (AUT-10) não vê o interruptor.
+
+### GER-24 — Segredo do JWT
 Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
 
-- **Dado** a configuração padrão, **quando** alguém abre `/docs`, `/redoc` ou `/openapi.json`,
-  **então** `404`. Com `API_DOCS=true` (só desenvolvimento) as três voltam.
-- **Dado** qualquer resposta da API, **então** ela traz `X-Content-Type-Options: nosniff`,
-  `X-Frame-Options: DENY` e `Referrer-Policy: no-referrer`.
-- **Dado** uma resposta que não define o próprio cache, **então** `Cache-Control: no-store` (dado de
-  colaborador não fica no cache do navegador do posto). A capa do aviso (MUR-09) mantém o
-  `Cache-Control` dela.
+- **Dado** `JWT_SECRET` com menos de 32 bytes ou igual ao valor de exemplo do `.env.example`
+  (`troque-este-segredo`), **então** a API não sobe (erro de configuração no startup, sem mostrar o
+  valor).
 
 ### GER-25 — Log técnico de segurança
 Origem: [COD] (auditoria OWASP, A09) · Back ✅ · Front — · Teste ✅
@@ -473,9 +537,13 @@ Origem: [COD] (auditoria OWASP, A03/A08) · Back ✅ · Front ✅ · Teste —
 - O Dependabot (`.github/dependabot.yml`) abre PRs semanais agrupados para pip, npm, Docker,
   compose e Actions; correção de segurança vem na hora.
 
-### GER-24 — Segredo do JWT
+### GER-27 — Superfície HTTP da API
 Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
 
-- **Dado** `JWT_SECRET` com menos de 32 bytes ou igual ao valor de exemplo do `.env.example`
-  (`troque-este-segredo`), **então** a API não sobe (erro de configuração no startup, sem mostrar o
-  valor).
+- **Dado** a configuração padrão, **quando** alguém abre `/docs`, `/redoc` ou `/openapi.json`,
+  **então** `404`. Com `API_DOCS=true` (só desenvolvimento) as três voltam.
+- **Dado** qualquer resposta da API, **então** ela traz `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY` e `Referrer-Policy: no-referrer`.
+- **Dado** uma resposta que não define o próprio cache, **então** `Cache-Control: no-store` (dado de
+  colaborador não fica no cache do navegador do posto). A capa do aviso (MUR-09) mantém o
+  `Cache-Control` dela.

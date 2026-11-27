@@ -1,3 +1,4 @@
+import io
 import os
 import uuid
 from collections.abc import Iterator
@@ -10,10 +11,11 @@ from sqlalchemy.orm import Session
 from app.core import armazenamento
 from app.core.arquivos import TIPOS_DOCUMENTO, TIPOS_IMAGEM, erro_arquivo, validar_arquivo
 from app.core.config import configuracoes
-from app.core.permissions import UsuarioAutenticado, garantir_escopo, resolver_setor
+from app.core.permissions import Papel, UsuarioAutenticado, garantir_escopo, resolver_setor
 from app.modules.logs.models import AcaoLog, ModuloLog
 from app.modules.logs.service import registrar
 from app.modules.murais import repository
+from app.modules.murais.capa import reduzir_capa
 from app.modules.murais.models import AnexoAviso, Aviso, CategoriaAviso
 from app.modules.murais.schemas import AniversarianteResposta, AvisoAtualizar, AvisoCriar
 from app.modules.murais.storage import montar_chave_anexo, montar_chave_capa
@@ -54,8 +56,10 @@ def _validar_aviso(
     raise _erro_campo("conteudo", "Conteúdo é obrigatório")
 
 
-def _validar_imagem(arquivo: UploadFile, campo: str) -> ArquivoValidado:
-  return (arquivo, *validar_arquivo(arquivo, TIPOS_IMAGEM, LIMITE_IMAGEM_MB, campo))
+def _validar_imagem(arquivo: UploadFile, campo: str) -> bytes:
+  """Valida extensão e tamanho e já devolve a versão menor em WebP que vai para o bucket."""
+  validar_arquivo(arquivo, TIPOS_IMAGEM, LIMITE_IMAGEM_MB, campo)
+  return reduzir_capa(arquivo.file, campo)
 
 
 def _validar_anexos(
@@ -79,10 +83,9 @@ def _remover_objetos(chaves: list[str]) -> None:
     armazenamento.remover_arquivo(chave)
 
 
-def _enviar_capa(aviso_id: uuid.UUID, imagem: ArquivoValidado, enviados: list[str]) -> str:
-  arquivo, nome_arquivo, tipo_conteudo, tamanho = imagem
-  chave = montar_chave_capa(aviso_id, nome_arquivo)
-  armazenamento.enviar_arquivo(chave, arquivo.file, tamanho, tipo_conteudo)
+def _enviar_capa(aviso_id: uuid.UUID, capa: bytes, enviados: list[str]) -> str:
+  chave = montar_chave_capa(aviso_id)
+  armazenamento.enviar_arquivo(chave, io.BytesIO(capa), len(capa), TIPOS_IMAGEM[".webp"])
   enviados.append(chave)
   return chave
 
@@ -164,6 +167,15 @@ def _buscar_anexo(sessao: Session, aviso_id: uuid.UUID, anexo_id: uuid.UUID) -> 
   return anexo
 
 
+def _garantir_escopo_aviso(usuario: UsuarioAutenticado, aviso: Aviso) -> None:
+  """Marketing mexe só nos avisos que criou (GER-04); os demais papéis seguem o escopo por setor."""
+  if usuario.role == Papel.MARKETING:
+    if aviso.autor_id != usuario.id:
+      raise HTTPException(status.HTTP_403_FORBIDDEN, "Fora do seu setor")
+    return
+  garantir_escopo(usuario, aviso.setor_id)
+
+
 def criar_aviso(sessao: Session, dados: AvisoCriar, usuario: UsuarioAutenticado) -> Aviso:
   _validar_aviso(dados.categoria, dados.conteudo, dados.data_inicio, dados.data_fim)
   setor_id = resolver_setor(dados.setor_id, usuario, entidade="aviso")
@@ -210,7 +222,7 @@ def atualizar_aviso(
   sessao: Session, aviso_id: uuid.UUID, dados: AvisoAtualizar, usuario: UsuarioAutenticado
 ) -> Aviso:
   aviso = buscar_aviso(sessao, aviso_id)
-  garantir_escopo(usuario, aviso.setor_id)
+  _garantir_escopo_aviso(usuario, aviso)
   campos = dados.model_dump(exclude_unset=True)
   if not campos:
     return aviso
@@ -237,7 +249,7 @@ def substituir_imagem(
   sessao: Session, aviso_id: uuid.UUID, arquivo: UploadFile, usuario: UsuarioAutenticado
 ) -> Aviso:
   aviso = buscar_aviso(sessao, aviso_id)
-  garantir_escopo(usuario, aviso.setor_id)
+  _garantir_escopo_aviso(usuario, aviso)
   imagem = _validar_imagem(arquivo, "arquivo")
 
   enviados: list[str] = []
@@ -253,7 +265,7 @@ def substituir_imagem(
 
 def remover_imagem(sessao: Session, aviso_id: uuid.UUID, usuario: UsuarioAutenticado) -> None:
   aviso = buscar_aviso(sessao, aviso_id)
-  garantir_escopo(usuario, aviso.setor_id)
+  _garantir_escopo_aviso(usuario, aviso)
   chave = aviso.chave_imagem
   if chave is None:
     return
@@ -268,7 +280,7 @@ def adicionar_anexos(
   sessao: Session, aviso_id: uuid.UUID, arquivos: list[UploadFile], usuario: UsuarioAutenticado
 ) -> Aviso:
   aviso = buscar_aviso(sessao, aviso_id)
-  garantir_escopo(usuario, aviso.setor_id)
+  _garantir_escopo_aviso(usuario, aviso)
   anexos = _validar_anexos(arquivos, len(aviso.anexos), "arquivos")
 
   enviados: list[str] = []
@@ -288,7 +300,7 @@ def remover_anexo(
   sessao: Session, aviso_id: uuid.UUID, anexo_id: uuid.UUID, usuario: UsuarioAutenticado
 ) -> None:
   aviso = buscar_aviso(sessao, aviso_id)
-  garantir_escopo(usuario, aviso.setor_id)
+  _garantir_escopo_aviso(usuario, aviso)
   anexo = _buscar_anexo(sessao, aviso_id, anexo_id)
   chave = anexo.chave_armazenamento
   # delete-orphan: tirar da lista apaga a linha.
@@ -301,7 +313,7 @@ def remover_anexo(
 
 def deletar_aviso(sessao: Session, aviso_id: uuid.UUID, usuario: UsuarioAutenticado) -> None:
   aviso = buscar_aviso(sessao, aviso_id)
-  garantir_escopo(usuario, aviso.setor_id)
+  _garantir_escopo_aviso(usuario, aviso)
   chaves = [anexo.chave_armazenamento for anexo in aviso.anexos]
   if aviso.chave_imagem is not None:
     chaves.append(aviso.chave_imagem)

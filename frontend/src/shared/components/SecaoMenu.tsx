@@ -10,6 +10,7 @@ interface PropriedadesSecaoMenu {
   as?: ElementType
   className?: string
   acoes?: ReactNode
+  introducao?: string
   children: ReactNode
 }
 
@@ -22,16 +23,17 @@ function SecaoMenu({
   as: Tag = 'div',
   className = '',
   acoes,
+  introducao,
   children,
 }: PropriedadesSecaoMenu) {
   const [expandido, setExpandido] = useState(true)
 
   if (compacto) {
-    return <Tag className={`flex flex-none flex-col gap-1 ${className}`}>{children}</Tag>
+    return <Tag data-introducao={introducao} className={`flex flex-none flex-col gap-1 ${className}`}>{children}</Tag>
   }
 
   return (
-    <Tag className={`flex flex-none flex-col gap-1 ${className}`}>
+    <Tag data-introducao={introducao} className={`flex flex-none flex-col gap-1 ${className}`}>
       <div className="flex items-center justify-between pr-1.5 pb-2 pl-3 liquido:pl-3.5">
         <button
           type="button"

@@ -7,6 +7,7 @@
 - **PostgreSQL**
 - **Alembic** para migrations
 - **MinIO** (S3-compatible) para armazenamento de arquivos
+- **Pillow** para reduzir a capa dos avisos (WebP, sem metadados) antes de ir pro MinIO
 - **JWT** (access + refresh token) para autenticação
 - **pwdlib** para hash de senha (não `passlib` — sem manutenção ativa e com incompatibilidades conhecidas)
 

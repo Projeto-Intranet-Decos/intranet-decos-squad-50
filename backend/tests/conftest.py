@@ -231,3 +231,13 @@ def admin_setor(fabrica: Fabrica, setor: Setor) -> Usuario:
 @pytest.fixture
 def superadmin(fabrica: Fabrica) -> Usuario:
     return fabrica.usuario(Papel.superadmin)
+
+
+@pytest.fixture
+def rh(fabrica: Fabrica, setor: Setor) -> Usuario:
+    return fabrica.usuario(Papel.rh, setor)
+
+
+@pytest.fixture
+def marketing(fabrica: Fabrica, setor: Setor) -> Usuario:
+    return fabrica.usuario(Papel.marketing, setor)

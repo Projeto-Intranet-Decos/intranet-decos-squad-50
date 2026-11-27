@@ -52,15 +52,17 @@ function ModalPreviaDocumento({ documento, aoFechar }: PropriedadesModalPreviaDo
         <span className="truncate text-[13px] text-slate-600">
           {documento.nomeArquivo} · {formatarTamanho(documento.tamanhoBytes)}
         </span>
-        <Botao
-          variante="primario"
-          onClick={() => baixarDocumento.mutate({ documento })}
-          disabled={baixarDocumento.isPending}
-          className="flex-none"
-        >
-          <IconeBaixar tamanho={15} />
-          {baixarDocumento.isPending ? 'Baixando…' : 'Baixar'}
-        </Botao>
+        <div className="flex flex-none gap-2.5">
+          <Botao
+            variante="primario"
+            onClick={() => baixarDocumento.mutate({ documento })}
+            disabled={baixarDocumento.isPending}
+            className="flex-1 sm:flex-none"
+          >
+            <IconeBaixar tamanho={15} />
+            {baixarDocumento.isPending ? 'Baixando…' : 'Baixar'}
+          </Botao>
+        </div>
       </div>
     </Modal>
   )

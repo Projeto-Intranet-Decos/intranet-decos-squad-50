@@ -3,14 +3,13 @@
 ## Contexto
 
 - Monorepo: frontend e backend no mesmo repositório.
-- Ambientes: `homolog` (produção) e `main` (integração do time).
+- Ambiente: `main` é a produção. Cada push nela faz o deploy no Cloudflare (ver [`cloudflare/README.md`](../cloudflare/README.md)).
 - Gestão de tarefas: Trello, sem IDs de card referenciados por enquanto (ver seção "Próximos passos").
 
 ## Branches
 
 ```
-homolog      # produção — só recebe releases vindas da main
-main         # integração contínua do time, destino dos PRs
+main         # produção, destino dos PRs — cada merge vai ao ar
 feature/<camada>/<modulo>/<descricao-curta>
 fix/<camada>/<modulo>/<descricao-curta>
 chore/<camada-ou-geral>/<descricao-curta>
@@ -33,10 +32,9 @@ chore/geral/configura-ci
 ### Fluxo
 
 1. `feature/*`, `fix/*` e `chore/*` nascem a partir de `main`.
-2. PR de volta para `main` — é onde o time integra o trabalho continuamente.
-3. Quando um conjunto de features está estável e validado, `main` é promovida para `homolog` (produção) por PR de release, com merge commit (sem squash) intitulado `Release <versão> — <descrição>` (ex: `Release 0.1 — MVP`).
+2. PR de volta para `main`. O merge publica em produção, então só entra o que está revisado e com a suíte verde.
 
-A `dev` foi descontinuada a partir da release 0.1; PRs abertos contra ela devem ser redirecionados para `main`.
+A `dev` foi descontinuada a partir da release 0.1, e a `homolog` deixou de ser a produção quando o deploy passou a sair da `main`. PRs abertos contra qualquer uma delas devem ser redirecionados para `main`.
 
 ### Tarefas que mexem em frontend e backend ao mesmo tempo
 

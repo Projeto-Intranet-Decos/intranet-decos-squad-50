@@ -45,7 +45,7 @@ class Configuracoes(BaseSettings):
 
     # Só necessário em dev, quando frontend e backend rodam em portas diferentes.
     origens_cors: list[str] = Field(default=[], validation_alias="CORS_ORIGINS")
-    # /docs, /redoc e /openapi.json (GER-23): só em desenvolvimento.
+    # /docs, /redoc e /openapi.json (GER-27): só em desenvolvimento.
     documentacao_api: bool = Field(default=False, validation_alias="API_DOCS")
 
     # Qualquer armazenamento compatível com S3 (o MinIO do compose, AWS S3, Railway Buckets...). Os

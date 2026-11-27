@@ -180,6 +180,30 @@ def test_usu03_superadmin_edita_o_proprio_nome_e_rebaixa_outro_superadmin(client
     assert cliente.delete(f'/usuarios/{outro.id}', headers=autenticar(superadmin)).status_code == 200
 
 
+def test_usu04_rh_nao_desativa_a_si_mesmo(cliente, sessao, rh):
+    resposta = cliente.delete(f'/usuarios/{rh.id}', headers=autenticar(rh))
+    assert resposta.status_code == 409
+    assert resposta.json() == {'mensagem': 'Você não pode desativar a própria conta'}
+    sessao.expire_all()
+    assert sessao.get(Usuario, rh.id).ativo is True
+
+
+@pytest.mark.parametrize('mudanca', [{'ativo': False}, {'role': 'comum'}, {'role': 'marketing'}])
+def test_usu03_rh_nao_se_desativa_nem_muda_o_proprio_papel(cliente, sessao, rh, mudanca):
+    resposta = cliente.put(f'/usuarios/{rh.id}', json=mudanca, headers=autenticar(rh))
+    assert resposta.status_code == 409
+    assert resposta.json() == {'mensagem': 'Você não pode desativar nem rebaixar a própria conta'}
+    sessao.expire_all()
+    assert sessao.get(Usuario, rh.id).ativo is True
+    assert sessao.get(Usuario, rh.id).role == 'rh'
+
+
+def test_usu03_rh_edita_o_proprio_nome_mandando_o_proprio_papel(cliente, rh):
+    resposta = cliente.put(f'/usuarios/{rh.id}', json={'nome':'Novo Nome', 'role':'rh', 'ativo':True}, headers=autenticar(rh))
+    assert resposta.status_code == 200
+    assert resposta.json()['nome'] == 'Novo Nome'
+
+
 def test_usu08_reenvia_convite_e_invalida_o_anterior(cliente, fabrica, correio_falso, superadmin):
     pendente = fabrica.usuario(pendente=True)
     anterior = fabrica.link(pendente)

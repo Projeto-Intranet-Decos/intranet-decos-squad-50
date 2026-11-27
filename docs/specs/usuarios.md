@@ -1,7 +1,7 @@
 # Usuários (`USU`)
 
-Cadastro dos colaboradores com papel de acesso e setor. Área de Administração, exclusiva de
-`superadmin` (GER-03).
+Cadastro dos colaboradores com papel de acesso e setor. Página de `superadmin` e de `rh` (GER-03);
+o `rh` tem a trava de nunca criar, promover nem alterar um `superadmin` (USU-09).
 
 | ID | Requisito | Back | Front | Teste |
 |---|---|---|---|---|
@@ -13,12 +13,13 @@ Cadastro dos colaboradores com papel de acesso e setor. Área de Administração
 | USU-06 | Cargo do colaborador | ⬜ | ⬜ | ⬜ |
 | USU-07 | Troca e redefinição de senha | ✅ | ✅ | ✅ |
 | USU-08 | Reenviar convite | ✅ | ✅ | ✅ |
+| USU-09 | Papéis RH e Marketing | ✅ | ✅ | ✅ |
 | USU-10 | Política de senha | ✅ | ✅ | ✅ |
 
 ### USU-01 — Listar usuários
 Origem: [ENT H6] · Back ✅ · Front ✅ · Teste ✅
 
-`GET /usuarios` — só `superadmin` (outros papéis → `403`). Devolve `id`, `nome`, `email`, `role`,
+`GET /usuarios` — `superadmin` ou `rh` (outros papéis → `403`). Devolve `id`, `nome`, `email`, `role`,
 `setor_id`, `data_nascimento`, `ativo`, `criado_em`; nunca a senha nem o hash. Inclui usuários
 desativados e pendentes.
 
@@ -30,7 +31,7 @@ desativados e pendentes.
 ### USU-02 — Cadastrar usuário por convite
 Origem: [ESP] [ENT H6] [CTX] · Back ✅ · Front ✅ · Teste ✅
 
-`POST /usuarios` — só `superadmin`. O superadmin **não define a senha**: o usuário é criado
+`POST /usuarios` — `superadmin` ou `rh`. Quem cria **não define a senha**: o usuário é criado
 **pendente** e recebe por e-mail um convite (magic link, AUT-08) para criar a própria senha e
 completar os dados (AUT-09).
 
@@ -39,7 +40,7 @@ completar os dados (AUT-09).
 | `nome` | obrigatório, 1–200, espaços nas pontas removidos — provisório, o colaborador confirma na ativação |
 | `email` | obrigatório, e-mail válido, até 200, único sem diferença de maiúsculas — gravado em minúsculas |
 | ~~`senha`~~ | removido: quem cria a senha é o próprio colaborador (AUT-09) |
-| `role` | `comum` (padrão), `admin_setor` ou `superadmin` |
+| `role` | `comum` (padrão), `admin_setor`, `rh`, `marketing` ou `superadmin` (este só o `superadmin` atribui, USU-09) |
 | `setor_id` | opcional, precisa existir |
 | `data_nascimento` | opcional (alimenta os aniversariantes, MUR-13) |
 
@@ -68,17 +69,18 @@ completar os dados (AUT-09).
 ### USU-03 — Editar usuário
 Origem: [ENT] · Back ✅ · Front ✅ · Teste ✅
 
-`PUT /usuarios/{id}` — só `superadmin`. Atualização parcial de `nome`, `email`, `role`,
+`PUT /usuarios/{id}` — `superadmin` ou `rh` (USU-09). Atualização parcial de `nome`, `email`, `role`,
 `setor_id`, `data_nascimento`, `ativo` (só os campos enviados mudam). Senha não é alterada por aqui.
 
 - **Dado** id inexistente, **então** `404`.
 - 🐞 Campos obrigatórios (`nome`, `email`, `role`, `ativo`) explicitamente nulos retornam `422` com o campo, sem alterar o registro; `setor_id` e `data_nascimento` aceitam nulo.
 - Mesmos conflitos de USU-02 (`409` em e-mail duplicado ou setor inexistente), e o e-mail novo
   também é gravado em minúsculas.
-- **Dado** o superadmin editando a si mesmo, **quando** manda `ativo: false` ou um papel diferente
-  de `superadmin`, **então** `409 {"mensagem": "Você não pode desativar nem rebaixar a própria
-  conta"}` e nada muda. Rebaixar ou desativar **outro** superadmin é permitido: quem faz isso
-  continua superadmin, então nunca sobra zero (USU-04).
+- **Dado** quem edita a si mesmo (`superadmin` ou `rh`), **quando** manda `ativo: false` ou um
+  papel diferente do atual, **então** `409 {"mensagem": "Você não pode desativar nem rebaixar a
+  própria conta"}` e nada muda. Rebaixar ou desativar **outro** superadmin é permitido ao
+  superadmin (o `rh` não toca em superadmin, USU-09): quem faz isso continua superadmin, então
+  nunca sobra zero (USU-04).
 - A mudança só chega ao token do usuário afetado quando o access token dele expira (AUT-03).
 - **Dado** uma mudança de `email`, **então** os links pendentes do usuário (convite ou
   redefinição de senha) deixam de valer (AUT-08). Se ele ainda for pendente, o superadmin reenvia
@@ -87,7 +89,7 @@ Origem: [ENT] · Back ✅ · Front ✅ · Teste ✅
 ### USU-04 — Desativar usuário (soft delete)
 Origem: [ENT H6] · Back ✅ · Front ✅ · Teste ✅
 
-`DELETE /usuarios/{id}` — só `superadmin`. Marca `ativo = false` e devolve `200` com o usuário
+`DELETE /usuarios/{id}` — `superadmin` ou `rh` (USU-09). Marca `ativo = false` e devolve `200` com o usuário
 atualizado; o registro e tudo que ele criou (avisos, documentos, eventos, FAQ) continuam.
 
 - **Dado** um usuário desativado, **quando** tenta login, **então** `401` (AUT-01); **quando** tenta
@@ -97,10 +99,10 @@ atualizado; o registro e tudo que ele criou (avisos, documentos, eventos, FAQ) c
 - **Dado** um usuário com links pendentes (convite ou redefinição de senha), **quando** é
   desativado, **então** os links deixam de valer (AUT-08). Desativar um pendente é o jeito de
   cancelar o convite; reativá-lo não reenvia nada automaticamente (USU-08).
-- **Dado** o superadmin, **quando** tenta desativar a si mesmo, **então** `409 {"mensagem": "Você
-  não pode desativar a própria conta"}` e nada muda. Como só um superadmin chama esta rota, isso
-  também garante que sempre sobra pelo menos um superadmin ativo. (Decidido em 2026-10-30, na
-  auditoria OWASP.)
+- **Dado** quem chama a rota (`superadmin` ou `rh`), **quando** tenta desativar a si mesmo,
+  **então** `409 {"mensagem": "Você não pode desativar a própria conta"}` e nada muda. Como o `rh`
+  não desativa superadmin (USU-09) e o superadmin não desativa a si mesmo, sempre sobra pelo menos
+  um superadmin ativo. (Decidido em 2026-10-30, na auditoria OWASP.)
 
 ### USU-05 — Primeiro superadmin
 Origem: [COD] · Back ✅ · Front — · Teste ⬜
@@ -183,7 +185,7 @@ Frontend:
 ### USU-08 — Reenviar convite
 Origem: [CTX] · Back ✅ · Front ✅ · Teste ✅
 
-`POST /usuarios/{id}/convite` — só `superadmin`. Gera um novo convite (AUT-08, válido por 72h) e
+`POST /usuarios/{id}/convite` — `superadmin` ou `rh`. Gera um novo convite (AUT-08, válido por 72h) e
 envia para o e-mail atual do usuário.
 
 - **Dado** um usuário pendente e ativo, **então** `200 {"email_enviado": true}`, um novo e-mail
@@ -200,6 +202,24 @@ envia para o e-mail atual do usuário.
 - **Dado** id inexistente, **então** `404`.
 - Frontend: ação "Reenviar convite" na linha de usuário pendente, com toast de sucesso ou de aviso
   conforme `email_enviado`.
+
+### USU-09 — Papéis RH e Marketing
+Origem: pedido do time (2026-11-26) · Back ✅ · Front ✅ · Teste ✅
+
+Dois papéis funcionais além dos três de GER-03: `rh` e `marketing`. O que cada um pode está em
+GER-03/GER-04 (marketing: avisos) e nas rotas de usuário acima (rh).
+
+- **Dado** um `rh`, **quando** cria ou edita um usuário com `role: "superadmin"`, **então** `403
+  {"mensagem": "Acesso negado"}` e nada muda.
+- **Dado** um `rh`, **quando** edita ou desativa um usuário que já é `superadmin`, **então** `403` e
+  nada muda.
+- **Dado** um `rh`, **então** atribui livremente `comum`, `admin_setor`, `rh` e `marketing`.
+- **Dado** um `marketing` ou `comum`, **quando** chama qualquer rota de `/usuarios`, **então** `403`.
+- `/logs` continua só do `superadmin`: `rh` e `marketing` → `403`.
+- Frontend: o `rh` vê "Usuários" no menu, em "Administração" (sem "Registro de atividades"); o seletor
+  de perfil dele não oferece `superadmin`, e usuários `superadmin` aparecem sem ações de editar,
+  excluir ou reenviar convite. O `marketing` vê "Novo aviso" no mural e escolhe o setor; só edita e
+  exclui os próprios avisos. Mudança de papel vale quando o access token é renovado (AUT-03).
 
 ### USU-10 — Política de senha
 Origem: [COD] (auditoria OWASP, A06) · Back ✅ · Front ✅ · Teste ✅

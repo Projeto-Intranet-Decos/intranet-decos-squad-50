@@ -58,3 +58,17 @@ class DocumentoResposta(BaseModel):
   autor_nome: str
   criado_em: datetime
   atualizado_em: datetime | None
+  versao: int
+
+
+class VersaoResposta(BaseModel):
+  model_config = ConfigDict(from_attributes=True)
+
+  numero: int
+  nome_arquivo: str
+  tipo_conteudo: str
+  tamanho_bytes: int
+  alteracao: str | None
+  autor_id: uuid.UUID
+  autor_nome: str
+  criado_em: datetime

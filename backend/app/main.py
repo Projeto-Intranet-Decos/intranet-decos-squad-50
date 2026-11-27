@@ -59,13 +59,13 @@ documentacao = configuracoes.documentacao_api
 app = FastAPI(
     title="Intranet do Hospital",
     lifespan=ciclo_de_vida,
-    # GER-23: o mapa da API só fica aberto em desenvolvimento.
+    # GER-27: o mapa da API só fica aberto em desenvolvimento.
     docs_url="/docs" if documentacao else None,
     redoc_url="/redoc" if documentacao else None,
     openapi_url="/openapi.json" if documentacao else None,
 )
 
-# GER-23. setdefault: a rota que define o próprio header (o cache da capa, MUR-09) vence.
+# GER-27. setdefault: a rota que define o próprio header (o cache da capa, MUR-09) vence.
 CABECALHOS_DE_SEGURANCA = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",

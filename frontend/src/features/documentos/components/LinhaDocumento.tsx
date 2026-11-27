@@ -5,12 +5,11 @@ import { ROTULOS_CATEGORIA, type Documento } from '../types'
 interface PropriedadesLinhaDocumento {
   documento: Documento
   podeGerenciar: boolean
-  /** Falso para o visitante: o arquivo exige login (AUT-10). */
-  podeAbrirArquivo: boolean
   aoVisualizar: () => void
   aoBaixar: () => void
   aoEditar: () => void
   aoExcluir: () => void
+  aoVerHistorico?: () => void
 }
 
 // Abaixo de md a linha vira card: documento em cima, categoria e data lado a
@@ -21,11 +20,11 @@ export const COLUNAS_TABELA =
 function LinhaDocumento({
   documento,
   podeGerenciar,
-  podeAbrirArquivo,
   aoVisualizar,
   aoBaixar,
   aoEditar,
   aoExcluir,
+  aoVerHistorico,
 }: PropriedadesLinhaDocumento) {
   const extensao = extensaoArquivo(documento.nomeArquivo)
 
@@ -39,22 +38,24 @@ function LinhaDocumento({
         >
           {extensao}
         </span>
-        {podeAbrirArquivo ? (
+        <button
+          type="button"
+          onClick={aoVisualizar}
+          title={documento.descricao ?? documento.nomeArquivo}
+          className="min-w-0 cursor-pointer truncate text-left text-sm font-semibold text-slate-900 hover:text-brand-600 liquido:text-[15px]"
+        >
+          {documento.titulo}
+        </button>
+        {aoVerHistorico && (
           <button
             type="button"
-            onClick={aoVisualizar}
-            title={documento.descricao ?? documento.nomeArquivo}
-            className="min-w-0 cursor-pointer truncate text-left text-sm font-semibold text-slate-900 hover:text-brand-600 liquido:text-[15px]"
+            onClick={aoVerHistorico}
+            title="Histórico de versões"
+            aria-label={`Versão ${documento.versao}: ver histórico`}
+            className="shrink-0 cursor-pointer rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 tabular-nums ring-1 ring-slate-200 transition-colors hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100"
           >
-            {documento.titulo}
+            v{documento.versao}
           </button>
-        ) : (
-          <span
-            title={documento.descricao ?? documento.nomeArquivo}
-            className="min-w-0 truncate text-sm font-semibold text-slate-900 liquido:text-[15px]"
-          >
-            {documento.titulo}
-          </span>
         )}
       </div>
 
@@ -67,7 +68,6 @@ function LinhaDocumento({
 
       <div className="col-span-2 flex items-center justify-between border-t border-brand-600/8 liquido:border-brand-600/6 pt-2.5 md:col-span-1 md:border-t-0 md:pt-0">
         <div className="flex items-center gap-1">
-          {podeAbrirArquivo && (
           <button
             type="button"
             onClick={aoVisualizar}
@@ -77,7 +77,6 @@ function LinhaDocumento({
           >
             <IconeOlho tamanho={15} />
           </button>
-          )}
           {podeGerenciar && (
             <>
               <button
@@ -101,16 +100,14 @@ function LinhaDocumento({
             </>
           )}
         </div>
-        {podeAbrirArquivo && (
-          <button
-            type="button"
-            onClick={aoBaixar}
-            className="btn btn-secondary min-h-10 px-3.5 text-[13px] text-brand-600 md:min-h-8"
-          >
-            <IconeBaixar tamanho={15} />
-            Baixar
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={aoBaixar}
+          className="btn btn-secondary min-h-10 px-3.5 text-[13px] text-brand-600 md:min-h-8"
+        >
+          <IconeBaixar tamanho={15} />
+          Baixar
+        </button>
       </div>
     </li>
   )

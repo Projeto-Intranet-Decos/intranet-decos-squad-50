@@ -12,7 +12,7 @@ import PaginaLogin from './lib/auth/PaginaLogin'
 import PaginaNaoAutorizado from './lib/auth/PaginaNaoAutorizado'
 import PaginaRedefinirSenha from './lib/auth/PaginaRedefinirSenha'
 import RotaProtegida from './lib/auth/RotaProtegida'
-import { PAPEIS_ADMINISTRACAO } from './lib/permissions'
+import { PAPEIS_LOGS, PAPEIS_USUARIOS } from './lib/permissions'
 import PaginaConfiguracoes from './lib/preferencias/PaginaConfiguracoes'
 import Layout from './shared/components/Layout'
 
@@ -53,9 +53,11 @@ function App() {
       <Route
         path="/documentos"
         element={
-          <Layout>
-            <PaginaDocumentos />
-          </Layout>
+          <RotaProtegida>
+            <Layout>
+              <PaginaDocumentos />
+            </Layout>
+          </RotaProtegida>
         }
       />
       <Route
@@ -87,7 +89,7 @@ function App() {
       <Route
         path="/usuarios"
         element={
-          <RotaProtegida papeisPermitidos={PAPEIS_ADMINISTRACAO}>
+          <RotaProtegida papeisPermitidos={PAPEIS_USUARIOS}>
             <Layout>
               <PaginaUsuarios />
             </Layout>
@@ -97,7 +99,7 @@ function App() {
       <Route
         path="/logs"
         element={
-          <RotaProtegida papeisPermitidos={PAPEIS_ADMINISTRACAO}>
+          <RotaProtegida papeisPermitidos={PAPEIS_LOGS}>
             <Layout>
               <PaginaLogs />
             </Layout>

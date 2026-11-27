@@ -11,14 +11,14 @@ e teste no módulo, como manda o fluxo do `CLAUDE.md`.
 
 Rodar: `docker compose up -d banco` e, em `backend/`, `.venv/bin/pytest tests/test_sondagem_owasp.py -rx`.
 
-Legenda: ✅ controle presente · 🟡 risco aceito/decisão registrada.
+Legenda: ✅ controle presente.
 
 ## Por categoria
 
 | Categoria | Situação | Onde está a regra |
 |---|---|---|
-| **A01** Controle de acesso | ✅ papéis e escopo por setor; ✅ superadmin não se desativa nem se rebaixa; ✅ aniversariantes visíveis ao visitante por decisão do time; 🟡 metadados de documentos legíveis por visitante | GER-03, GER-04, USU-03, USU-04, AUT-10 |
-| **A02** Configuração | ✅ `/docs` só com `API_DOCS=true`; ✅ headers na API e no nginx (CSP, HSTS, XFO, nosniff, Referrer-Policy, Permissions-Policy), `server_tokens off`; ✅ `JWT_SECRET` fraco impede a subida; ✅ compose expõe só o nginx | GER-13, GER-23, GER-24 |
+| **A01** Controle de acesso | ✅ papéis e escopo por setor; ✅ superadmin não se desativa nem se rebaixa; ✅ aniversariantes visíveis ao visitante por decisão do time; ✅ visitante não vê documentos, nem os metadados (#54) | GER-03, GER-04, USU-03, USU-04, AUT-10 |
+| **A02** Configuração | ✅ `/docs` só com `API_DOCS=true`; ✅ headers na API e no nginx (CSP, HSTS, XFO, nosniff, Referrer-Policy, Permissions-Policy), `server_tokens off`; ✅ `JWT_SECRET` fraco impede a subida; ✅ compose expõe só o nginx | GER-13, GER-27, GER-24 |
 | **A03** Cadeia de suprimentos | ✅ `pip-audit` e `npm audit` limpos; ✅ CI com auditoria; ✅ Dependabot; ✅ imagens e Actions fixadas | GER-26 |
 | **A04** Criptografia | ✅ argon2; ✅ tokens só como hash; ✅ JWT com algoritmo fixo; ✅ refresh token em cookie HttpOnly, access token só em memória | AUT-03, AUT-07 |
 | **A05** Injeção | ✅ só ORM; ✅ tipo servido pela extensão + `nosniff`; ✅ atalhos só `http(s)`; ✅ e-mails escapados; ✅ log técnico não deixa quebrar a linha | GER-06, ATA, GER-22, GER-25 |
@@ -77,8 +77,6 @@ Legenda: ✅ controle presente · 🟡 risco aceito/decisão registrada.
 
 - **Proteção de branch** na `main` e na `homolog` exigindo o CI verde: é configuração do GitHub,
   não código.
-- **Risco aceito do AUT-10**: metadados de documentos legíveis sem login. Rever se a API sair da
-  rede interna. Os aniversariantes não entram aqui: o visitante vê a lista por decisão do time.
 - **Alerta**: os eventos já saem no log com `evento=…`; falta a regra na plataforma (ex: alertar
   com muitos `login_bloqueado` ou qualquer `refresh_reutilizado`).
 - **Credencial root do MinIO** no backend (dívida já registrada na arquitetura).

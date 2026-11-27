@@ -48,7 +48,7 @@ export const ROTULOS_SITUACAO: Record<SituacaoUsuario, string> = {
 }
 
 export const ROTULOS_PAPEL: Record<Papel, string> = {
-  comum: 'Colaborador', admin_setor: 'Administrador de setor', superadmin: 'Superadmin',
+  comum: 'Colaborador', admin_setor: 'Administrador de setor', superadmin: 'Superadmin', rh: 'RH', marketing: 'Marketing',
 }
 
 export type ColunaUsuario = 'nome' | 'perfil' | 'setor' | 'status'

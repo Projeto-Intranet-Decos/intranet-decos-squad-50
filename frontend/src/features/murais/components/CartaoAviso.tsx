@@ -1,6 +1,7 @@
 import { IconeCalendario, IconeLapis, IconeLixeira, IconeUsuario } from '../../../shared/components/icones'
 import { formatarHora, formatarPeriodoEvento } from '../formatadores'
 import BadgeCategoria from './BadgeCategoria'
+import CapaAviso from './CapaAviso'
 import type { Aviso } from '../types'
 
 interface PropriedadesCartaoAviso {
@@ -63,13 +64,14 @@ function CartaoAviso({
         <div className="mb-3.5 h-0.5 rounded-full bg-brand-600 liquido:hidden" />
         {aviso.urlImagem && (
           <div className="mb-3.5 rounded-[10px] bg-white/55 p-1.5 ring-1 ring-slate-200/60 liquido:mb-4 liquido:rounded-inner liquido:ring-white/80 liquido:shadow-[inset_0_1px_0_white]">
-            <div
-              className="h-[160px] w-full rounded-md bg-cover bg-center sm:h-[190px] liquido:rounded-[10px]"
-              style={{ backgroundImage: `url(${aviso.urlImagem})` }}
+            <CapaAviso
+              url={aviso.urlImagem}
+              alt={aviso.titulo}
+              classeQuadro="aspect-video w-full rounded-md liquido:rounded-[10px]"
             />
           </div>
         )}
-        <h3 className="m-0 mb-3 text-lg leading-snug font-semibold tracking-tight text-slate-900">
+        <h3 className="m-0 mb-3 line-clamp-2 text-lg leading-snug font-semibold tracking-tight text-slate-900">
           {aviso.titulo}
         </h3>
         {aviso.dataInicio && (

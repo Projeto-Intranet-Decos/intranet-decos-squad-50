@@ -10,7 +10,7 @@ server {
     # Sem a versão do nginx nas respostas e páginas de erro (GER-13).
     server_tokens off;
     # Vale para o /api/, que não tem add_header próprio; os outros headers da API vêm do backend
-    # (GER-23). As outras locations incluem o cabecalhos-seguranca.conf completo.
+    # (GER-27). As outras locations incluem o cabecalhos-seguranca.conf completo.
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
     # Upload de documentos e de capa/anexos de aviso passa por aqui. A criação de aviso manda

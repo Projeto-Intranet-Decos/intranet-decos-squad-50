@@ -4,9 +4,10 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../App'
 import { simularConsultasDeMidia, simularNavegador } from '../../testes/apoio'
+import { isIntroducaoVista, marcarIntroducaoVista } from '../introducao/useIntroducao'
 import PaginaConfiguracoes from './PaginaConfiguracoes'
 import { CHAVE_PREFERENCIAS, PREFERENCIAS_PADRAO, definirPreferencias, iniciarPreferencias, obterPreferencias } from './preferencias'
-import { entrarComToken } from '../auth/useAuth'
+import { entrarComToken, limparTokens } from '../auth/useAuth'
 
 vi.mock('../../features/atalhos/api', async (original) => ({
   ...(await original<typeof import('../../features/atalhos/api')>()),
@@ -23,6 +24,8 @@ function tokenDe(role: string) {
 describe('GER-14 — página Configurações', () => {
   beforeEach(() => {
     iniciarPreferencias()
+    marcarIntroducaoVista('1')
+    marcarIntroducaoVista(null)
   })
 
   it('colaborador comum abre /configuracoes e encontra o item no menu lateral', () => {
@@ -122,5 +125,29 @@ describe('GER-14 — página Configurações', () => {
     expect((screen.getByRole('radio', { name: 'Vidro líquido' }) as HTMLInputElement).checked).toBe(true)
     expect((screen.getByLabelText('Desfoque do vidro') as HTMLInputElement).value).toBe('16')
     expect((screen.getByRole('radio', { name: 'Suave' }) as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('GER-23 — usuário logado desliga e religa a introdução pelo interruptor', () => {
+    entrarComToken(tokenDe('comum'))
+    localStorage.removeItem('intranet:introducao:1')
+    render(<PaginaConfiguracoes />)
+    const interruptor = () => screen.getByRole('switch', { name: 'Mostrar introdução ao entrar' }) as HTMLInputElement
+
+    expect(interruptor().checked).toBe(true)
+
+    fireEvent.click(interruptor())
+    expect(localStorage.getItem('intranet:introducao:1')).toBe('desativada')
+    expect(interruptor().checked).toBe(false)
+
+    fireEvent.click(interruptor())
+    expect(isIntroducaoVista('1')).toBe(false)
+    expect(interruptor().checked).toBe(true)
+  })
+
+  it('GER-23 — o visitante não vê o interruptor da introdução', () => {
+    limparTokens()
+    render(<PaginaConfiguracoes />)
+
+    expect(screen.queryByRole('switch', { name: 'Mostrar introdução ao entrar' })).toBeNull()
   })
 })

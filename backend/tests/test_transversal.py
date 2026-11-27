@@ -188,7 +188,7 @@ def test_ger06_recusa_conteudo_que_nao_bate_com_a_extensao(
     assert resposta.json() == {
         "campo": "arquivo", "mensagem": "O conteúdo do arquivo não corresponde à extensão"
     }
-    assert cliente.get("/documentos").json() == []
+    assert cliente.get("/documentos", headers=autenticar(admin_setor)).json() == []
 
 
 def test_ger06_capa_do_aviso_tambem_confere_a_assinatura(cliente: TestClient, admin_setor: Usuario):
@@ -204,11 +204,11 @@ def test_ger06_capa_do_aviso_tambem_confere_a_assinatura(cliente: TestClient, ad
 
 
 @pytest.mark.parametrize("rota", ["/docs", "/redoc", "/openapi.json"])
-def test_ger23_documentacao_interativa_fora_do_ar(cliente: TestClient, rota: str):
+def test_ger27_documentacao_interativa_fora_do_ar(cliente: TestClient, rota: str):
     assert cliente.get(rota).status_code == 404
 
 
-def test_ger23_headers_de_seguranca_em_toda_resposta(cliente: TestClient):
+def test_ger27_headers_de_seguranca_em_toda_resposta(cliente: TestClient):
     for resposta in (cliente.get("/setores"), cliente.get("/usuarios"), cliente.get("/nao-existe")):
         assert resposta.headers["X-Content-Type-Options"] == "nosniff"
         assert resposta.headers["X-Frame-Options"] == "DENY"
@@ -216,7 +216,7 @@ def test_ger23_headers_de_seguranca_em_toda_resposta(cliente: TestClient):
         assert resposta.headers["Cache-Control"] == "no-store"
 
 
-def test_ger23_capa_do_aviso_mantem_o_proprio_cache(cliente: TestClient, admin_setor: Usuario):
+def test_ger27_capa_do_aviso_mantem_o_proprio_cache(cliente: TestClient, admin_setor: Usuario):
     aviso = cliente.post(
         "/murais/avisos",
         data={"titulo": "Aviso", "conteudo": "Texto"},

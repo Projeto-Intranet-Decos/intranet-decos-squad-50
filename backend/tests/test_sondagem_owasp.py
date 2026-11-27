@@ -139,7 +139,7 @@ def test_a04_refresh_token_guardado_so_como_hash(cliente, sessao: Session, comum
 @pytest.mark.parametrize("busca", ["' OR 1=1 --", "%' ; DROP TABLE documentos; --", "\\x00"])
 def test_a05_busca_com_sqli_nao_quebra(cliente, superadmin, setor, busca):
     _documento(cliente, superadmin, setor_id=setor.id)
-    r = cliente.get("/documentos", params={"busca": busca})
+    r = cliente.get("/documentos", params={"busca": busca}, headers=autenticar(superadmin))
     assert r.status_code in (200, 422)
     assert r.status_code == 422 or r.json() == []
 

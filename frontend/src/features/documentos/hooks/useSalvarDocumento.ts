@@ -6,7 +6,7 @@ import type { EdicaoDocumento, ErroCampo, NovoDocumento } from '../types'
 
 type VariaveisSalvarDocumento =
   | { id?: undefined; dados: NovoDocumento }
-  | { id: string; dados: EdicaoDocumento; arquivo?: File | null }
+  | { id: string; dados: EdicaoDocumento; arquivo?: File | null; alteracao?: string }
 
 export function useSalvarDocumento() {
   const queryClient = useQueryClient()
@@ -15,7 +15,7 @@ export function useSalvarDocumento() {
     mutationFn: async (variaveis: VariaveisSalvarDocumento) => {
       if (variaveis.id === undefined) return criarDocumento(variaveis.dados)
       const documento = await editarDocumento(variaveis.id, variaveis.dados)
-      return variaveis.arquivo ? substituirArquivo(variaveis.id, variaveis.arquivo) : documento
+      return variaveis.arquivo ? substituirArquivo(variaveis.id, variaveis.arquivo, variaveis.alteracao) : documento
     },
     onSuccess: (_documento, variaveis) => {
       queryClient.invalidateQueries({ queryKey: ['documentos'] })

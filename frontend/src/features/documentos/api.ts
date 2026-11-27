@@ -6,6 +6,7 @@ import type {
   FiltroDocumentos,
   NovoDocumento,
   Setor,
+  VersaoDocumento,
 } from './types'
 
 // Espelho de DocumentoResposta (backend/app/modules/documentos/schemas.py).
@@ -23,6 +24,18 @@ interface DocumentoApi {
   autor_nome: string
   criado_em: string
   atualizado_em: string | null
+  versao: number
+}
+
+interface VersaoApi {
+  numero: number
+  nome_arquivo: string
+  tipo_conteudo: string
+  tamanho_bytes: number
+  alteracao: string | null
+  autor_id: string
+  autor_nome: string
+  criado_em: string
 }
 
 interface SetorApi {
@@ -45,6 +58,7 @@ function paraDocumento(bruto: DocumentoApi): Documento {
     autorNome: bruto.autor_nome,
     criadoEm: bruto.criado_em,
     atualizadoEm: bruto.atualizado_em,
+    versao: bruto.versao,
   }
 }
 
@@ -81,9 +95,10 @@ export async function editarDocumento(id: string, edicao: EdicaoDocumento): Prom
   return paraDocumento(data)
 }
 
-export async function substituirArquivo(id: string, arquivo: File): Promise<Documento> {
+export async function substituirArquivo(id: string, arquivo: File, alteracao?: string): Promise<Documento> {
   const corpo = new FormData()
   corpo.append('arquivo', arquivo)
+  if (alteracao) corpo.append('alteracao', alteracao)
   const { data } = await api.put<DocumentoApi>(`/documentos/${id}/arquivo`, corpo)
   return paraDocumento(data)
 }
@@ -99,6 +114,25 @@ export async function baixarArquivo(id: string, inline = false): Promise<Blob> {
     params: { inline },
     responseType: 'blob',
   })
+  return data
+}
+
+export async function listarVersoes(id: string): Promise<VersaoDocumento[]> {
+  const { data } = await api.get<VersaoApi[]>(`/documentos/${id}/versoes`)
+  return data.map((bruta) => ({
+    numero: bruta.numero,
+    nomeArquivo: bruta.nome_arquivo,
+    tipoConteudo: bruta.tipo_conteudo,
+    tamanhoBytes: bruta.tamanho_bytes,
+    alteracao: bruta.alteracao,
+    autorId: bruta.autor_id,
+    autorNome: bruta.autor_nome,
+    criadoEm: bruta.criado_em,
+  }))
+}
+
+export async function baixarVersaoArquivo(id: string, numero: number): Promise<Blob> {
+  const { data } = await api.get<Blob>(`/documentos/${id}/versoes/${numero}/download`, { responseType: 'blob' })
   return data
 }
 

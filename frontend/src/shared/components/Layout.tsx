@@ -3,11 +3,15 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import ListaAtalhos from '../../features/atalhos/components/ListaAtalhos'
+import { useAtalhos } from '../../features/atalhos/hooks/useAtalhos'
 import { renovarAccessToken } from '../../lib/api'
 import ModalAlterarSenha from '../../lib/auth/ModalAlterarSenha'
 import { sairDaConta } from '../../lib/auth/sessao'
 import { useAuth } from '../../lib/auth/useAuth'
-import { canAcessarAdministracao } from '../../lib/permissions'
+import Introducao from '../../lib/introducao/Introducao'
+import { montarPassos } from '../../lib/introducao/passos'
+import { useIntroducao } from '../../lib/introducao/useIntroducao'
+import { canAcessarAdministracao, canGerenciarAtalhos, canVerLogs } from '../../lib/permissions'
 import { usePreferencias } from '../../lib/preferencias/usePreferencias'
 import { useConsultaDeMidia } from '../hooks/useConsultaDeMidia'
 import { useReduzirAnimacoes } from '../hooks/useReduzirAnimacoes'
@@ -22,6 +26,7 @@ import {
   IconeChave,
   IconeDuvida,
   IconeHistorico,
+  IconeInfo,
   IconeMegafone,
   IconeMenu,
   IconeSair,
@@ -64,6 +69,7 @@ function ItemMenu({ rota, label, Icone, compacto, aoNavegar, className }: Propri
   return (
     <NavLink
       to={rota}
+      data-introducao={rota.slice(1)}
       title={label}
       onClick={aoNavegar}
       className={({ isActive }) =>
@@ -112,6 +118,9 @@ function Layout({ children }: PropriedadesLayout) {
   const completouSessaoAntiga = useRef(false)
   const preferencias = usePreferencias()
   const semAnimacao = useReduzirAnimacoes()
+  const introducao = useIntroducao(usuario?.id ?? null)
+  const { data: atalhos = [] } = useAtalhos()
+  const temAtalhos = canGerenciarAtalhos(usuario) || atalhos.length > 0
 
   // "Recolher menu" só vale no desktop; o drawer sempre abre inteiro.
   const compacto = recolhido && desktop
@@ -145,6 +154,11 @@ function Layout({ children }: PropriedadesLayout) {
   function fecharMenuDevolvendoFoco() {
     setMenuAberto(false)
     botaoMenuRef.current?.focus()
+  }
+
+  function verIntroducao() {
+    fecharMenu()
+    introducao.abrir()
   }
 
   function aoSair() {
@@ -206,15 +220,18 @@ function Layout({ children }: PropriedadesLayout) {
         }`}
         style={desktop ? { width: compacto ? '82px' : '262px', padding: compacto ? '24px 11px' : '24px 17px' } : { padding: '24px 17px' }}
       >
-        {/* Em tela cheia o fundo escurecido fica coberto, então o menu precisa do próprio botão de fechar. */}
-        <button
-          type="button"
-          onClick={fecharMenuDevolvendoFoco}
-          aria-label="Fechar menu"
-          className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-white/60 lg:hidden liquido:btn-icon"
-        >
-          <IconeX tamanho={20} />
-        </button>
+        {/* Em tela cheia o fundo escurecido fica coberto, então o menu precisa do próprio botão de fechar.
+            No desktop ele nem é montado: o display do btn-icon passaria por cima de um lg:hidden. */}
+        {!desktop && (
+          <button
+            type="button"
+            onClick={fecharMenuDevolvendoFoco}
+            aria-label="Fechar menu"
+            className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-white/60 liquido:btn-icon"
+          >
+            <IconeX tamanho={20} />
+          </button>
+        )}
 
         <div className="flex flex-none flex-col items-center gap-2 px-3 pb-5">
           {!compacto && (
@@ -230,7 +247,7 @@ function Layout({ children }: PropriedadesLayout) {
 
         <motion.div layoutScroll className="min-h-0 flex-1 overflow-y-auto">
           <SecaoMenu titulo="Páginas" compacto={compacto} semAnimacao={semAnimacao} as="nav">
-            {NAV_PRINCIPAL.map((item) => (
+            {NAV_PRINCIPAL.filter((item) => usuario || item.rota !== '/documentos').map((item) => (
               <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
             ))}
           </SecaoMenu>
@@ -238,11 +255,12 @@ function Layout({ children }: PropriedadesLayout) {
           {canAcessarAdministracao(usuario) && (
             <SecaoMenu
               titulo="Administração"
+              introducao="administracao"
               compacto={compacto}
               semAnimacao={semAnimacao}
               className="mt-5 border-t border-white/70 pt-4 liquido:border-slate-900/5"
             >
-              {NAV_ADMIN.map((item) => (
+              {NAV_ADMIN.filter((item) => item.rota !== '/logs' || canVerLogs(usuario)).map((item) => (
                 <ItemMenu key={item.rota} {...item} compacto={compacto} aoNavegar={fecharMenu} />
               ))}
             </SecaoMenu>
@@ -262,6 +280,16 @@ function Layout({ children }: PropriedadesLayout) {
 
         <button
           type="button"
+          onClick={verIntroducao}
+          title="Ver introdução"
+          className={`mt-1 flex flex-none items-center gap-2.5 rounded-lg py-2 ${compacto ? 'justify-center px-0' : 'px-3 liquido:px-3.5'} text-xs text-slate-500 transition-[color,background-color,scale] hover:bg-white/60 hover:text-slate-700 liquido:min-h-10 liquido:rounded-full liquido:text-sm liquido:text-slate-600 liquido:hover:bg-white/50 liquido:active:scale-[0.98]`}
+        >
+          <IconeInfo tamanho={16} />
+          {!compacto && <span className="flex-1 text-left">Ver introdução</span>}
+        </button>
+
+        <button
+          type="button"
           onClick={() => setRecolhido((r) => !r)}
           title={compacto ? 'Expandir menu' : 'Recolher menu'}
           className={`mt-1 hidden flex-none items-center gap-2.5 rounded-lg py-2 lg:flex ${compacto ? 'justify-center px-0' : 'px-3 liquido:px-3.5'} text-xs text-slate-500 transition-[color,background-color,scale] hover:bg-white/60 hover:text-slate-700 liquido:min-h-10 liquido:rounded-full liquido:text-sm liquido:text-slate-600 liquido:hover:bg-white/50 liquido:active:scale-[0.98]`}
@@ -271,7 +299,7 @@ function Layout({ children }: PropriedadesLayout) {
         </button>
 
         {/* Duas linhas: o nome ganha a largura toda, em vez de dividir a linha com os botões. */}
-        <div className="mt-2 flex flex-none flex-col gap-2 border-t border-white/70 pt-4 liquido:border-slate-900/5">
+        <div data-introducao="conta" className="mt-2 flex flex-none flex-col gap-2 border-t border-white/70 pt-4 liquido:border-slate-900/5">
           <div className={`flex items-center gap-2.5 ${compacto ? 'justify-center' : ''}`}>
             {usuario ? (
               <span title={usuario.nome} className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700 liquido:size-9">
@@ -344,6 +372,9 @@ function Layout({ children }: PropriedadesLayout) {
       </motion.aside>
 
       {alterandoSenha && <ModalAlterarSenha aoFechar={() => setAlterandoSenha(false)} />}
+      {introducao.aberta && (
+        <Introducao passos={montarPassos(usuario, temAtalhos)} destacar={desktop} aoEncerrar={introducao.encerrar} />
+      )}
 
       <main className="min-w-0 flex-1 self-stretch lg:min-h-dvh">
         <div ref={conteudoRef} className="px-4 pt-5 pb-8 sm:px-7 lg:py-6">

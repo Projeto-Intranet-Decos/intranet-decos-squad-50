@@ -6,6 +6,7 @@ import { definirPreferencias, iniciarPreferencias } from '../../lib/preferencias
 import { simularConsultasDeMidia, tokenDeAcessoFalso } from '../../testes/apoio'
 import estilos from '../../index.css?raw'
 import { entrarComToken, salvarAccessToken } from '../../lib/auth/useAuth'
+import { marcarIntroducaoVista } from '../../lib/introducao/useIntroducao'
 import Layout from './Layout'
 
 const renovacao = vi.hoisted(() => ({ token: '' }))
@@ -26,6 +27,8 @@ vi.mock('../../lib/api', async (original) => {
 
 beforeEach(() => {
   renovacao.token = ''
+  marcarIntroducaoVista('1')
+  marcarIntroducaoVista(null)
 })
 
 vi.mock('../../features/atalhos/api', async (original) => ({
@@ -205,6 +208,22 @@ describe('GER-01 — menu em tela cheia abaixo de 1024px', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Fechar menu' }))
     expect(abrir.getAttribute('aria-expanded')).toBe('false')
     expect(document.activeElement).toBe(abrir)
+  })
+})
+
+describe('GER-01 🐞 — menu sem botão de fechar no desktop', () => {
+  beforeEach(() => {
+    const carga = btoa(JSON.stringify({ sub: '1', role: 'comum', setor_id: null }))
+    entrarComToken(`cabecalho.${carga}.assinatura`)
+    simularConsultasDeMidia((consulta) => consulta.includes('min-width: 1024px'))
+    iniciarPreferencias()
+  })
+
+  // O btn-icon do Vidro líquido define display e derrubava o lg:hidden: o botão nem é montado.
+  it('o menu lateral não tem o botão "Fechar menu"', () => {
+    render(<Aplicacao />)
+
+    expect(screen.queryByRole('button', { name: 'Fechar menu' })).toBeNull()
   })
 })
 
