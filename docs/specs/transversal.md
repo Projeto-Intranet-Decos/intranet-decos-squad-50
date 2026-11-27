@@ -554,7 +554,7 @@ Origem: [COD] (auditoria OWASP, A02) · Back ✅ · Front — · Teste ✅
   `Cache-Control` dela.
 
 ### GER-28 — Novidades desde a última visita
-Origem: pedido do time (2026-11-27) · Back ✅ · Front ✅ · Teste 🟡
+Origem: pedido do time (2026-11-27) · Back ✅ · Front ✅ · Teste ✅
 
 O sino do rodapé do menu lateral mostra o que foi publicado desde a última vez que o usuário abriu
 as novidades: **avisos** (inclusive eventos) e **documentos** novos ou com **versão nova** do

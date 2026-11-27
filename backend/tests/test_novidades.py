@@ -129,7 +129,7 @@ def test_ger28_documentos_desde_trazem_os_criados_depois(
     _envelhecer_documento(sessao, antigo)
     novo = _enviar_documento(cliente, admin_setor, "POP novo")
 
-    resposta = cliente.get("/documentos", params={"desde": DESDE.isoformat()})
+    resposta = cliente.get("/documentos", params={"desde": DESDE.isoformat()}, headers=autenticar(admin_setor))
 
     assert resposta.status_code == 200
     assert [documento["id"] for documento in resposta.json()] == [novo]
@@ -148,7 +148,7 @@ def test_ger28_documento_com_versao_nova_volta_a_ser_novidade(
     )
     assert substituicao.status_code == 200, substituicao.json()
 
-    resposta = cliente.get("/documentos", params={"desde": DESDE.isoformat()})
+    resposta = cliente.get("/documentos", params={"desde": DESDE.isoformat()}, headers=autenticar(admin_setor))
     assert [(d["id"], d["versao"]) for d in resposta.json()] == [(documento_id, 2)]
 
 
@@ -163,4 +163,4 @@ def test_ger28_editar_so_metadados_do_documento_nao_e_novidade(
     )
     assert edicao.status_code == 200, edicao.json()
 
-    assert cliente.get("/documentos", params={"desde": DESDE.isoformat()}).json() == []
+    assert cliente.get("/documentos", params={"desde": DESDE.isoformat()}, headers=autenticar(admin_setor)).json() == []
