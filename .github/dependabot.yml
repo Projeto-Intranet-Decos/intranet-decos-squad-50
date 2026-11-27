@@ -19,6 +19,11 @@ updates:
     groups:
       frontend:
         update-types: [minor, patch]
+    ignore:
+      # O typescript-eslint 8 só aceita TypeScript < 6.1: o bump para o 7 quebra o `npm ci` (ERESOLVE)
+      # no CI, no build da imagem e no deploy. Tirar daqui quando o typescript-eslint suportar o 7.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   # Imagens base fixadas por digest nos Dockerfiles e no compose: o Dependabot troca tag e digest
   # juntos quando sai uma imagem nova (inclusive a mesma tag reconstruída com correções).
